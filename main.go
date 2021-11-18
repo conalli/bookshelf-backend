@@ -1,30 +1,36 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net/http"
+	"os"
 
+	routes "github.com/conalli/bookshelf-backend/routes"
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	loadEnv()
 	router := mux.NewRouter()
-	
-	router.HandleFunc("/", HealthCheck).Methods("GET")
-	router.HandleFunc("/hello", HelloWorld).Methods("GET")
+
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello"))
+	}).Methods("GET")
+	router.HandleFunc("/signup", routes.SignUp).Methods("POST")
+	router.HandleFunc("/login", routes.LogIn).Methods("POST")
+	router.HandleFunc("/setcmd", routes.SetCmd).Methods("POST")
+	router.HandleFunc("/getcmds", routes.GetCmds).Methods("GET")
+	router.HandleFunc("/search/{apiKey}/{cmd}", routes.Search).Methods("GET")
 
 	http.Handle("/", router)
-	http.ListenAndServe(":8080", router)
+	port := os.Getenv("PORT")
+	http.ListenAndServe(port, router)
 }
 
-func HealthCheck(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-
-		fmt.Fprintf(w, "Server is up and running on port 8080")
+func loadEnv() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Could not load .env file")
 	}
-
-	func HelloWorld(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-
-		w.Write([]byte("Hello World"))
-	}
+}
