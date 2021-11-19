@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 
-	routes "github.com/conalli/bookshelf-backend/routes"
+	"github.com/conalli/bookshelf-backend/routes"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 )
@@ -25,6 +25,7 @@ func main() {
 
 	http.Handle("/", router)
 	port := os.Getenv("PORT")
+	log.Println("Server up and running on port" + port)
 	http.ListenAndServe(port, router)
 }
 
