@@ -27,9 +27,10 @@ func CreateNewUser(requestData models.SignUpReq) (*mongo.InsertOneResult, error)
 			return nil, hashErr
 		}
 		newUserData := models.SignUpData{
-			Name:     *requestData.Name,
-			Password: hashedPassword,
-			ApiKey:   apiKey,
+			Name:      *requestData.Name,
+			Password:  hashedPassword,
+			ApiKey:    apiKey,
+			Bookmarks: map[string]string{},
 		}
 		res, err := collection.InsertOne(ctx, newUserData)
 		if err != nil {

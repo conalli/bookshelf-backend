@@ -16,9 +16,10 @@ type SignUpReq struct {
 }
 
 type SignUpData struct {
-	Name     string `json:"name" bson:"name"`
-	Password string `json:"password" bson:"password"`
-	ApiKey   string `json:"apiKey" bson:"apiKey"`
+	Name      string            `json:"name" bson:"name"`
+	Password  string            `json:"password" bson:"password"`
+	ApiKey    string            `json:"apiKey" bson:"apiKey"`
+	Bookmarks map[string]string `json:"bookmarks" bson:"bookmarks"`
 }
 
 func UserAlreadyExists(ctx context.Context, collection *mongo.Collection, name string) bool {
