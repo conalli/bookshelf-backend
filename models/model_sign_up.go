@@ -11,20 +11,13 @@ import (
 )
 
 type SignUpReq struct {
-	Name     *string `json:"name" bson:"name,omitempty"`
-	Password *string `json:"password" bson:"password,omitempty"`
+	Name     *string `json:"name"`
+	Password *string `json:"password"`
 }
 
-type SignUpData struct {
-	Name      string            `json:"name" bson:"name"`
-	Password  string            `json:"password" bson:"password"`
-	ApiKey    string            `json:"apiKey" bson:"apiKey"`
-	Bookmarks map[string]string `json:"bookmarks" bson:"bookmarks"`
-}
-
-func UserAlreadyExists(ctx context.Context, collection *mongo.Collection, name string) bool {
+func UserFieldAlreadyExists(ctx context.Context, collection *mongo.Collection, key, value string) bool {
 	var result bson.M
-	err := collection.FindOne(ctx, bson.D{primitive.E{Key: "name", Value: name}}).Decode(&result)
+	err := collection.FindOne(ctx, bson.D{primitive.E{Key: key, Value: value}}).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return false
