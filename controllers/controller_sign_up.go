@@ -17,16 +17,19 @@ func CreateNewUser(requestData models.SignUpReq) (*mongo.InsertOneResult, error)
 	defer client.Disconnect(ctx)
 
 	collection := db.MongoCollection(client, "users")
-	userExists := models.UserAlreadyExists(ctx, &collection, *requestData.Name)
+	userExists := models.UserFieldAlreadyExists(ctx, &collection, "name", *requestData.Name)
 
 	if !userExists {
 		apiKey := models.GenerateAPIKey()
+		for models.UserFieldAlreadyExists(ctx, &collection, "apiKey", apiKey) {
+			apiKey = models.GenerateAPIKey()
+		}
 		hashedPassword, hashErr := password.HashPassword(*requestData.Password)
 		// TODO: add better error handling
 		if hashErr != nil {
 			return nil, hashErr
 		}
-		newUserData := models.SignUpData{
+		newUserData := models.UserData{
 			Name:      *requestData.Name,
 			Password:  hashedPassword,
 			ApiKey:    apiKey,
