@@ -15,9 +15,9 @@ type UserData struct {
 	Bookmarks map[string]string `json:"bookmarks" bson:"bookmarks"`
 }
 
-func GetUserByName(ctx context.Context, collection *mongo.Collection, reqName string) (UserData, error) {
+func GetUserByKey(ctx context.Context, collection *mongo.Collection, reqKey, reqValue string) (UserData, error) {
 	var result UserData
-	err := collection.FindOne(ctx, bson.D{primitive.E{Key: "name", Value: reqName}}).Decode(&result)
+	err := collection.FindOne(ctx, bson.D{primitive.E{Key: reqKey, Value: reqValue}}).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return result, mongo.ErrNoDocuments
