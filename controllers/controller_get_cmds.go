@@ -15,7 +15,7 @@ func GetAllCmds(requestData models.GetCmdsReq) (map[string]string, error) {
 	defer client.Disconnect(ctx)
 
 	collection := db.MongoCollection(client, "users")
-	user, err := models.GetUserByName(ctx, &collection, requestData.Name)
+	user, err := models.GetUserByKey(ctx, &collection, "name", requestData.Name)
 	if err != nil {
 		return nil, err
 	}
