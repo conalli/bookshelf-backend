@@ -16,7 +16,6 @@ func GetURL(apiKey, cmd string) (string, error) {
 	collection := db.MongoCollection(client, "users")
 	user, err := models.GetUserByKey(ctx, &collection, "apiKey", apiKey)
 	var defaultSearch = fmt.Sprintf("http://www.google.com/search?q=%s", cmd)
-	fmt.Println(cmd)
 	if err != nil {
 		return defaultSearch, err
 	}
