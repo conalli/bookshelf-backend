@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -10,7 +9,7 @@ import (
 )
 
 func Search(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Search endpoint hit")
+	log.Println("Search endpoint hit")
 	vars := mux.Vars(r)
 	apiKey := vars["apiKey"]
 	cmd := vars["cmd"]

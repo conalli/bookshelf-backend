@@ -2,7 +2,7 @@ package routes
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/controllers"
@@ -14,20 +14,20 @@ type tempError struct {
 }
 
 func SignUp(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("SignUp endpoint hit")
+	log.Println("SignUp endpoint hit")
 	var newUserReq models.SignUpReq
 	json.NewDecoder(r.Body).Decode(&newUserReq)
 	// add validation for request
 	createUser, err := controllers.CreateNewUser(newUserReq)
 	if err != nil {
-		fmt.Printf("error returned while trying to create a new user: %v", err)
+		log.Printf("error returned while trying to create a new user: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		var testError tempError
 		testError.Error = err.Error()
 		json.NewEncoder(w).Encode(testError)
 	} else {
-		fmt.Printf("successfully created a new user: %v", createUser.InsertedID)
+		log.Printf("successfully created a new user: %v", createUser.InsertedID)
 		w.WriteHeader(http.StatusCreated)
 	}
 }
