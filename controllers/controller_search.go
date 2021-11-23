@@ -8,7 +8,7 @@ import (
 	"github.com/conalli/bookshelf-backend/utils/apiErrors"
 )
 
-func GetURL(apiKey, cmd string) (string, error) {
+func GetURL(apiKey, cmd string) (string, apiErrors.ApiErr) {
 	ctx, cancelFunc := db.MongoContext()
 	client := db.MongoClient(ctx)
 	defer cancelFunc()
@@ -18,11 +18,11 @@ func GetURL(apiKey, cmd string) (string, error) {
 	user, err := models.GetUserByKey(ctx, &collection, "apiKey", apiKey)
 	var defaultSearch = fmt.Sprintf("http://www.google.com/search?q=%s", cmd)
 	if err != nil {
-		return defaultSearch, apiErrors.ErrBadQueryParams
+		return defaultSearch, apiErrors.ParseGetUserError(apiKey, err)
 	}
 	url, found := user.Bookmarks[cmd]
 	if !found {
-		return defaultSearch, apiErrors.NewBadRequestError("command: " + cmd + " not registered")
+		return defaultSearch, apiErrors.NewBadRequestError("error: command: " + cmd + " not registered")
 	}
 	// TODO: improve url format handling
 	return "http://" + url, nil

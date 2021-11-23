@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func CreateNewUser(requestData models.SignUpReq) (*mongo.InsertOneResult, error) {
+func CreateNewUser(requestData models.SignUpReq) (*mongo.InsertOneResult, apiErrors.ApiErr) {
 	ctx, cancelFunc := db.MongoContext()
 	client := db.MongoClient(ctx)
 	defer cancelFunc()

@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func AddCmd(requestData models.SetCmdReq) (int, error) {
+func AddCmd(requestData models.SetCmdReq) (int, apiErrors.ApiErr) {
 	ctx, cancelFunc := db.MongoContext()
 	client := db.MongoClient(ctx)
 	defer cancelFunc()

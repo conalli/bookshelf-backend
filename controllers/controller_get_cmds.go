@@ -7,7 +7,7 @@ import (
 	"github.com/conalli/bookshelf-backend/utils/password"
 )
 
-func GetAllCmds(requestData models.GetCmdsReq) (map[string]string, error) {
+func GetAllCmds(requestData models.GetCmdsReq) (map[string]string, apiErrors.ApiErr) {
 	ctx, cancelFunc := db.MongoContext()
 	client := db.MongoClient(ctx)
 	defer cancelFunc()
