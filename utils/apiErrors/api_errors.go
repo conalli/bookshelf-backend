@@ -4,11 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type ApiError struct {
-	ErrStatus int    `json:"errStatus,omitempty"`
-	ErrValue  string `json:"err,omitempty"`
+	ErrStatus  int    `json:"errStatus,omitempty"`
+	ErrValue   string `json:"err,omitempty"`
+	ErrDetails string `jsong:"errDetails,omitempty"`
 }
 
 var (
@@ -33,17 +36,27 @@ func (e ApiError) Status() int {
 	return e.ErrStatus
 }
 
-func NewApiError(status int, value string) ApiError {
+func NewApiError(status int, value string, details string) ApiError {
 	return ApiError{
-		ErrStatus: status,
-		ErrValue:  value,
+		ErrStatus:  status,
+		ErrValue:   value,
+		ErrDetails: details,
 	}
 }
 
-func NewBadRequestError() ApiError {
+func NewBadRequestError(details string) ApiError {
 	return ApiError{
-		ErrStatus: http.StatusBadRequest,
-		ErrValue:  ErrBadRequest.Error(),
+		ErrStatus:  http.StatusBadRequest,
+		ErrValue:   ErrBadRequest.Error(),
+		ErrDetails: details,
+	}
+}
+
+func NewWrongCredentialsError(details string) ApiError {
+	return ApiError{
+		ErrStatus:  http.StatusUnauthorized,
+		ErrValue:   ErrWrongCredentials.Error(),
+		ErrDetails: details,
 	}
 }
 
@@ -52,4 +65,11 @@ func NewInternalServerError() ApiError {
 		ErrStatus: http.StatusInternalServerError,
 		ErrValue:  ErrInternalServerError.Error(),
 	}
+}
+
+func ParseGetUserError(name string, err error) ApiError {
+	if err == mongo.ErrNoDocuments {
+		return NewBadRequestError("error: could not find user with name " + name)
+	}
+	return NewInternalServerError()
 }
