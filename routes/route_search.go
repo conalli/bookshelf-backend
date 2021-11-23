@@ -15,7 +15,7 @@ func Search(w http.ResponseWriter, r *http.Request) {
 	cmd := vars["cmd"]
 	url, err := controllers.GetURL(apiKey, cmd)
 	if err != nil {
-		log.Println(err)
+		log.Printf("%d: %s", err.Status(), err.Error())
 	}
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }

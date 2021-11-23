@@ -7,6 +7,7 @@ import (
 
 	"github.com/conalli/bookshelf-backend/controllers"
 	"github.com/conalli/bookshelf-backend/models"
+	"github.com/conalli/bookshelf-backend/utils/apiErrors"
 )
 
 func SetCmd(w http.ResponseWriter, r *http.Request) {
@@ -18,10 +19,12 @@ func SetCmd(w http.ResponseWriter, r *http.Request) {
 	if err != nil || numUpdated == 0 {
 		log.Printf("error returned while trying to add a new cmd: %v", err)
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		var testError tempError
-		testError.Error = err.Error()
-		json.NewEncoder(w).Encode(testError)
+		w.WriteHeader(err.Status())
+		setCmdError := apiErrors.ResError{
+			Status: err.Status(),
+			Error:  err.Error(),
+		}
+		json.NewEncoder(w).Encode(setCmdError)
 	} else {
 		log.Printf("successfully set cmd: %s, url: %s", getCmdsReq.Cmd, getCmdsReq.URL)
 		w.Header().Set("Content-Type", "application/json")
