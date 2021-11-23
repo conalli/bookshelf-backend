@@ -6,6 +6,7 @@ import (
 
 	"github.com/conalli/bookshelf-backend/db"
 	"github.com/conalli/bookshelf-backend/models"
+	"github.com/conalli/bookshelf-backend/utils/apiErrors"
 	"github.com/conalli/bookshelf-backend/utils/password"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -25,9 +26,9 @@ func CreateNewUser(requestData models.SignUpReq) (*mongo.InsertOneResult, error)
 			apiKey = models.GenerateAPIKey()
 		}
 		hashedPassword, hashErr := password.HashPassword(*requestData.Password)
-		// TODO: add better error handling
 		if hashErr != nil {
-			return nil, hashErr
+			log.Println("error hashing password")
+			return nil, apiErrors.NewInternalServerError()
 		}
 		newUserData := models.UserData{
 			Name:      *requestData.Name,
@@ -38,9 +39,9 @@ func CreateNewUser(requestData models.SignUpReq) (*mongo.InsertOneResult, error)
 		res, err := collection.InsertOne(ctx, newUserData)
 		if err != nil {
 			log.Printf("error creating new user with data: \n username: %v\n password: %v", requestData.Name, requestData.Password)
-			return nil, err
+			return nil, apiErrors.NewInternalServerError()
 		}
-		return res, err
+		return res, nil
 	}
-	return nil, fmt.Errorf("error creating new user; user with name %v already exists", requestData.Name)
+	return nil, apiErrors.NewBadRequestError(fmt.Sprintf("error creating new user; user with name %v already exists", requestData.Name))
 }
