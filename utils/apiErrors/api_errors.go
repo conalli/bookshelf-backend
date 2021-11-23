@@ -9,9 +9,19 @@ import (
 )
 
 type ApiError struct {
-	ErrStatus  int    `json:"errStatus,omitempty"`
-	ErrValue   string `json:"err,omitempty"`
-	ErrDetails string `jsong:"errDetails,omitempty"`
+	ErrStatus  int
+	ErrValue   string
+	ErrDetails string
+}
+
+type ResError struct {
+	Status int    `json:"status,omitempty"`
+	Error  string `json:"error,omitempty"`
+}
+
+type ApiErr interface {
+	Status() int
+	Error() string
 }
 
 var (
@@ -28,12 +38,12 @@ var (
 	ErrInvalidJWTClaims    = errors.New("invalid JWT claims")
 )
 
-func (e ApiError) Error() string {
-	return fmt.Sprintf("error: status-%d, value %s", e.ErrStatus, e.ErrValue)
-}
-
 func (e ApiError) Status() int {
 	return e.ErrStatus
+}
+
+func (e ApiError) Error() string {
+	return fmt.Sprintf("%s -- %s", e.ErrDetails, e.ErrValue)
 }
 
 func NewApiError(status int, value string, details string) ApiError {
@@ -67,9 +77,9 @@ func NewInternalServerError() ApiError {
 	}
 }
 
-func ParseGetUserError(name string, err error) ApiError {
+func ParseGetUserError(value string, err error) ApiError {
 	if err == mongo.ErrNoDocuments {
-		return NewBadRequestError("error: could not find user with name " + name)
+		return NewBadRequestError("error: could not find user with value " + value)
 	}
 	return NewInternalServerError()
 }
