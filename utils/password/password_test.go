@@ -16,12 +16,24 @@ func TestHashPassword(t *testing.T) {
 			"password",
 		},
 		{
+			"long string",
+			"qwertyuiopsdfghjklzxcvbnmdfghjklvbnmbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm",
+		},
+		{
+			"mix caps",
+			"DFGHJuuioshHHSjeiJOdnuUsizZ",
+		},
+		{
 			"number string",
 			"1234567890",
 		},
 		{
-			"long string",
-			"qwertyuiopsdfghjklzxcvbnmdfghjklvbnmbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm",
+			"non-alphanumeric",
+			",./;'[]   -¥",
+		},
+		{
+			"initial space",
+			"           password           ",
 		},
 	}
 
@@ -50,13 +62,28 @@ func TestCheckHashedPassword(t *testing.T) {
 			"placeholder",
 		},
 		{
+			"long string",
+			"qwertyuiopsdfghjklzxcvbnmdfghjklvbnmbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm",
+			"",
+		},
+		{
+			"mix caps",
+			"DFGHJuuioshHHSjeiJOdnuUsizZ",
+			"",
+		},
+		{
 			"number string",
 			"1234567890",
 			"",
 		},
 		{
-			"long string",
-			"qwertyuiopsdfghjklzxcvbnmdfghjklvbnmbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm",
+			"non-alphanumeric",
+			",./;'[]   -¥",
+			"",
+		},
+		{
+			"initial space",
+			"           password           ",
 			"",
 		},
 	}
