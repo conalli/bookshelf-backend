@@ -8,22 +8,18 @@ func TestHashPassword(t *testing.T) {
 	tp := []struct {
 		name     string
 		password string
-		expect   bool
 	}{
 		{
 			"simple string",
 			"password",
-			true,
 		},
 		{
 			"number string",
 			"1234567890",
-			true,
 		},
 		{
 			"long string",
 			"qwertyuiopsdfghjklzxcvbnmdfghjklvbnmbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm",
-			true,
 		},
 	}
 
