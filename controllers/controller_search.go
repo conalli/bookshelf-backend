@@ -24,6 +24,6 @@ func GetURL(apiKey, cmd string) (string, apiErrors.ApiErr) {
 	if !found {
 		return defaultSearch, apiErrors.NewBadRequestError("error: command: " + cmd + " not registered")
 	}
-	// TODO: improve url format handling
-	return "http://" + url, nil
+	url = models.FormatURL(url)
+	return url, nil
 }
