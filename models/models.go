@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// UserData represents the db fields associated with each user.
 type UserData struct {
 	Name      string            `json:"name" bson:"name"`
 	Password  string            `json:"password" bson:"password"`
@@ -15,6 +16,7 @@ type UserData struct {
 	Bookmarks map[string]string `json:"bookmarks" bson:"bookmarks"`
 }
 
+// GetUserByKey finds and returns user data based on a key-value pair.
 func GetUserByKey(ctx context.Context, collection *mongo.Collection, reqKey, reqValue string) (UserData, error) {
 	var result UserData
 	err := collection.FindOne(ctx, bson.D{primitive.E{Key: reqKey, Value: reqValue}}).Decode(&result)
