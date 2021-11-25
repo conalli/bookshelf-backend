@@ -33,7 +33,7 @@ func CreateNewUser(requestData models.SignUpReq) (*mongo.InsertOneResult, apiErr
 		newUserData := models.UserData{
 			Name:      *requestData.Name,
 			Password:  hashedPassword,
-			ApiKey:    apiKey,
+			APIKey:    apiKey,
 			Bookmarks: map[string]string{},
 		}
 		res, err := collection.InsertOne(ctx, newUserData)
