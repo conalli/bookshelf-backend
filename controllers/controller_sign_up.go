@@ -11,6 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// CreateNewUser checks whether a username alreadys exists in the db. If not, a new user
+// is created based upon the request data.
 func CreateNewUser(requestData models.SignUpReq) (*mongo.InsertOneResult, apiErrors.ApiErr) {
 	ctx, cancelFunc := db.MongoContext()
 	client := db.MongoClient(ctx)

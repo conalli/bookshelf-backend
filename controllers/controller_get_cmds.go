@@ -7,6 +7,7 @@ import (
 	"github.com/conalli/bookshelf-backend/utils/password"
 )
 
+// GetAllCmds uses req info to get all users current cmds from the db.
 func GetAllCmds(requestData models.GetCmdsReq) (map[string]string, apiErrors.ApiErr) {
 	ctx, cancelFunc := db.MongoContext()
 	client := db.MongoClient(ctx)

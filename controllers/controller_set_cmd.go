@@ -8,6 +8,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// AddCmd attempts to either add or update a cmd for the user, returning the number
+// of updated cmds.
 func AddCmd(requestData models.SetCmdReq) (int, apiErrors.ApiErr) {
 	ctx, cancelFunc := db.MongoContext()
 	client := db.MongoClient(ctx)
