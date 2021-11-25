@@ -12,8 +12,8 @@ import (
 
 // SignUpReq represents the fields needed in the request in order to attempt to sign up.
 type SignUpReq struct {
-	Name     *string `json:"name"`
-	Password *string `json:"password"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
 }
 
 // UserFieldAlreadyExists attempts to find a user based on a given key-value pair, returning wether they

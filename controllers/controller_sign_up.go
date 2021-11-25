@@ -18,20 +18,20 @@ func CreateNewUser(requestData models.SignUpReq) (*mongo.InsertOneResult, apiErr
 	defer client.Disconnect(ctx)
 
 	collection := db.MongoCollection(client, "users")
-	userExists := models.UserFieldAlreadyExists(ctx, &collection, "name", *requestData.Name)
+	userExists := models.UserFieldAlreadyExists(ctx, &collection, "name", requestData.Name)
 
 	if !userExists {
 		apiKey := models.GenerateAPIKey()
 		for models.UserFieldAlreadyExists(ctx, &collection, "apiKey", apiKey) {
 			apiKey = models.GenerateAPIKey()
 		}
-		hashedPassword, hashErr := password.HashPassword(*requestData.Password)
+		hashedPassword, hashErr := password.HashPassword(requestData.Password)
 		if hashErr != nil {
 			log.Println("error hashing password")
 			return nil, apiErrors.NewInternalServerError()
 		}
 		newUserData := models.UserData{
-			Name:      *requestData.Name,
+			Name:      requestData.Name,
 			Password:  hashedPassword,
 			APIKey:    apiKey,
 			Bookmarks: map[string]string{},
