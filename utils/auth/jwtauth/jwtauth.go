@@ -5,17 +5,13 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"regexp"
 	"time"
 
 	"github.com/conalli/bookshelf-backend/utils/apiErrors"
 	"github.com/golang-jwt/jwt/v4"
 )
 
-var (
-	signingKey    = []byte(os.Getenv("SIGNING_SECRET"))
-	headerTokenRe = regexp.MustCompile(`^Bearer\s([a-zA-Z0-9\.\-_]+)$`)
-)
+var signingKey = []byte(os.Getenv("SIGNING_SECRET"))
 
 // CustomClaims represents the claims made in the JWT.
 type CustomClaims struct {
