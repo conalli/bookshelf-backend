@@ -4,7 +4,7 @@ import (
 	"github.com/conalli/bookshelf-backend/db"
 	"github.com/conalli/bookshelf-backend/models"
 	"github.com/conalli/bookshelf-backend/utils/apiErrors"
-	"github.com/conalli/bookshelf-backend/utils/password"
+	"github.com/conalli/bookshelf-backend/utils/auth/password"
 )
 
 // GetAllCmds uses req info to get all users current cmds from the db.

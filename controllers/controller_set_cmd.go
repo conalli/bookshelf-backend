@@ -4,7 +4,7 @@ import (
 	"github.com/conalli/bookshelf-backend/db"
 	"github.com/conalli/bookshelf-backend/models"
 	"github.com/conalli/bookshelf-backend/utils/apiErrors"
-	"github.com/conalli/bookshelf-backend/utils/password"
+	"github.com/conalli/bookshelf-backend/utils/auth/password"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
