@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	key           = []byte(os.Getenv("SIGNING_SECRET"))
+	signingKey    = []byte(os.Getenv("SIGNING_SECRET"))
 	headerTokenRe = regexp.MustCompile(`^Bearer\s([a-zA-Z0-9\.\-_]+)$`)
 )
 
@@ -33,10 +33,11 @@ func NewToken(name string) (string, apiErrors.ApiErr) {
 			NotBefore: time.Now().Add(5 * time.Second).Unix(),
 			IssuedAt:  time.Now().Unix(),
 			Issuer:    "http://bookshelf-backend.jp",
+			Subject:   name,
 		},
 	})
 
-	tkn, err := token.SignedString(key)
+	tkn, err := token.SignedString(signingKey)
 	if err != nil {
 		log.Printf("error when trying to sign token %+v", token)
 		return tkn, apiErrors.NewInternalServerError()
@@ -45,14 +46,15 @@ func NewToken(name string) (string, apiErrors.ApiErr) {
 }
 
 // Authorized reads the JWT from the incoming request and returns whether the user is authorized or not.
-func Authorized(key string) func(w http.ResponseWriter, r *http.Request) bool {
+func Authorized() func(w http.ResponseWriter, r *http.Request) bool {
 	return func(w http.ResponseWriter, r *http.Request) bool {
-		matches := headerTokenRe.FindStringSubmatch(r.Header.Get("Authorization"))
-		if len(matches) < 2 {
-			log.Println("error: failed to match authorization header")
+		cookies := r.Cookies()
+		if len(cookies) < 1 {
+			log.Println("error: no cookies in request")
 			return false
 		}
-		token, err := jwt.ParseWithClaims(matches[1], &CustomClaims{}, func(t *jwt.Token) (interface{}, error) { return key, nil })
+		cookieValue := cookies[0].Value
+		token, err := jwt.ParseWithClaims(cookieValue, &CustomClaims{}, func(t *jwt.Token) (interface{}, error) { return signingKey, nil })
 		if err != nil {
 			log.Println("error: failed to parse with claims")
 			return false
