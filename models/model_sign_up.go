@@ -10,12 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// SignUpReq represents the fields needed in the request in order to attempt to sign up.
-type SignUpReq struct {
-	Name     string `json:"name"`
-	Password string `json:"password"`
-}
-
 // UserFieldAlreadyExists attempts to find a user based on a given key-value pair, returning wether they
 // already exist in the db or not.
 func UserFieldAlreadyExists(ctx context.Context, collection *mongo.Collection, key, value string) bool {
