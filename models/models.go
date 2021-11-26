@@ -8,6 +8,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// Credentials represents the fields needed in the request in order to attempt to sign up or log in.
+type Credentials struct {
+	Name     string `json:"name"`
+	Password string `json:"password"`
+}
+
 // UserData represents the db fields associated with each user.
 type UserData struct {
 	Name      string            `json:"name" bson:"name"`

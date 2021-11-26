@@ -12,7 +12,7 @@ import (
 
 func SignUp(w http.ResponseWriter, r *http.Request) {
 	log.Println("SignUp endpoint hit")
-	var newUserReq models.SignUpReq
+	var newUserReq models.Credentials
 	json.NewDecoder(r.Body).Decode(&newUserReq)
 	// add validation for request
 	createUser, err := controllers.CreateNewUser(newUserReq)
