@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  app:
+    container_name: bookshelf_backend
+    build:
+      context: .
+    env_file: .env
+    ports: 
+     - 8080:8080
