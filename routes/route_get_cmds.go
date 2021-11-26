@@ -17,7 +17,7 @@ func GetCmds(w http.ResponseWriter, r *http.Request) {
 
 	cmds, err := controllers.GetAllCmds(getCmdsReq)
 	if err != nil {
-		log.Printf("error returned while trying to create a new user: %v", err)
+		log.Printf("error returned while trying to get cmds: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(err.Status())
 		getCmdsErr := apiErrors.ResError{
