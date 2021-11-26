@@ -8,10 +8,15 @@ import (
 	"github.com/conalli/bookshelf-backend/controllers"
 	"github.com/conalli/bookshelf-backend/models"
 	"github.com/conalli/bookshelf-backend/utils/apiErrors"
+	"github.com/conalli/bookshelf-backend/utils/auth/jwtauth"
 )
 
 func GetCmds(w http.ResponseWriter, r *http.Request) {
 	log.Println("GetCmds endpoint hit")
+	if !jwtauth.Authorized()(w, r) {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	var getCmdsReq models.GetCmdsReq
 	json.NewDecoder(r.Body).Decode(&getCmdsReq)
 
