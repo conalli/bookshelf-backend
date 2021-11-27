@@ -19,7 +19,8 @@ func GetCmds(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&getCmdsReq)
 
 	if !jwtauth.Authorized(getCmdsReq.Name)(w, r) {
-		w.WriteHeader(http.StatusUnauthorized)
+		jwtErr := apiErrors.NewApiError(http.StatusUnauthorized, apiErrors.ErrInvalidJWTToken.Error(), "error: invalid access token")
+		apiErrors.APIErrorResponse(w, jwtErr)
 		return
 	}
 
