@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/conalli/bookshelf-backend/controllers"
 	"github.com/conalli/bookshelf-backend/models"
 	"github.com/conalli/bookshelf-backend/utils/apiErrors"
+	"github.com/conalli/bookshelf-backend/utils/auth/jwtauth"
 )
 
 // SignUp is the handler for the signup endpoint. Checks db for username and if
@@ -24,6 +26,28 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("successfully created a new user: %v", createUser.InsertedID)
-	w.WriteHeader(http.StatusCreated)
+	var token string
+	token, err = jwtauth.NewToken(newUserReq.Name)
+	if err != nil {
+		log.Printf("error returned while trying to create a new token: %v", err)
+		apiErrors.APIErrorResponse(w, err)
+		return
+	}
+	cookie := http.Cookie{
+		Name:     "jwt",
+		Value:    token,
+		Expires:  time.Now().Add(15 * time.Minute),
+		HttpOnly: true,
+	}
+	log.Println("successfully returned token as cookie")
+	http.SetCookie(w, &cookie)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	res := struct {
+		Status string `json:"status"`
+	}{
+		Status: "success",
+	}
+	json.NewEncoder(w).Encode(res)
 	return
 }
