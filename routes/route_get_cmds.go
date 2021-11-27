@@ -11,14 +11,17 @@ import (
 	"github.com/conalli/bookshelf-backend/utils/auth/jwtauth"
 )
 
+// GetCmds is the handler for the getcmds endpoint. Checks credentials + JWT and if
+// authorized returns all users cmds.
 func GetCmds(w http.ResponseWriter, r *http.Request) {
 	log.Println("GetCmds endpoint hit")
-	if !jwtauth.Authorized()(w, r) {
+	var getCmdsReq models.GetCmdsReq
+	json.NewDecoder(r.Body).Decode(&getCmdsReq)
+
+	if !jwtauth.Authorized(getCmdsReq.Name)(w, r) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	var getCmdsReq models.GetCmdsReq
-	json.NewDecoder(r.Body).Decode(&getCmdsReq)
 
 	cmds, err := controllers.GetAllCmds(getCmdsReq)
 	if err != nil {
@@ -30,10 +33,11 @@ func GetCmds(w http.ResponseWriter, r *http.Request) {
 			Error:  err.Error(),
 		}
 		json.NewEncoder(w).Encode(getCmdsErr)
-	} else {
-		log.Printf("successfully retrieved cmds: %v", cmds)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(cmds)
+		return
 	}
+	log.Printf("successfully retrieved cmds: %v", cmds)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(cmds)
+	return
 }
