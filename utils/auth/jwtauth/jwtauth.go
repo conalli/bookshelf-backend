@@ -43,7 +43,7 @@ func NewToken(name string) (string, apiErrors.ApiErr) {
 
 // Authorized reads the JWT from the incoming request and returns whether the user is authorized or not.
 // TODO: improve validation/ cookie handling
-func Authorized() func(w http.ResponseWriter, r *http.Request) bool {
+func Authorized(name string) func(w http.ResponseWriter, r *http.Request) bool {
 	return func(w http.ResponseWriter, r *http.Request) bool {
 		cookies := r.Cookies()
 		if len(cookies) < 1 {
@@ -61,7 +61,7 @@ func Authorized() func(w http.ResponseWriter, r *http.Request) bool {
 			log.Println("error: failed to convert token to CustomClaims")
 			return false
 		}
-		if err = tkn.Valid(); err != nil {
+		if err = tkn.Valid(); err != nil || tkn.Name != name || tkn.Subject != name {
 			log.Println("error: token not valid")
 			return false
 		}
