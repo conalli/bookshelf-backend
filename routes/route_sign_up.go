@@ -10,6 +10,8 @@ import (
 	"github.com/conalli/bookshelf-backend/utils/apiErrors"
 )
 
+// SignUp is the handler for the signup endpoint. Checks db for username and if
+// unique adds new user with given credentials.
 func SignUp(w http.ResponseWriter, r *http.Request) {
 	log.Println("SignUp endpoint hit")
 	var newUserReq models.Credentials
@@ -18,15 +20,10 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	createUser, err := controllers.CreateNewUser(newUserReq)
 	if err != nil {
 		log.Printf("error returned while trying to create a new user: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(err.Status())
-		signUpError := apiErrors.ResError{
-			Status: err.Status(),
-			Error:  err.Error(),
-		}
-		json.NewEncoder(w).Encode(signUpError)
-	} else {
-		log.Printf("successfully created a new user: %v", createUser.InsertedID)
-		w.WriteHeader(http.StatusCreated)
+		apiErrors.APIErrorResponse(w, err)
+		return
 	}
+	log.Printf("successfully created a new user: %v", createUser.InsertedID)
+	w.WriteHeader(http.StatusCreated)
+	return
 }

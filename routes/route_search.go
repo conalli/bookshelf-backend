@@ -20,4 +20,5 @@ func Search(w http.ResponseWriter, r *http.Request) {
 		log.Printf("%d: %s", err.Status(), err.Error())
 	}
 	http.Redirect(w, r, url, http.StatusSeeOther)
+	return
 }

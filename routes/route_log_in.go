@@ -12,6 +12,8 @@ import (
 	"github.com/conalli/bookshelf-backend/utils/auth/jwtauth"
 )
 
+// LogIn is the handler for the login endpoint. Checks credentials and if
+// correct returns JWT cookie for use with getcmds and setcmd.
 func LogIn(w http.ResponseWriter, r *http.Request) {
 	log.Println("LogIn endpoint hit")
 	var logInReq models.Credentials
@@ -20,26 +22,14 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 	name, err := controllers.CheckCredentials(logInReq)
 	if err != nil {
 		log.Printf("error returned while trying to get check credentials: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(err.Status())
-		checkCredErr := apiErrors.ResError{
-			Status: err.Status(),
-			Error:  err.Error(),
-		}
-		json.NewEncoder(w).Encode(checkCredErr)
+		apiErrors.APIErrorResponse(w, err)
 		return
 	}
 	var token string
 	token, err = jwtauth.NewToken(name)
 	if err != nil {
 		log.Printf("error returned while trying to create a new token: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(err.Status())
-		newTknErr := apiErrors.ResError{
-			Status: err.Status(),
-			Error:  err.Error(),
-		}
-		json.NewEncoder(w).Encode(newTknErr)
+		apiErrors.APIErrorResponse(w, err)
 		return
 	}
 	cookie := http.Cookie{

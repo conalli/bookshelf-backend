@@ -25,13 +25,7 @@ func SetCmd(w http.ResponseWriter, r *http.Request) {
 	numUpdated, err := controllers.AddCmd(setCmdReq)
 	if err != nil || numUpdated == 0 {
 		log.Printf("error returned while trying to add a new cmd: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(err.Status())
-		setCmdError := apiErrors.ResError{
-			Status: err.Status(),
-			Error:  err.Error(),
-		}
-		json.NewEncoder(w).Encode(setCmdError)
+		apiErrors.APIErrorResponse(w, err)
 		return
 	}
 	log.Printf("successfully set cmd: %s, url: %s", setCmdReq.Cmd, setCmdReq.URL)
