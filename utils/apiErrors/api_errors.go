@@ -1,28 +1,13 @@
 package apiErrors
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 
 	"go.mongodb.org/mongo-driver/mongo"
 )
-
-type ApiError struct {
-	ErrStatus  int
-	ErrValue   string
-	ErrDetails string
-}
-
-type ResError struct {
-	Status int    `json:"status,omitempty"`
-	Error  string `json:"error,omitempty"`
-}
-
-type ApiErr interface {
-	Status() int
-	Error() string
-}
 
 var (
 	ErrBadRequest          = errors.New("bad request")
@@ -37,6 +22,22 @@ var (
 	ErrInvalidJWTToken     = errors.New("invalid JWT token")
 	ErrInvalidJWTClaims    = errors.New("invalid JWT claims")
 )
+
+type ApiError struct {
+	ErrStatus  int
+	ErrValue   string
+	ErrDetails string
+}
+
+type ApiErr interface {
+	Status() int
+	Error() string
+}
+
+type ResError struct {
+	Status int    `json:"status,omitempty"`
+	Error  string `json:"error,omitempty"`
+}
 
 func (e ApiError) Status() int {
 	return e.ErrStatus
@@ -82,4 +83,14 @@ func ParseGetUserError(value string, err error) ApiError {
 		return NewBadRequestError("error: could not find user with value " + value)
 	}
 	return NewInternalServerError()
+}
+
+func APIErrorResponse(w http.ResponseWriter, err ApiErr) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(err.Status())
+	res := ResError{
+		Status: err.Status(),
+		Error:  err.Error(),
+	}
+	json.NewEncoder(w).Encode(res)
 }
