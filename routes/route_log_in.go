@@ -33,7 +33,7 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cookie := http.Cookie{
-		Name:     "jwt",
+		Name:     "bookshelfjwt",
 		Value:    token,
 		Expires:  time.Now().Add(15 * time.Minute),
 		HttpOnly: true,
