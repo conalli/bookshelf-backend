@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/conalli/bookshelf-backend/middleware"
 	"github.com/conalli/bookshelf-backend/routes"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -24,9 +25,10 @@ func main() {
 	router.HandleFunc("/search/{apiKey}/{cmd}", routes.Search).Methods("GET")
 
 	http.Handle("/", router)
+
 	port := os.Getenv("PORT")
 	log.Println("Server up and running on port" + port)
-	log.Fatal(http.ListenAndServe(port, router))
+	log.Fatal(http.ListenAndServe(port, middleware.CORSMiddleware(router)))
 }
 
 func loadEnv() {
