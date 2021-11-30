@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/conalli/bookshelf-backend/utils/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/apiErrors"
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -50,9 +50,14 @@ func Authorized(name string) func(w http.ResponseWriter, r *http.Request) bool {
 			log.Println("error: no cookies in request")
 			return false
 		}
-		cookieValue := cookies[0].Value
-		token, err := jwt.ParseWithClaims(cookieValue, &CustomClaims{}, func(t *jwt.Token) (interface{}, error) { return signingKey, nil })
+		bookshelfCookie := filterCookies("bookshelfjwt", cookies)
+		if bookshelfCookie == nil {
+			log.Println("error: did not find bookshelf cookie")
+			return false
+		}
+		token, err := jwt.ParseWithClaims(bookshelfCookie.Value, &CustomClaims{}, func(t *jwt.Token) (interface{}, error) { return signingKey, nil })
 		if err != nil {
+			log.Printf("%+v", err)
 			log.Println("error: failed to parse with claims")
 			return false
 		}
@@ -68,4 +73,13 @@ func Authorized(name string) func(w http.ResponseWriter, r *http.Request) bool {
 		fmt.Printf("%+v", tkn)
 		return true
 	}
+}
+
+func filterCookies(name string, cookies []*http.Cookie) *http.Cookie {
+	for _, c := range cookies {
+		if c.Name == name {
+			return c
+		}
+	}
+	return nil
 }
