@@ -20,7 +20,9 @@ type SetCmdReq struct {
 
 // SetCmdRes represents the number of commands that have been updated by the setcmd request.
 type SetCmdRes struct {
-	CmdsSet int `json:"cmdsSet"`
+	CmdsSet int    `json:"cmdsSet"`
+	Cmd     string `json:"cmd"`
+	URL     string `json:"url"`
 }
 
 // AddCmdToUser takes a given username along with the cmd and URL to set and adds the data to their bookmarks.
