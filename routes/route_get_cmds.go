@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/conalli/bookshelf-backend/auth/jwtauth"
 	"github.com/conalli/bookshelf-backend/controllers"
 	"github.com/conalli/bookshelf-backend/models/apiErrors"
 	"github.com/gorilla/mux"
@@ -16,12 +15,6 @@ import (
 func GetCmds(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	user := vars["user"]
-
-	if !jwtauth.Authorized(user)(w, r) {
-		jwtErr := apiErrors.NewApiError(http.StatusUnauthorized, apiErrors.ErrInvalidJWTToken.Error(), "error: invalid access token")
-		apiErrors.APIErrorResponse(w, jwtErr)
-		return
-	}
 
 	cmds, err := controllers.GetAllCmds(user)
 	if err != nil {
