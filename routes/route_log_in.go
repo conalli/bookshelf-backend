@@ -19,7 +19,7 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 	var logInReq models.Credentials
 	json.NewDecoder(r.Body).Decode(&logInReq)
 
-	name, err := controllers.CheckCredentials(logInReq)
+	name, apiKey, err := controllers.CheckCredentials(logInReq)
 	if err != nil {
 		log.Printf("error returned while trying to get check credentials: %v", err)
 		apiErrors.APIErrorResponse(w, err)
@@ -42,10 +42,8 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &cookie)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	res := struct {
-		Status string `json:"status"`
-	}{
-		Status: "success",
+	res := models.LogInRes{
+		APIKey: apiKey,
 	}
 	json.NewEncoder(w).Encode(res)
 	return

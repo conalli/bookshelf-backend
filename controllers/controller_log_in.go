@@ -9,7 +9,8 @@ import (
 	"github.com/conalli/bookshelf-backend/models/apiErrors"
 )
 
-func CheckCredentials(requestData models.Credentials) (string, apiErrors.ApiErr) {
+// CheckCredentials takes in request data, checks the db and returns the username and apikey is successful.
+func CheckCredentials(requestData models.Credentials) (string, string, apiErrors.ApiErr) {
 	ctx, cancelFunc := db.MongoContext()
 	client := db.MongoClient(ctx)
 	defer cancelFunc()
@@ -18,7 +19,7 @@ func CheckCredentials(requestData models.Credentials) (string, apiErrors.ApiErr)
 	collection := db.MongoCollection(client, "users")
 	user, err := models.GetUserByKey(ctx, &collection, "name", requestData.Name)
 	if err != nil || !password.CheckHashedPassword(user.Password, requestData.Password) {
-		return "", apiErrors.NewApiError(http.StatusUnauthorized, apiErrors.ErrWrongCredentials.Error(), "error: name or password incorrect")
+		return "", "", apiErrors.NewApiError(http.StatusUnauthorized, apiErrors.ErrWrongCredentials.Error(), "error: name or password incorrect")
 	}
-	return user.Name, nil
+	return user.Name, user.APIKey, nil
 }

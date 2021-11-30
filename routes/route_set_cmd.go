@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/conalli/bookshelf-backend/auth/jwtauth"
 	"github.com/conalli/bookshelf-backend/controllers"
 	"github.com/conalli/bookshelf-backend/models"
 	"github.com/conalli/bookshelf-backend/models/apiErrors"
@@ -18,11 +17,6 @@ func SetCmd(w http.ResponseWriter, r *http.Request) {
 	var setCmdReq models.SetCmdReq
 	json.NewDecoder(r.Body).Decode(&setCmdReq)
 
-	if !jwtauth.Authorized(setCmdReq.Name)(w, r) {
-		jwtErr := apiErrors.NewApiError(http.StatusUnauthorized, apiErrors.ErrInvalidJWTToken.Error(), "error: invalid access token")
-		apiErrors.APIErrorResponse(w, jwtErr)
-		return
-	}
 	numUpdated, err := controllers.AddCmd(setCmdReq)
 	if err != nil || numUpdated == 0 {
 		log.Printf("error returned while trying to add a new cmd: %v", err)
@@ -34,6 +28,8 @@ func SetCmd(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	res := models.SetCmdRes{
 		CmdsSet: numUpdated,
+		Cmd:     setCmdReq.Cmd,
+		URL:     setCmdReq.URL,
 	}
 	json.NewEncoder(w).Encode(res)
 	return
