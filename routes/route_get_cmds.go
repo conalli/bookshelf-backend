@@ -5,26 +5,25 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/conalli/bookshelf-backend/auth/jwtauth"
 	"github.com/conalli/bookshelf-backend/controllers"
-	"github.com/conalli/bookshelf-backend/models"
-	"github.com/conalli/bookshelf-backend/utils/apiErrors"
-	"github.com/conalli/bookshelf-backend/utils/auth/jwtauth"
+	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/gorilla/mux"
 )
 
 // GetCmds is the handler for the getcmds endpoint. Checks credentials + JWT and if
 // authorized returns all users cmds.
 func GetCmds(w http.ResponseWriter, r *http.Request) {
-	log.Println("GetCmds endpoint hit")
-	var getCmdsReq models.GetCmdsReq
-	json.NewDecoder(r.Body).Decode(&getCmdsReq)
+	vars := mux.Vars(r)
+	user := vars["user"]
 
-	if !jwtauth.Authorized(getCmdsReq.Name)(w, r) {
+	if !jwtauth.Authorized(user)(w, r) {
 		jwtErr := apiErrors.NewApiError(http.StatusUnauthorized, apiErrors.ErrInvalidJWTToken.Error(), "error: invalid access token")
 		apiErrors.APIErrorResponse(w, jwtErr)
 		return
 	}
 
-	cmds, err := controllers.GetAllCmds(getCmdsReq)
+	cmds, err := controllers.GetAllCmds(user)
 	if err != nil {
 		log.Printf("error returned while trying to get cmds: %v", err)
 		apiErrors.APIErrorResponse(w, err)

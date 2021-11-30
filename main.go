@@ -21,7 +21,7 @@ func main() {
 	router.HandleFunc("/signup", routes.SignUp).Methods("POST")
 	router.HandleFunc("/login", routes.LogIn).Methods("POST")
 	router.HandleFunc("/setcmd", routes.SetCmd).Methods("PUT")
-	router.HandleFunc("/getcmds", routes.GetCmds).Methods("GET")
+	router.HandleFunc("/getcmds/{user}", routes.GetCmds).Methods("GET")
 	router.HandleFunc("/search/{apiKey}/{cmd}", routes.Search).Methods("GET")
 
 	http.Handle("/", router)
