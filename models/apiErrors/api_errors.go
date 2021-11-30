@@ -78,6 +78,22 @@ func NewInternalServerError() ApiError {
 	}
 }
 
+func NewJWTTokenError(details string) ApiError {
+	return ApiError{
+		ErrStatus:  http.StatusInternalServerError,
+		ErrValue:   ErrInvalidJWTToken.Error(),
+		ErrDetails: details,
+	}
+}
+
+func NewJWTClaimsError(details string) ApiError {
+	return ApiError{
+		ErrStatus:  http.StatusInternalServerError,
+		ErrValue:   ErrInvalidJWTClaims.Error(),
+		ErrDetails: details,
+	}
+}
+
 func ParseGetUserError(value string, err error) ApiError {
 	if err == mongo.ErrNoDocuments {
 		return NewBadRequestError("error: could not find user with value " + value)
