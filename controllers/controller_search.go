@@ -5,7 +5,7 @@ import (
 
 	"github.com/conalli/bookshelf-backend/db"
 	"github.com/conalli/bookshelf-backend/models"
-	"github.com/conalli/bookshelf-backend/utils/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/apiErrors"
 )
 
 // GetURL takes in an apiKey and cmd and returns either a correctly formatted url from the db,

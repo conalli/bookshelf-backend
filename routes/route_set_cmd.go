@@ -5,10 +5,10 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/conalli/bookshelf-backend/auth/jwtauth"
 	"github.com/conalli/bookshelf-backend/controllers"
 	"github.com/conalli/bookshelf-backend/models"
-	"github.com/conalli/bookshelf-backend/utils/apiErrors"
-	"github.com/conalli/bookshelf-backend/utils/auth/jwtauth"
+	"github.com/conalli/bookshelf-backend/models/apiErrors"
 )
 
 // SetCmd is the handler for the setcmd endpoint. Checks credentials + JWT and if

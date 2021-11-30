@@ -3,10 +3,10 @@ package controllers
 import (
 	"net/http"
 
+	"github.com/conalli/bookshelf-backend/auth/password"
 	"github.com/conalli/bookshelf-backend/db"
 	"github.com/conalli/bookshelf-backend/models"
-	"github.com/conalli/bookshelf-backend/utils/apiErrors"
-	"github.com/conalli/bookshelf-backend/utils/auth/password"
+	"github.com/conalli/bookshelf-backend/models/apiErrors"
 )
 
 func CheckCredentials(requestData models.Credentials) (string, apiErrors.ApiErr) {

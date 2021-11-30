@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/conalli/bookshelf-backend/auth/jwtauth"
 	"github.com/conalli/bookshelf-backend/controllers"
 	"github.com/conalli/bookshelf-backend/models"
-	"github.com/conalli/bookshelf-backend/utils/apiErrors"
-	"github.com/conalli/bookshelf-backend/utils/auth/jwtauth"
+	"github.com/conalli/bookshelf-backend/models/apiErrors"
 )
 
 // LogIn is the handler for the login endpoint. Checks credentials and if
