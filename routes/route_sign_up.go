@@ -43,9 +43,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &cookie)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	res := struct {
-		Status string `json:"status"`
-	}{
+	res := models.SuccessRes{
 		Status: "success",
 	}
 	json.NewEncoder(w).Encode(res)
