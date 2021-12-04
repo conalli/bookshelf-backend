@@ -22,6 +22,11 @@ type UserData struct {
 	Bookmarks map[string]string `json:"bookmarks" bson:"bookmarks"`
 }
 
+// SuccessRes represents a general success message to return to the user.
+type SuccessRes struct {
+	Status string `json:"status"`
+}
+
 // GetUserByKey finds and returns user data based on a key-value pair.
 func GetUserByKey(ctx context.Context, collection *mongo.Collection, reqKey, reqValue string) (UserData, error) {
 	var result UserData
@@ -29,9 +34,8 @@ func GetUserByKey(ctx context.Context, collection *mongo.Collection, reqKey, req
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return result, mongo.ErrNoDocuments
-		} else {
-			return result, err
 		}
+		return result, err
 	}
 	return result, nil
 }
