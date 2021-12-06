@@ -9,8 +9,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// MongoClient uses a context to create a new client connection based on the MONGO_URI env var.
-func MongoClient(ctx context.Context) mongo.Client {
+// Client represents a mongo db client.
+type Client struct {
+	DB *mongo.Client
+}
+
+// NewMongoClient uses a context to create a new client connection based on the MONGO_URI env var.
+func NewMongoClient(ctx context.Context) *Client {
 	mongoURI := os.Getenv("MONGO_URI")
 	client, err := mongo.NewClient(options.Client().ApplyURI(mongoURI))
 	if err != nil {
@@ -20,12 +25,14 @@ func MongoClient(ctx context.Context) mongo.Client {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return *client
+	return &Client{
+		DB: client,
+	}
 }
 
 // MongoCollection uses the DB_NAME env var, and returns a collection based on the collectionName and client.
-func MongoCollection(client mongo.Client, collectionName string) mongo.Collection {
+func (c *Client) MongoCollection(collectionName string) mongo.Collection {
 	db := os.Getenv("DB_NAME")
-	collection := client.Database(db).Collection(collectionName)
+	collection := c.DB.Database(db).Collection(collectionName)
 	return *collection
 }
