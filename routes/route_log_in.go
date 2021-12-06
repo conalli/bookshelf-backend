@@ -19,7 +19,7 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 	var logInReq models.Credentials
 	json.NewDecoder(r.Body).Decode(&logInReq)
 
-	name, apiKey, err := controllers.CheckCredentials(logInReq)
+	name, apiKey, err := controllers.CheckCredentials(r.Context(), logInReq)
 	if err != nil {
 		log.Printf("error returned while trying to get check credentials: %v", err)
 		apiErrors.APIErrorResponse(w, err)

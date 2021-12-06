@@ -17,7 +17,7 @@ func DelCmd(w http.ResponseWriter, r *http.Request) {
 	var delCmdReq models.DelCmdReq
 	json.NewDecoder(r.Body).Decode(&delCmdReq)
 
-	result, err := controllers.DelCmd(delCmdReq)
+	result, err := controllers.DelCmd(r.Context(), delCmdReq)
 	if err != nil {
 		log.Printf("error returned while trying to remove a cmd: %v", err)
 		apiErrors.APIErrorResponse(w, err)

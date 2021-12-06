@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"context"
+
 	"github.com/conalli/bookshelf-backend/auth/password"
 	"github.com/conalli/bookshelf-backend/db"
 	"github.com/conalli/bookshelf-backend/models"
@@ -10,8 +12,8 @@ import (
 
 // DelCmd attempts to either rempve a cmd from the user, returning the number
 // of updated cmds.
-func DelCmd(requestData models.DelCmdReq) (int, apiErrors.ApiErr) {
-	ctx, cancelFunc := db.MongoContext()
+func DelCmd(reqCtx context.Context, requestData models.DelCmdReq) (int, apiErrors.ApiErr) {
+	ctx, cancelFunc := db.ReqContext(reqCtx)
 	client := db.MongoClient(ctx)
 	defer cancelFunc()
 	defer client.Disconnect(ctx)

@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"context"
+
 	"github.com/conalli/bookshelf-backend/auth/password"
 	"github.com/conalli/bookshelf-backend/db"
 	"github.com/conalli/bookshelf-backend/models"
@@ -10,8 +12,8 @@ import (
 
 // AddCmd attempts to either add or update a cmd for the user, returning the number
 // of updated cmds.
-func AddCmd(requestData models.SetCmdReq) (int, apiErrors.ApiErr) {
-	ctx, cancelFunc := db.MongoContext()
+func AddCmd(reqCtx context.Context, requestData models.SetCmdReq) (int, apiErrors.ApiErr) {
+	ctx, cancelFunc := db.ReqContext(reqCtx)
 	client := db.MongoClient(ctx)
 	defer cancelFunc()
 	defer client.Disconnect(ctx)

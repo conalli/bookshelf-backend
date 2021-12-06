@@ -16,7 +16,7 @@ func GetCmds(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	user := vars["user"]
 
-	cmds, err := controllers.GetAllCmds(user)
+	cmds, err := controllers.GetAllCmds(r.Context(), user)
 	if err != nil {
 		log.Printf("error returned while trying to get cmds: %v", err)
 		apiErrors.APIErrorResponse(w, err)

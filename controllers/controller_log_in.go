@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/auth/password"
@@ -10,8 +11,8 @@ import (
 )
 
 // CheckCredentials takes in request data, checks the db and returns the username and apikey is successful.
-func CheckCredentials(requestData models.Credentials) (string, string, apiErrors.ApiErr) {
-	ctx, cancelFunc := db.MongoContext()
+func CheckCredentials(reqCtx context.Context, requestData models.Credentials) (string, string, apiErrors.ApiErr) {
+	ctx, cancelFunc := db.ReqContext(reqCtx)
 	client := db.MongoClient(ctx)
 	defer cancelFunc()
 	defer client.Disconnect(ctx)

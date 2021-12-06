@@ -17,7 +17,7 @@ func SetCmd(w http.ResponseWriter, r *http.Request) {
 	var setCmdReq models.SetCmdReq
 	json.NewDecoder(r.Body).Decode(&setCmdReq)
 
-	numUpdated, err := controllers.AddCmd(setCmdReq)
+	numUpdated, err := controllers.AddCmd(r.Context(), setCmdReq)
 	if err != nil || numUpdated == 0 {
 		log.Printf("error returned while trying to add a new cmd: %v", err)
 		apiErrors.APIErrorResponse(w, err)
