@@ -18,9 +18,9 @@ func GetURL(reqCtx context.Context, apiKey, cmd string) (string, apiErrors.ApiEr
 	cache := db.NewRedisClient()
 	url, err := cache.GetSearchData(ctx, apiKey, cmd)
 	if err != nil {
-		client := db.MongoClient(ctx)
-		defer client.Disconnect(ctx)
-		collection := db.MongoCollection(client, "users")
+		client := db.NewMongoClient(ctx)
+		defer client.DB.Disconnect(ctx)
+		collection := client.MongoCollection("users")
 
 		var user models.UserData
 		user, err = models.GetUserByKey(ctx, &collection, "apiKey", apiKey)

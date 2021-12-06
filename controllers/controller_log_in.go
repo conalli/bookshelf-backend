@@ -13,11 +13,11 @@ import (
 // CheckCredentials takes in request data, checks the db and returns the username and apikey is successful.
 func CheckCredentials(reqCtx context.Context, requestData models.Credentials) (string, string, apiErrors.ApiErr) {
 	ctx, cancelFunc := db.ReqContext(reqCtx)
-	client := db.MongoClient(ctx)
+	client := db.NewMongoClient(ctx)
 	defer cancelFunc()
-	defer client.Disconnect(ctx)
+	defer client.DB.Disconnect(ctx)
 
-	collection := db.MongoCollection(client, "users")
+	collection := client.MongoCollection("users")
 	user, err := models.GetUserByKey(ctx, &collection, "name", requestData.Name)
 	if err != nil || !password.CheckHashedPassword(user.Password, requestData.Password) {
 		return "", "", apiErrors.NewApiError(http.StatusUnauthorized, apiErrors.ErrWrongCredentials.Error(), "error: name or password incorrect")

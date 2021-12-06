@@ -14,11 +14,11 @@ import (
 // of updated cmds.
 func DelCmd(reqCtx context.Context, requestData models.DelCmdReq) (int, apiErrors.ApiErr) {
 	ctx, cancelFunc := db.ReqContext(reqCtx)
-	client := db.MongoClient(ctx)
+	client := db.NewMongoClient(ctx)
 	defer cancelFunc()
-	defer client.Disconnect(ctx)
+	defer client.DB.Disconnect(ctx)
 
-	collection := db.MongoCollection(client, "users")
+	collection := client.MongoCollection("users")
 	user, err := models.GetUserByKey(ctx, &collection, "name", requestData.Name)
 	if err != nil {
 		return 0, apiErrors.ParseGetUserError(requestData.Name, err)

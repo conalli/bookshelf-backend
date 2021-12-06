@@ -16,11 +16,11 @@ import (
 // is created based upon the request data.
 func CreateNewUser(reqCtx context.Context, requestData models.Credentials) (*mongo.InsertOneResult, apiErrors.ApiErr) {
 	ctx, cancelFunc := db.ReqContext(reqCtx)
-	client := db.MongoClient(ctx)
+	client := db.NewMongoClient(ctx)
 	defer cancelFunc()
-	defer client.Disconnect(ctx)
+	defer client.DB.Disconnect(ctx)
 
-	collection := db.MongoCollection(client, "users")
+	collection := client.MongoCollection("users")
 	userExists := models.UserFieldAlreadyExists(ctx, &collection, "name", requestData.Name)
 
 	if !userExists {
