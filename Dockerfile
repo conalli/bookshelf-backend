@@ -2,7 +2,8 @@ FROM golang:1.17-alpine as build
 
 WORKDIR /go/src/github.com/bookshelf-backend
 
-COPY go.* .
+COPY go.mod .
+COPY go.sum .
 
 RUN go mod download
 
