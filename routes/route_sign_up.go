@@ -37,6 +37,8 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		Value:    token,
 		Expires:  time.Now().Add(15 * time.Minute),
 		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
 	}
 	log.Println("successfully returned token as cookie")
 	http.SetCookie(w, &cookie)
