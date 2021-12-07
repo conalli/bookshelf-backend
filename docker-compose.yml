@@ -4,7 +4,8 @@ services:
   app:
     container_name: bookshelf_backend
     build:
-      context: .
+      context: ./
+      dockerfile: ./docker/Dockerfile.dev
     env_file: .env
     ports: 
      - 8080:8080
