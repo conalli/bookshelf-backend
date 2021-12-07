@@ -9,6 +9,7 @@ services:
     ports: 
      - 8080:8080
     environment:
-      REDIS_URI: redis
+      LOCAL: "true"
+      REDIS_HOST: redis
   redis:
     image: redis:alpine

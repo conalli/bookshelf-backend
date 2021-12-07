@@ -18,11 +18,21 @@ type Cache struct {
 
 // NewRedisClient uses default values to return a redis caching client.
 func NewRedisClient() *Cache {
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:6379", os.Getenv("REDIS_URI")),
-		Password: "",
-		DB:       0,
-	})
+	var options *redis.Options
+	if os.Getenv("LOCAL") == "true" {
+		options = &redis.Options{
+			Addr:     fmt.Sprintf("%s:6379", os.Getenv("REDIS_HOST")),
+			Password: "",
+			DB:       0,
+		}
+	} else {
+		opts, err := redis.ParseURL(os.Getenv("REDIS_URL"))
+		if err != nil {
+			log.Printf("error: could not parse redis url -- %+v", err)
+		}
+		options = opts
+	}
+	rdb := redis.NewClient(options)
 	return &Cache{
 		rdb,
 	}
