@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -30,7 +31,7 @@ func main() {
 
 	port := os.Getenv("PORT")
 	log.Println("Server up and running on port" + port)
-	log.Fatal(http.ListenAndServe(port, middleware.CORSMiddleware(router)))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), middleware.CORSMiddleware(router)))
 }
 
 func loadEnv() {
