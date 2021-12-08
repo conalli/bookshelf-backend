@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	loadEnv("development")
+	loadEnv("production")
 	router := mux.NewRouter()
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
