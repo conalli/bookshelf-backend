@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	loadEnv()
+	loadEnv("development")
 	router := mux.NewRouter()
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +34,10 @@ func main() {
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), middleware.CORSMiddleware(router)))
 }
 
-func loadEnv() {
+func loadEnv(env string) {
+	if env == "production" {
+		return
+	}
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Could not load .env file")
