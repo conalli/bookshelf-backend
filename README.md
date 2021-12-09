@@ -1,4 +1,4 @@
-# Welcome to Bookshelf - Backend 📖
+# Bookshelf - Backend 📖
 
 ![bookshelf-logo-github](https://user-images.githubusercontent.com/76471929/145391946-8870d37b-fab8-4fd4-8a68-000d33d02d15.png)
 
