@@ -18,9 +18,10 @@ This example uses Google Chrome, however setup is similar across most browsers.
  - Under URL, copy and paste your unique URL.
 
 ## Get started developing 🖥️
-This is the repository for the backend. If you would like to work on the frontend, check out the [frontend repository](https://github.com/conalli/bookshelf-client-web) 📘
+This is the repository for the backend. If you would like to work on the frontend, check out the [frontend repository](https://github.com/conalli/bookshelf-client-web) 📘.
 
-The backend is written entirely in Go, using Redis and MongoDB (with MongoDB Atlas). To get started
+The backend is written entirely in Go, using Redis and MongoDB (with MongoDB Atlas). 
+To get started
  - Clone this repository.
  - To build the project and run the server, in the terminal run:
  ``` 
