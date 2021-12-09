@@ -1,6 +1,6 @@
 # Welcome to Bookshelf - Backend
 
-![bookshelf-logo](https://user-images.githubusercontent.com/76471929/145390127-0d5b45a3-368a-45ca-ba9b-fc4eef03ca23.png)
+![bookshelf-logo-github](https://user-images.githubusercontent.com/76471929/145391946-8870d37b-fab8-4fd4-8a68-000d33d02d15.png)
 
  ## About Bookshelf
  
