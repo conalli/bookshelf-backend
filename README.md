@@ -12,7 +12,20 @@ This example uses Google Chrome, however setup is similar across most browsers.
 1. First, find the settings page.
 2. Next, locate the Search engine tab on the left hand side.
 3. Click Manage search engines.
-4 In the Other search engines section, click Add.
+4. In the Other search engines section, click Add.
  - Undersearch engine, choose a name; e.g. Bookshelf.
  - Under Keyword, choose a keyword to invoke Bookshelf; e.g. bk, shelf, etc.
  - Under URL, copy and paste your unique URL.
+
+## Get started developing 🖥️
+The backend is written entirely in Go, using Redis and MongoDB (with MongoDB Atlas). To get started
+ - Clone this repository.
+ - To build the project and run the server, in the terminal run:
+ ``` 
+ docker-compose build
+ docker-compose up -d
+ ```
+  - When you are done, run:
+ ```
+ docker-compose down
+ ```
