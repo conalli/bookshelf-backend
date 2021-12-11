@@ -15,7 +15,7 @@ import (
 // CreateNewUser checks whether a username alreadys exists in the db. If not, a new user
 // is created based upon the request data.
 func CreateNewUser(reqCtx context.Context, requestData models.Credentials) (*mongo.InsertOneResult, apiErrors.ApiErr) {
-	ctx, cancelFunc := db.ReqContext(reqCtx)
+	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
 	client := db.NewMongoClient(ctx)
 	defer cancelFunc()
 	defer client.DB.Disconnect(ctx)

@@ -12,7 +12,7 @@ import (
 
 // CheckCredentials takes in request data, checks the db and returns the username and apikey is successful.
 func CheckCredentials(reqCtx context.Context, requestData models.Credentials) (string, string, apiErrors.ApiErr) {
-	ctx, cancelFunc := db.ReqContext(reqCtx)
+	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
 	client := db.NewMongoClient(ctx)
 	defer cancelFunc()
 	defer client.DB.Disconnect(ctx)

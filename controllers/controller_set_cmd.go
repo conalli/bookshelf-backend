@@ -13,7 +13,7 @@ import (
 // AddCmd attempts to either add or update a cmd for the user, returning the number
 // of updated cmds.
 func AddCmd(reqCtx context.Context, requestData models.SetCmdReq) (int, apiErrors.ApiErr) {
-	ctx, cancelFunc := db.ReqContext(reqCtx)
+	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
 	client := db.NewMongoClient(ctx)
 	defer cancelFunc()
 	defer client.DB.Disconnect(ctx)

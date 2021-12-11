@@ -13,7 +13,7 @@ import (
 // DelCmd attempts to either rempve a cmd from the user, returning the number
 // of updated cmds.
 func DelCmd(reqCtx context.Context, requestData models.DelCmdReq) (int, apiErrors.ApiErr) {
-	ctx, cancelFunc := db.ReqContext(reqCtx)
+	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
 	client := db.NewMongoClient(ctx)
 	defer cancelFunc()
 	defer client.DB.Disconnect(ctx)
