@@ -23,6 +23,12 @@ func DelCmd(w http.ResponseWriter, r *http.Request) {
 		apiErrors.APIErrorResponse(w, err)
 		return
 	}
+	if result == 0 {
+		log.Printf("could not remove cmd... maybe %s doesn't exists?", delCmdReq.Cmd)
+		err := apiErrors.NewBadRequestError("error: could not remove cmd")
+		apiErrors.APIErrorResponse(w, err)
+		return
+	}
 	log.Printf("successfully updates cmds: %s, removed %d", delCmdReq.Cmd, result)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

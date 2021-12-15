@@ -12,9 +12,8 @@ import (
 
 // DelCmdReq represents the expected fields needed for the delcmd request to be completed.
 type DelCmdReq struct {
-	Name     string `json:"name" bson:"name"`
-	Password string `json:"password" bson:"password"`
-	Cmd      string `json:"cmd" bson:"cmd"`
+	ID  string `json:"id" bson:"_id"`
+	Cmd string `json:"cmd" bson:"cmd"`
 }
 
 // DelCmdRes represents the fields returned by the delcmd endpoint.
@@ -24,11 +23,14 @@ type DelCmdRes struct {
 }
 
 // RemoveCmdFromUser takes a given username along with the cmd and removes the cmd from their bookmarks.
-func RemoveCmdFromUser(ctx context.Context, collection *mongo.Collection, username, cmd string) (*mongo.UpdateResult, error) {
+func RemoveCmdFromUser(ctx context.Context, collection *mongo.Collection, userID, cmd string) (*mongo.UpdateResult, error) {
 	opts := options.Update().SetUpsert(true)
-	filter := bson.D{primitive.E{Key: "name", Value: username}}
+	filter, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, err
+	}
 	update := bson.D{primitive.E{Key: "$unset", Value: bson.D{primitive.E{Key: fmt.Sprintf("bookmarks.%s", cmd), Value: ""}}}}
-	result, err := collection.UpdateOne(ctx, filter, update, opts)
+	result, err := collection.UpdateByID(ctx, filter, update, opts)
 	if err != nil {
 		return nil, err
 	}
