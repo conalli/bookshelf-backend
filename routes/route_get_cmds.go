@@ -14,7 +14,7 @@ import (
 // authorized returns all users cmds.
 func GetCmds(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	user := vars["user"]
+	user := vars["apiKey"]
 
 	cmds, err := controllers.GetAllCmds(r.Context(), user)
 	if err != nil {

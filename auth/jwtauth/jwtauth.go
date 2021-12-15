@@ -1,7 +1,6 @@
 package jwtauth
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -47,7 +46,7 @@ func NewToken(name string) (string, apiErrors.ApiErr) {
 func Authorized(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		name := vars["user"]
+		name := vars["apiKey"]
 		cookies := r.Cookies()
 		if len(cookies) < 1 {
 			log.Println("error: no cookies in request")
@@ -78,7 +77,6 @@ func Authorized(next http.HandlerFunc) http.HandlerFunc {
 			apiErrors.APIErrorResponse(w, apiErrors.NewJWTTokenError("error: token not valid"))
 			return
 		}
-		fmt.Printf("%+v\n", tkn)
 		next(w, r)
 	}
 }

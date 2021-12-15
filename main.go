@@ -22,9 +22,9 @@ func main() {
 	}).Methods("GET")
 	router.HandleFunc("/signup", routes.SignUp).Methods("POST")
 	router.HandleFunc("/login", routes.LogIn).Methods("POST")
-	router.HandleFunc("/getcmds/{user}", jwtauth.Authorized(routes.GetCmds)).Methods("GET")
-	router.HandleFunc("/setcmd/{user}", jwtauth.Authorized(routes.SetCmd)).Methods("PUT")
-	router.HandleFunc("/delcmd/{user}", jwtauth.Authorized(routes.DelCmd)).Methods("PUT")
+	router.HandleFunc("/getcmds/{apiKey}", jwtauth.Authorized(routes.GetCmds)).Methods("GET")
+	router.HandleFunc("/setcmd/{apiKey}", jwtauth.Authorized(routes.SetCmd)).Methods("PUT")
+	router.HandleFunc("/delcmd/{apiKey}", jwtauth.Authorized(routes.DelCmd)).Methods("PUT")
 	router.HandleFunc("/search/{apiKey}/{cmd}", routes.Search).Methods("GET")
 
 	http.Handle("/", router)
