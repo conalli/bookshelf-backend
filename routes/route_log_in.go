@@ -26,7 +26,7 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var token string
-	token, err = jwtauth.NewToken(user.Name)
+	token, err = jwtauth.NewToken(user.APIKey)
 	if err != nil {
 		log.Printf("error returned while trying to create a new token: %v", err)
 		apiErrors.APIErrorResponse(w, err)
