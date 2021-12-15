@@ -28,6 +28,23 @@ type SuccessRes struct {
 	Status string `json:"status"`
 }
 
+// GetUserByID finds and returns user data based on a the users _id.
+func GetUserByID(ctx context.Context, collection *mongo.Collection, userID string) (UserData, error) {
+	id, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return UserData{}, err
+	}
+	var result UserData
+	err = collection.FindOne(ctx, bson.M{"_id": id}).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return result, mongo.ErrNoDocuments
+		}
+		return result, err
+	}
+	return result, nil
+}
+
 // GetUserByKey finds and returns user data based on a key-value pair.
 func GetUserByKey(ctx context.Context, collection *mongo.Collection, reqKey, reqValue string) (UserData, error) {
 	var result UserData
