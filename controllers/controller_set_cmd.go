@@ -3,11 +3,9 @@ package controllers
 import (
 	"context"
 
-	"github.com/conalli/bookshelf-backend/auth/password"
 	"github.com/conalli/bookshelf-backend/db"
 	"github.com/conalli/bookshelf-backend/models"
 	"github.com/conalli/bookshelf-backend/models/apiErrors"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // AddCmd attempts to either add or update a cmd for the user, returning the number
@@ -19,16 +17,8 @@ func AddCmd(reqCtx context.Context, requestData models.SetCmdReq) (int, apiError
 	defer client.DB.Disconnect(ctx)
 
 	collection := client.MongoCollection("users")
-	user, err := models.GetUserByKey(ctx, &collection, "name", requestData.Name)
-	if err != nil {
-		return 0, apiErrors.ParseGetUserError(requestData.Name, err)
-	}
-	correctPassword := password.CheckHashedPassword(user.Password, requestData.Password)
-	if !correctPassword {
-		return 0, apiErrors.NewWrongCredentialsError("error: password incorrect")
-	}
-	var result *mongo.UpdateResult
-	result, err = models.AddCmdToUser(ctx, &collection, user.Name, requestData.Cmd, requestData.URL)
+
+	result, err := models.AddCmdToUser(ctx, &collection, requestData.ID, requestData.Cmd, requestData.URL)
 	if err != nil {
 		return 0, apiErrors.NewInternalServerError()
 	}

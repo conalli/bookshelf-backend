@@ -18,8 +18,14 @@ func SetCmd(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&setCmdReq)
 
 	numUpdated, err := controllers.AddCmd(r.Context(), setCmdReq)
-	if err != nil || numUpdated == 0 {
+	if err != nil {
 		log.Printf("error returned while trying to add a new cmd: %v", err)
+		apiErrors.APIErrorResponse(w, err)
+		return
+	}
+	if numUpdated == 0 {
+		log.Printf("could not update cmds... maybe %s:%s already exists?", setCmdReq.Cmd, setCmdReq.URL)
+		err := apiErrors.NewBadRequestError("error: could not update cmds")
 		apiErrors.APIErrorResponse(w, err)
 		return
 	}
