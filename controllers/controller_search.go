@@ -22,9 +22,8 @@ func GetURL(reqCtx context.Context, apiKey, cmd string) (string, apiErrors.ApiEr
 		defer client.DB.Disconnect(ctx)
 		collection := client.MongoCollection("users")
 
-		var user models.UserData
-		user, err = models.GetUserByKey(ctx, &collection, "apiKey", apiKey)
-		var defaultSearch = fmt.Sprintf("http://www.google.com/search?q=%s", cmd)
+		user, err := models.GetUserByKey(ctx, &collection, "apiKey", apiKey)
+		defaultSearch := fmt.Sprintf("http://www.google.com/search?q=%s", cmd)
 		if err != nil {
 			return defaultSearch, apiErrors.ParseGetUserError(apiKey, err)
 		}

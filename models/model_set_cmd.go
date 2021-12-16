@@ -32,8 +32,7 @@ func AddCmdToUser(ctx context.Context, collection *mongo.Collection, userID, key
 		return nil, err
 	}
 	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: fmt.Sprintf("bookmarks.%s", key), Value: value}}}}
-	var result *mongo.UpdateResult
-	result, err = collection.UpdateByID(ctx, filter, update, opts)
+	result, err := collection.UpdateByID(ctx, filter, update, opts)
 	if err != nil {
 		return nil, err
 	}
