@@ -28,7 +28,7 @@ func GetURL(reqCtx context.Context, apiKey, cmd string) (string, apiErrors.ApiEr
 			return defaultSearch, apiErrors.ParseGetUserError(apiKey, err)
 		}
 
-		cache.SetSearchData(ctx, apiKey, user.Bookmarks)
+		cache.SetCacheCmds(ctx, apiKey, user.Bookmarks)
 
 		url, found := user.Bookmarks[cmd]
 		if !found {
