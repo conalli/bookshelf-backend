@@ -28,8 +28,8 @@ func CreateNewUser(reqCtx context.Context, requestData models.Credentials) (*mon
 		for models.UserFieldAlreadyExists(ctx, &collection, "apiKey", apiKey) {
 			apiKey = models.GenerateAPIKey()
 		}
-		hashedPassword, hashErr := password.HashPassword(requestData.Password)
-		if hashErr != nil {
+		hashedPassword, err := password.HashPassword(requestData.Password)
+		if err != nil {
 			log.Println("error hashing password")
 			return nil, apiErrors.NewInternalServerError()
 		}
