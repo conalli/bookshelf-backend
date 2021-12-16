@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"log"
 
 	"github.com/conalli/bookshelf-backend/db"
 	"github.com/conalli/bookshelf-backend/models"
@@ -10,7 +11,7 @@ import (
 
 // AddCmd attempts to either add or update a cmd for the user, returning the number
 // of updated cmds.
-func AddCmd(reqCtx context.Context, requestData models.SetCmdReq) (int, apiErrors.ApiErr) {
+func AddCmd(reqCtx context.Context, requestData models.SetCmdReq, apiKey string) (int, apiErrors.ApiErr) {
 	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
 	client := db.NewMongoClient(ctx)
 	defer cancelFunc()
@@ -27,6 +28,17 @@ func AddCmd(reqCtx context.Context, requestData models.SetCmdReq) (int, apiError
 		numUpdated = int(result.UpsertedCount)
 	} else {
 		numUpdated = int(result.ModifiedCount)
+	}
+	if numUpdated >= 1 {
+		cache := db.NewRedisClient()
+		cmds, err := cache.GetCachedCmds(ctx, apiKey)
+		if err != nil {
+			log.Println("could not get cached cmds after adding new cmd")
+		} else {
+			cmds[requestData.Cmd] = requestData.URL
+			cache.SetCacheCmds(ctx, apiKey, cmds)
+			log.Println("successfully updated cache with new cmd")
+		}
 	}
 	return numUpdated, nil
 }

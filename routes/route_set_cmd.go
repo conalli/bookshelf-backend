@@ -8,16 +8,19 @@ import (
 	"github.com/conalli/bookshelf-backend/controllers"
 	"github.com/conalli/bookshelf-backend/models"
 	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/gorilla/mux"
 )
 
 // SetCmd is the handler for the setcmd endpoint. Checks credentials + JWT and if
 // authorized sets new cmd.
 func SetCmd(w http.ResponseWriter, r *http.Request) {
 	log.Println("SetCmd endpoint hit")
+	vars := mux.Vars(r)
+	user := vars["apiKey"]
 	var setCmdReq models.SetCmdReq
 	json.NewDecoder(r.Body).Decode(&setCmdReq)
 
-	numUpdated, err := controllers.AddCmd(r.Context(), setCmdReq)
+	numUpdated, err := controllers.AddCmd(r.Context(), setCmdReq, user)
 	if err != nil {
 		log.Printf("error returned while trying to add a new cmd: %v", err)
 		apiErrors.APIErrorResponse(w, err)
