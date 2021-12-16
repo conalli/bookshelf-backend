@@ -2,33 +2,24 @@ package controllers
 
 import (
 	"context"
+	"log"
 
-	"github.com/conalli/bookshelf-backend/auth/password"
 	"github.com/conalli/bookshelf-backend/db"
 	"github.com/conalli/bookshelf-backend/models"
 	"github.com/conalli/bookshelf-backend/models/apiErrors"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // AddCmd attempts to either add or update a cmd for the user, returning the number
 // of updated cmds.
-func AddCmd(reqCtx context.Context, requestData models.SetCmdReq) (int, apiErrors.ApiErr) {
-	ctx, cancelFunc := db.ReqContext(reqCtx)
+func AddCmd(reqCtx context.Context, requestData models.SetCmdReq, apiKey string) (int, apiErrors.ApiErr) {
+	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
 	client := db.NewMongoClient(ctx)
 	defer cancelFunc()
 	defer client.DB.Disconnect(ctx)
 
 	collection := client.MongoCollection("users")
-	user, err := models.GetUserByKey(ctx, &collection, "name", requestData.Name)
-	if err != nil {
-		return 0, apiErrors.ParseGetUserError(requestData.Name, err)
-	}
-	correctPassword := password.CheckHashedPassword(user.Password, requestData.Password)
-	if !correctPassword {
-		return 0, apiErrors.NewWrongCredentialsError("error: password incorrect")
-	}
-	var result *mongo.UpdateResult
-	result, err = models.AddCmdToUser(ctx, &collection, user.Name, requestData.Cmd, requestData.URL)
+
+	result, err := models.AddCmdToUser(ctx, &collection, requestData.ID, requestData.Cmd, requestData.URL)
 	if err != nil {
 		return 0, apiErrors.NewInternalServerError()
 	}
@@ -37,6 +28,17 @@ func AddCmd(reqCtx context.Context, requestData models.SetCmdReq) (int, apiError
 		numUpdated = int(result.UpsertedCount)
 	} else {
 		numUpdated = int(result.ModifiedCount)
+	}
+	if numUpdated >= 1 {
+		cache := db.NewRedisClient()
+		cmds, err := cache.GetCachedCmds(ctx, apiKey)
+		if err != nil {
+			log.Println("could not get cached cmds after adding new cmd")
+		} else {
+			cmds[requestData.Cmd] = requestData.URL
+			cache.SetCacheCmds(ctx, apiKey, cmds)
+			log.Printf("successfully updated cache with new cmd %s:%s\n", requestData.Cmd, requestData.URL)
+		}
 	}
 	return numUpdated, nil
 }

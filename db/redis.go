@@ -38,20 +38,31 @@ func NewRedisClient() *Cache {
 	}
 }
 
-// GetSearchData attempts to get a cached cmd from redis, returning the cmd or an error.
-func (c *Cache) GetSearchData(ctx context.Context, apiKey, cmd string) (string, error) {
+// GetCachedCmds attempts to get all of the cached cmd from redis, returning the cmds or an error.
+func (c *Cache) GetCachedCmds(ctx context.Context, apiKey string) (map[string]string, error) {
 	result, err := c.rdb.Get(ctx, apiKey).Result()
 	if err != nil {
 		if err == redis.Nil {
-			log.Println("could not retrieve data from cache")
+			log.Printf("could not retrieve cmds from cache for user: %s\n", apiKey)
 		}
-		log.Println("error attempting to retrieve data from cache")
-		return "", err
+		log.Println("error attempting to retrieve cmds from cache")
+		return nil, err
 	}
 	allCmds := make(map[string]string)
 	err = json.Unmarshal([]byte(result), &allCmds)
 	if err != nil {
 		log.Println("could not unmarshal cmds from cache")
+		return nil, err
+	}
+	log.Println("successfully retrieved all cmds from cache")
+	return allCmds, nil
+}
+
+// GetSearchData attempts to get a cached cmd from redis, returning the cmd or an error.
+func (c *Cache) GetSearchData(ctx context.Context, apiKey, cmd string) (string, error) {
+	allCmds, err := c.GetCachedCmds(ctx, apiKey)
+	if err != nil {
+		log.Println("error attempting to get all cmds from cache for search data")
 		return "", err
 	}
 	url, ok := allCmds[cmd]
@@ -62,8 +73,8 @@ func (c *Cache) GetSearchData(ctx context.Context, apiKey, cmd string) (string, 
 	return url, nil
 }
 
-// SetSearchData adds cmds to the cache if a user attempts accesses the search endpoint.
-func (c *Cache) SetSearchData(ctx context.Context, apiKey string, cmds map[string]string) {
+// SetCacheCmds adds cmds to the cache if a user attempts accesses the search endpoint.
+func (c *Cache) SetCacheCmds(ctx context.Context, apiKey string, cmds map[string]string) {
 	data, err := json.Marshal(cmds)
 	if err != nil {
 		log.Printf("error attempting to marshal cmds for redis: %+v\n", err)

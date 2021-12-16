@@ -12,7 +12,7 @@ import (
 // GetURL takes in an apiKey and cmd and returns either a correctly formatted url from the db,
 // or a google search url for the cmd based on whether the cmd could be found or not.
 func GetURL(reqCtx context.Context, apiKey, cmd string) (string, apiErrors.ApiErr) {
-	ctx, cancelFunc := db.ReqContext(reqCtx)
+	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
 	defer cancelFunc()
 
 	cache := db.NewRedisClient()
@@ -22,14 +22,13 @@ func GetURL(reqCtx context.Context, apiKey, cmd string) (string, apiErrors.ApiEr
 		defer client.DB.Disconnect(ctx)
 		collection := client.MongoCollection("users")
 
-		var user models.UserData
-		user, err = models.GetUserByKey(ctx, &collection, "apiKey", apiKey)
-		var defaultSearch = fmt.Sprintf("http://www.google.com/search?q=%s", cmd)
+		user, err := models.GetUserByKey(ctx, &collection, "apiKey", apiKey)
+		defaultSearch := fmt.Sprintf("http://www.google.com/search?q=%s", cmd)
 		if err != nil {
 			return defaultSearch, apiErrors.ParseGetUserError(apiKey, err)
 		}
 
-		cache.SetSearchData(ctx, apiKey, user.Bookmarks)
+		cache.SetCacheCmds(ctx, apiKey, user.Bookmarks)
 
 		url, found := user.Bookmarks[cmd]
 		if !found {
