@@ -43,7 +43,7 @@ func (c *Cache) GetCachedCmds(ctx context.Context, apiKey string) (map[string]st
 	result, err := c.rdb.Get(ctx, apiKey).Result()
 	if err != nil {
 		if err == redis.Nil {
-			log.Println("could not retrieve cmds from cache")
+			log.Printf("could not retrieve cmds from cache for user: %s\n", apiKey)
 		}
 		log.Println("error attempting to retrieve cmds from cache")
 		return nil, err

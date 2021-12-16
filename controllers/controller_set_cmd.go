@@ -37,7 +37,7 @@ func AddCmd(reqCtx context.Context, requestData models.SetCmdReq, apiKey string)
 		} else {
 			cmds[requestData.Cmd] = requestData.URL
 			cache.SetCacheCmds(ctx, apiKey, cmds)
-			log.Println("successfully updated cache with new cmd")
+			log.Printf("successfully updated cache with new cmd %s:%s\n", requestData.Cmd, requestData.URL)
 		}
 	}
 	return numUpdated, nil
