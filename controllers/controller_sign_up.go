@@ -33,7 +33,7 @@ func CreateNewUser(reqCtx context.Context, requestData models.Credentials) (*mon
 			log.Println("error hashing password")
 			return nil, apiErrors.NewInternalServerError()
 		}
-		newUserData := models.UserData{
+		newUserData := models.NewUserData{
 			Name:      requestData.Name,
 			Password:  hashedPassword,
 			APIKey:    apiKey,
