@@ -25,6 +25,7 @@ func main() {
 	router.HandleFunc("/getcmds/{apiKey}", jwtauth.Authorized(routes.GetCmds)).Methods("GET")
 	router.HandleFunc("/setcmd/{apiKey}", jwtauth.Authorized(routes.SetCmd)).Methods("PUT")
 	router.HandleFunc("/delcmd/{apiKey}", jwtauth.Authorized(routes.DelCmd)).Methods("PUT")
+	router.HandleFunc("/delacc/{apiKey}", jwtauth.Authorized(routes.DelAcc)).Methods("DELETE")
 	router.HandleFunc("/search/{apiKey}/{cmd}", routes.Search).Methods("GET")
 
 	http.Handle("/", router)
