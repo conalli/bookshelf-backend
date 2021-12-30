@@ -18,15 +18,15 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	log.Println("SignUp endpoint hit")
 	var newUserReq models.Credentials
 	json.NewDecoder(r.Body).Decode(&newUserReq)
-	createUser, err := controllers.CreateNewUser(r.Context(), newUserReq)
+	userID, apiKey, err := controllers.CreateNewUser(r.Context(), newUserReq)
 	if err != nil {
 		log.Printf("error returned while trying to create a new user: %v", err)
 		apiErrors.APIErrorResponse(w, err)
 		return
 	}
-	log.Printf("successfully created a new user: %v", createUser.InsertedID)
+	log.Printf("successfully created a new user: %s", userID)
 	var token string
-	token, err = jwtauth.NewToken(newUserReq.Name)
+	token, err = jwtauth.NewToken(apiKey)
 	if err != nil {
 		log.Printf("error returned while trying to create a new token: %v", err)
 		apiErrors.APIErrorResponse(w, err)
@@ -44,8 +44,9 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &cookie)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	res := models.SuccessRes{
-		Status: "success",
+	res := models.SignUpRes{
+		ID:     userID,
+		APIKey: apiKey,
 	}
 	json.NewEncoder(w).Encode(res)
 	return
