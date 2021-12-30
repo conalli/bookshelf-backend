@@ -74,15 +74,28 @@ func (c *Cache) GetSearchData(ctx context.Context, apiKey, cmd string) (string, 
 }
 
 // SetCacheCmds adds cmds to the cache if a user attempts accesses the search endpoint.
-func (c *Cache) SetCacheCmds(ctx context.Context, apiKey string, cmds map[string]string) {
+func (c *Cache) SetCacheCmds(ctx context.Context, apiKey string, cmds map[string]string) bool {
 	data, err := json.Marshal(cmds)
 	if err != nil {
 		log.Printf("error attempting to marshal cmds for redis: %+v\n", err)
+		return false
 	}
 	err = c.rdb.Set(ctx, apiKey, data, time.Minute).Err()
 	if err != nil {
 		log.Printf("error attempting to set search cmds in redis: %+v\n", err)
-	} else {
-		log.Println("successfully set data in redis")
+		return false
 	}
+	log.Println("successfully set data in redis")
+	return true
+}
+
+// DelCachedCmds removes cmds to the cache if a user deletes their account.
+func (c *Cache) DelCachedCmds(ctx context.Context, apiKey string) bool {
+	err := c.rdb.Del(ctx, apiKey, apiKey).Err()
+	if err != nil {
+		log.Printf("error attempting to del search cmds in redis: %+v\n", err)
+		return false
+	}
+	log.Printf("successfully deleted data in redis for user with key: %s\n", apiKey)
+	return true
 }
