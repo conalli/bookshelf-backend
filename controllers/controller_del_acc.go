@@ -33,5 +33,11 @@ func DelAcc(reqCtx context.Context, requestData models.DelAccReq, apiKey string)
 		log.Printf("error deleting user: error -> %v", err)
 		return 0, apiErrors.NewInternalServerError()
 	}
+	if result.DeletedCount == 0 {
+		log.Printf("could not remove user... maybe user:%s doesn't exists?", requestData.Name)
+		return 0, apiErrors.NewBadRequestError("error: could not remove cmd")
+	}
+	cache := db.NewRedisClient()
+	cache.DelCachedCmds(ctx, apiKey)
 	return int(result.DeletedCount), nil
 }

@@ -27,11 +27,10 @@ func DelCmd(reqCtx context.Context, requestData models.DelCmdReq, apiKey string)
 		cmds, err := cache.GetCachedCmds(ctx, apiKey)
 		if err != nil {
 			log.Println("could not get cached cmds after removing cmd")
-		} else {
-			delete(cmds, requestData.Cmd)
-			cache.SetCacheCmds(ctx, apiKey, cmds)
-			log.Printf("successfully removed cmd: %s from cache \n", requestData.Cmd)
 		}
+		delete(cmds, requestData.Cmd)
+		cache.SetCacheCmds(ctx, apiKey, cmds)
+		log.Printf("successfully removed cmd: %s from cache \n", requestData.Cmd)
 	}
 	return int(result.ModifiedCount), nil
 }
