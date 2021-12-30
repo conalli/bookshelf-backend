@@ -25,12 +25,6 @@ func DelAcc(w http.ResponseWriter, r *http.Request) {
 		apiErrors.APIErrorResponse(w, err)
 		return
 	}
-	if numDeleted == 0 {
-		log.Printf("could not remove user... maybe user:%s doesn't exists?", delAccReq.Name)
-		err := apiErrors.NewBadRequestError("error: could not remove cmd")
-		apiErrors.APIErrorResponse(w, err)
-		return
-	}
 	log.Printf("successfully deleted %d users: %v", numDeleted, delAccReq)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
