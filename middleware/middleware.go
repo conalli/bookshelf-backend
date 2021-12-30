@@ -11,7 +11,7 @@ import (
 // CORSMiddleware sets CORS options for the main router.
 func CORSMiddleware(r *mux.Router) http.Handler {
 	allowedURL := []string{os.Getenv("ALLOWED_URL_BASE"), os.Getenv("ALLOWED_URL_DASHBOARD")}
-	methods := handlers.AllowedMethods([]string{"GET", "POST", "PUT"})
+	methods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE"})
 	origins := handlers.AllowedOrigins(allowedURL)
 	credentials := handlers.AllowCredentials()
 	headers := handlers.AllowedHeaders([]string{"Content-Type"})
