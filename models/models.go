@@ -23,11 +23,6 @@ type UserData struct {
 	Bookmarks map[string]string `json:"bookmarks" bson:"bookmarks"`
 }
 
-// SuccessRes represents a general success message to return to the user.
-type SuccessRes struct {
-	Status string `json:"status"`
-}
-
 // GetUserByID finds and returns user data based on a the users _id.
 func GetUserByID(ctx context.Context, collection *mongo.Collection, userID string) (UserData, error) {
 	id, err := primitive.ObjectIDFromHex(userID)
