@@ -28,6 +28,8 @@ func main() {
 	router.HandleFunc("/delacc/{apiKey}", jwtauth.Authorized(routes.DelAcc)).Methods("DELETE")
 	router.HandleFunc("/search/{apiKey}/{cmd}", routes.Search).Methods("GET")
 
+	router.HandleFunc("/team/{apiKey}", jwtauth.Authorized(routes.NewTeam)).Methods("POST")
+
 	http.Handle("/", router)
 
 	port := os.Getenv("PORT")
