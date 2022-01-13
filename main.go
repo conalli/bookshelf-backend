@@ -29,6 +29,7 @@ func main() {
 	router.HandleFunc("/search/{apiKey}/{cmd}", routes.Search).Methods("GET")
 
 	router.HandleFunc("/team/{apiKey}", jwtauth.Authorized(routes.NewTeam)).Methods("POST")
+	router.HandleFunc("/team/addmember/{apiKey}", jwtauth.Authorized(routes.AddMember)).Methods("PUT")
 
 	http.Handle("/", router)
 
