@@ -38,12 +38,18 @@ type NewTeamReq struct {
 	ShortName string `json:"shortName"`
 }
 
-//AddMemberReq represents the clients request to add a new user.
+// AddMemberReq represents the clients request to add a new user.
 type AddMemberReq struct {
 	ID         string `json:"id"`
 	TeamID     string `json:"teamId"`
 	MemberName string `json:"memberName"`
 	Role       string `json:"role"`
+}
+
+// AddMemberRes represents the result of a request to the addmember endpoint.
+type AddMemberRes struct {
+	TeamID          string `json:"teamId"`
+	NumMembersAdded int    `json:"numMembersAdded"`
 }
 
 // AddMemberToTeam attempts to add a new member to a team.
@@ -61,6 +67,7 @@ func AddMemberToTeam(ctx context.Context, collection *mongo.Collection, teamID, 
 		return false, err
 	}
 	if result.ModifiedCount == 0 && result.UpsertedCount == 0 {
+		log.Printf("error attempting to add user: %s to team: %s, team was not modified\n", memberID, teamID)
 		return false, nil
 	}
 	return true, nil
