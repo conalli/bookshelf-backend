@@ -22,26 +22,21 @@ func AddMember(w http.ResponseWriter, r *http.Request) {
 		apiErrors.APIErrorResponse(w, err)
 		return
 	}
+	res := models.AddMemberRes{
+		TeamID:          newMemberReq.TeamID,
+		NumMembersAdded: 0,
+	}
 	if !ok {
 		log.Printf("failed to add member: %s\n", newMemberReq.MemberName)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		res := struct {
-			NumMembersAdded int `json:"numMembersAdded"`
-		}{
-			NumMembersAdded: 0,
-		}
 		json.NewEncoder(w).Encode(res)
 		return
 	}
 	log.Printf("successfully added a new member: %s\n", newMemberReq.MemberName)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	res := struct {
-		NumMembersAdded int `json:"numMembersAdded"`
-	}{
-		NumMembersAdded: 1,
-	}
+	res.NumMembersAdded = 1
 	json.NewEncoder(w).Encode(res)
 	return
 }
