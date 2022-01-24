@@ -29,8 +29,8 @@ func DelAcc(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	res := models.DelAccRes{
+		Name:       delAccReq.Name,
 		NumDeleted: numDeleted,
-		Username:   delAccReq.Name,
 	}
 	json.NewEncoder(w).Encode(res)
 	return

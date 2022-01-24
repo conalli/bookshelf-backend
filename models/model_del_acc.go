@@ -18,8 +18,8 @@ type DelAccReq struct {
 
 // DelAccRes represents the response from the DelAcc endpoint.
 type DelAccRes struct {
+	Name       string `json:"name"`
 	NumDeleted int    `json:"numDeleted"`
-	Username   string `json:"username"`
 }
 
 // DeleteUser takes a given userID and removes the user from the database.

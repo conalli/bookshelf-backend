@@ -23,15 +23,15 @@ func main() {
 	router.HandleFunc("/signup", routes.SignUp).Methods("POST")
 	router.HandleFunc("/login", routes.LogIn).Methods("POST")
 	router.HandleFunc("/getcmds/{apiKey}", jwtauth.Authorized(routes.GetCmds)).Methods("GET")
-	router.HandleFunc("/setcmd/{apiKey}", jwtauth.Authorized(routes.SetCmd)).Methods("PUT")
-	router.HandleFunc("/delcmd/{apiKey}", jwtauth.Authorized(routes.DelCmd)).Methods("PUT")
+	router.HandleFunc("/setcmd/{apiKey}", jwtauth.Authorized(routes.SetCmd)).Methods("PATCH")
+	router.HandleFunc("/delcmd/{apiKey}", jwtauth.Authorized(routes.DelCmd)).Methods("PATCH")
 	router.HandleFunc("/delacc/{apiKey}", jwtauth.Authorized(routes.DelAcc)).Methods("DELETE")
 	router.HandleFunc("/search/{apiKey}/{cmd}", routes.Search).Methods("GET")
 
 	http.Handle("/", router)
 
 	port := os.Getenv("PORT")
-	log.Println("Server up and running on port" + port)
+	log.Println("Server up and running on port: " + port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), middleware.CORSMiddleware(router)))
 }
 
