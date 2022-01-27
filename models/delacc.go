@@ -9,12 +9,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// DelAccRes represents the response from the DelAcc endpoint.
-type DelAccRes struct {
-	Name       string `json:"name"`
-	NumDeleted int    `json:"numDeleted"`
-}
-
 // DeleteUser takes a given userID and removes the user from the database.
 func DeleteUser(ctx context.Context, collection *mongo.Collection, userID string) (*mongo.DeleteResult, error) {
 	opts := options.Delete().SetCollation(&options.Collation{

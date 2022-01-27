@@ -35,7 +35,7 @@ func SetCmd(w http.ResponseWriter, r *http.Request) {
 	log.Printf("successfully set cmd: %s, url: %s", setCmdReq.Cmd, setCmdReq.URL)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	res := models.SetCmdRes{
+	res := models.SetCmdResponse{
 		CmdsSet: numUpdated,
 		Cmd:     setCmdReq.Cmd,
 		URL:     setCmdReq.URL,

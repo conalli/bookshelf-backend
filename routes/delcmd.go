@@ -35,7 +35,7 @@ func DelCmd(w http.ResponseWriter, r *http.Request) {
 	log.Printf("successfully updates cmds: %s, removed %d", delCmdReq.Cmd, result)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	res := models.DelCmdRes{
+	res := models.DelCmdResponse{
 		NumDeleted: result,
 		Cmd:        delCmdReq.Cmd,
 	}

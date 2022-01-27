@@ -10,20 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// NewUserData represents the document fields created when a user signs up.
-type NewUserData struct {
-	Name      string            `json:"name" bson:"name"`
-	Password  string            `json:"password" bson:"password"`
-	APIKey    string            `json:"apiKey" bson:"apiKey"`
-	Bookmarks map[string]string `json:"bookmarks" bson:"bookmarks"`
-}
-
-// SignUpRes represents the fields returned when a user signs up.
-type SignUpRes struct {
-	ID     string `json:"id"`
-	APIKey string `json:"apiKey"`
-}
-
 // UserFieldAlreadyExists attempts to find a user based on a given key-value pair, returning wether they
 // already exist in the db or not.
 func UserFieldAlreadyExists(ctx context.Context, collection *mongo.Collection, key, value string) bool {

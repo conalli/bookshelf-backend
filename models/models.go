@@ -8,6 +8,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// NewUserData represents the document fields created when a user signs up.
+type NewUserData struct {
+	Name      string            `json:"name" bson:"name"`
+	Password  string            `json:"password" bson:"password"`
+	APIKey    string            `json:"apiKey" bson:"apiKey"`
+	Bookmarks map[string]string `json:"bookmarks" bson:"bookmarks"`
+}
+
 // UserData represents the db fields associated with each user.
 type UserData struct {
 	ID        string            `json:"id" bson:"_id"`

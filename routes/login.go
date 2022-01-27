@@ -44,7 +44,7 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &cookie)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	res := models.LogInRes{
+	res := models.LogInResponse{
 		ID:     user.ID,
 		APIKey: user.APIKey,
 	}

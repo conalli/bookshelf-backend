@@ -28,7 +28,7 @@ func DelAcc(w http.ResponseWriter, r *http.Request) {
 	log.Printf("successfully deleted %d users: %v", numDeleted, delAccReq)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	res := models.DelAccRes{
+	res := models.DelAccResponse{
 		Name:       delAccReq.Name,
 		NumDeleted: numDeleted,
 	}

@@ -10,12 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// DelCmdRes represents the fields returned by the delcmd endpoint.
-type DelCmdRes struct {
-	NumDeleted int    `json:"numDeleted"`
-	Cmd        string `json:"cmd"`
-}
-
 // RemoveCmdFromUser takes a given username along with the cmd and removes the cmd from their bookmarks.
 func RemoveCmdFromUser(ctx context.Context, collection *mongo.Collection, userID, cmd string) (*mongo.UpdateResult, error) {
 	opts := options.Update().SetUpsert(true)
