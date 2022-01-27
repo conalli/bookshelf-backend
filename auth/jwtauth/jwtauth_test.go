@@ -13,10 +13,10 @@ var signingKey = []byte(os.Getenv("SIGNING_SECRET"))
 func TestNewToken(t *testing.T) {
 	tn := []string{
 		"Name 1",
-		"Name 2",
-		"Name 3",
-		"Name 4",
-		"Name 5",
+		"This is a test name",
+		"abd",
+		"12345",
+		"Name",
 	}
 
 	for _, n := range tn {
