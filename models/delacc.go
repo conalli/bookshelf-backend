@@ -9,13 +9,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// DelAccReq represents the request body for the DelAcc endpoint.
-type DelAccReq struct {
-	ID       string `json:"id" bson:"_id"`
-	Name     string `json:"name" bson:"name"`
-	Password string `json:"password" bson:"password"`
-}
-
 // DelAccRes represents the response from the DelAcc endpoint.
 type DelAccRes struct {
 	Name       string `json:"name"`

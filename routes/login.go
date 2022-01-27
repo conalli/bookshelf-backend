@@ -16,7 +16,7 @@ import (
 // correct returns JWT cookie for use with getcmds and setcmd.
 func LogIn(w http.ResponseWriter, r *http.Request) {
 	log.Println("LogIn endpoint hit")
-	var logInReq models.Credentials
+	var logInReq models.CredentialsRequest
 	json.NewDecoder(r.Body).Decode(&logInReq)
 
 	user, err := controllers.CheckCredentials(r.Context(), logInReq)

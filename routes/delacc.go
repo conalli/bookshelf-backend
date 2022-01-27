@@ -17,7 +17,7 @@ func DelAcc(w http.ResponseWriter, r *http.Request) {
 	log.Println("delacc endpoint hit")
 	vars := mux.Vars(r)
 	user := vars["apiKey"]
-	var delAccReq models.DelAccReq
+	var delAccReq models.DelAccRequest
 	json.NewDecoder(r.Body).Decode(&delAccReq)
 	numDeleted, err := controllers.DelAcc(r.Context(), delAccReq, user)
 	if err != nil {

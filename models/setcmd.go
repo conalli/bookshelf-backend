@@ -10,13 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// SetCmdReq represents the expected fields needed for the setcmd request to be completed.
-type SetCmdReq struct {
-	ID  string `json:"id" bson:"_id"`
-	Cmd string `json:"cmd" bson:"cmd"`
-	URL string `json:"url" bson:"url"`
-}
-
 // SetCmdRes represents the number of commands that have been updated by the setcmd request.
 type SetCmdRes struct {
 	CmdsSet int    `json:"cmdsSet"`

@@ -10,12 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// DelCmdReq represents the expected fields needed for the delcmd request to be completed.
-type DelCmdReq struct {
-	ID  string `json:"id" bson:"_id"`
-	Cmd string `json:"cmd" bson:"cmd"`
-}
-
 // DelCmdRes represents the fields returned by the delcmd endpoint.
 type DelCmdRes struct {
 	NumDeleted int    `json:"numDeleted"`

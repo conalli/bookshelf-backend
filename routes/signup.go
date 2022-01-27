@@ -16,7 +16,7 @@ import (
 // unique adds new user with given credentials.
 func SignUp(w http.ResponseWriter, r *http.Request) {
 	log.Println("SignUp endpoint hit")
-	var newUserReq models.Credentials
+	var newUserReq models.CredentialsRequest
 	json.NewDecoder(r.Body).Decode(&newUserReq)
 	userID, apiKey, err := controllers.CreateNewUser(r.Context(), newUserReq)
 	if err != nil {

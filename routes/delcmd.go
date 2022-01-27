@@ -17,7 +17,7 @@ func DelCmd(w http.ResponseWriter, r *http.Request) {
 	log.Println("DelCmd endpoint hit")
 	vars := mux.Vars(r)
 	user := vars["apiKey"]
-	var delCmdReq models.DelCmdReq
+	var delCmdReq models.DelCmdRequest
 	json.NewDecoder(r.Body).Decode(&delCmdReq)
 
 	result, err := controllers.DelCmd(r.Context(), delCmdReq, user)
