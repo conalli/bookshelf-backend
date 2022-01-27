@@ -30,28 +30,6 @@ type TeamData struct {
 	Bookmarks map[string]string `json:"bookmarks" bson:"bookmarks"`
 }
 
-// NewTeamReq reprents the clients new team request.
-type NewTeamReq struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Password  string `json:"password"`
-	ShortName string `json:"shortName"`
-}
-
-// AddMemberReq represents the clients request to add a new user.
-type AddMemberReq struct {
-	ID         string `json:"id"`
-	TeamID     string `json:"teamId"`
-	MemberName string `json:"memberName"`
-	Role       string `json:"role"`
-}
-
-// AddMemberRes represents the result of a request to the addmember endpoint.
-type AddMemberRes struct {
-	TeamID          string `json:"teamId"`
-	NumMembersAdded int    `json:"numMembersAdded"`
-}
-
 // AddMemberToTeam attempts to add a new member to a team.
 func AddMemberToTeam(ctx context.Context, collection *mongo.Collection, teamID, memberID, role string) (bool, error) {
 	opts := options.Update().SetUpsert(true)
