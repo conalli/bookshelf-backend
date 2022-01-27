@@ -33,8 +33,10 @@ func NewMongoClient(ctx context.Context) *Client {
 // MongoCollection uses the DB_NAME env var, and returns a collection based on the collectionName and client.
 func (c *Client) MongoCollection(collectionName string) mongo.Collection {
 	var db string
-	if os.Getenv("LOCAL") == "true" {
+	if os.Getenv("LOCAL") == "dev" {
 		db = os.Getenv("DEV_DB_NAME")
+	} else if os.Getenv("LOCAL") == "test" {
+		db = os.Getenv("TEST_DB_NAME")
 	} else {
 		db = os.Getenv("DB_NAME")
 	}
