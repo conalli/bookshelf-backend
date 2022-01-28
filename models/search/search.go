@@ -23,7 +23,7 @@ func GetURL(reqCtx context.Context, apiKey, cmd string) (string, errors.ApiErr) 
 		defer client.DB.Disconnect(ctx)
 		collection := client.MongoCollection("users")
 
-		currUser, err := user.GetUserByKey(ctx, &collection, "apiKey", apiKey)
+		currUser, err := user.GetByKey(ctx, &collection, "apiKey", apiKey)
 		defaultSearch := fmt.Sprintf("http://www.google.com/search?q=%s", cmd)
 		if err != nil {
 			return defaultSearch, errors.ParseGetUserError(apiKey, err)
