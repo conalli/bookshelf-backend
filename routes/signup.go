@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/conalli/bookshelf-backend/auth/jwtauth"
-	"github.com/conalli/bookshelf-backend/controllers"
 	"github.com/conalli/bookshelf-backend/models/errors"
 	"github.com/conalli/bookshelf-backend/models/requests"
 	"github.com/conalli/bookshelf-backend/models/responses"
+	"github.com/conalli/bookshelf-backend/models/user"
 )
 
 // SignUp is the handler for the signup endpoint. Checks db for username and if
@@ -19,7 +19,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	log.Println("SignUp endpoint hit")
 	var newUserReq requests.CredentialsRequest
 	json.NewDecoder(r.Body).Decode(&newUserReq)
-	userID, apiKey, err := controllers.CreateNewUser(r.Context(), newUserReq)
+	userID, apiKey, err := user.CreateNewUser(r.Context(), newUserReq)
 	if err != nil {
 		log.Printf("error returned while trying to create a new user: %v", err)
 		errors.APIErrorResponse(w, err)
