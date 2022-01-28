@@ -22,7 +22,7 @@ func Delete(reqCtx context.Context, requestData requests.DelUserRequest, apiKey 
 	defer client.DB.Disconnect(ctx)
 
 	collection := client.MongoCollection("users")
-	userData, err := GetUserByID(ctx, &collection, requestData.ID)
+	userData, err := GetByID(ctx, &collection, requestData.ID)
 	if err != nil {
 		log.Printf("error deleting user: couldn't find user -> %v", err)
 		return 0, errors.NewBadRequestError("could not find user to delete")

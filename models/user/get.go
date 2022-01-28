@@ -10,8 +10,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// GetUserByID finds and returns user data based on a the users _id.
-func GetUserByID(ctx context.Context, collection *mongo.Collection, userID string) (UserData, error) {
+// GetByID finds and returns user data based on a the users _id.
+func GetByID(ctx context.Context, collection *mongo.Collection, userID string) (UserData, error) {
 	id, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		return UserData{}, err
@@ -27,8 +27,8 @@ func GetUserByID(ctx context.Context, collection *mongo.Collection, userID strin
 	return result, nil
 }
 
-// GetUserByKey finds and returns user data based on a key-value pair.
-func GetUserByKey(ctx context.Context, collection *mongo.Collection, reqKey, reqValue string) (UserData, error) {
+// GetByKey finds and returns user data based on a key-value pair.
+func GetByKey(ctx context.Context, collection *mongo.Collection, reqKey, reqValue string) (UserData, error) {
 	var result UserData
 	err := collection.FindOne(ctx, bson.D{primitive.E{Key: reqKey, Value: reqValue}}).Decode(&result)
 	if err != nil {
@@ -52,7 +52,7 @@ func GetAllCmds(reqCtx context.Context, apiKey string) (map[string]string, error
 		defer client.DB.Disconnect(ctx)
 
 		collection := client.MongoCollection("users")
-		user, err := GetUserByKey(ctx, &collection, "apiKey", apiKey)
+		user, err := GetByKey(ctx, &collection, "apiKey", apiKey)
 		if err != nil {
 			return nil, errors.ParseGetUserError(apiKey, err)
 		}

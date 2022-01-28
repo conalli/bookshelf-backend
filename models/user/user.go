@@ -35,7 +35,7 @@ func CheckCredentials(reqCtx context.Context, requestData requests.CredentialsRe
 	defer client.DB.Disconnect(ctx)
 
 	collection := client.MongoCollection("users")
-	currUser, err := GetUserByKey(ctx, &collection, "name", requestData.Name)
+	currUser, err := GetByKey(ctx, &collection, "name", requestData.Name)
 	if err != nil || !password.CheckHashedPassword(currUser.Password, requestData.Password) {
 		return UserData{}, errors.NewApiError(http.StatusUnauthorized, errors.ErrWrongCredentials.Error(), "error: name or password incorrect")
 	}
