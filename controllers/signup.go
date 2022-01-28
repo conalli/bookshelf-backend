@@ -58,7 +58,7 @@ func CreateNewUser(reqCtx context.Context, requestData requests.CredentialsReque
 
 // CreateNewTeam checks whether a team name alreadys exists in the db. If not, a new team
 // is created based upon the request data.
-func CreateNewTeam(reqContext context.Context, requestData requests.NewTeamReq) (string, apiErrors.ApiErr) {
+func CreateNewTeam(reqContext context.Context, requestData requests.NewTeamRequest) (string, apiErrors.ApiErr) {
 	ctx, cancelFunc := db.ReqContextWithTimeout(reqContext)
 	client := db.NewMongoClient(ctx)
 	defer cancelFunc()

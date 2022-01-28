@@ -13,7 +13,7 @@ import (
 
 // AddMember checks whether a username alreadys exists in the db. If not, a new user
 // is created based upon the request data.
-func AddMember(reqCtx context.Context, requestData requests.AddMemberReq) (bool, apiErrors.ApiErr) {
+func AddMember(reqCtx context.Context, requestData requests.AddMemberRequest) (bool, apiErrors.ApiErr) {
 	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
 	client := db.NewMongoClient(ctx)
 	defer cancelFunc()

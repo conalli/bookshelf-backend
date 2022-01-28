@@ -14,7 +14,7 @@ import (
 // unique adds new team with given data.
 func NewTeam(w http.ResponseWriter, r *http.Request) {
 	log.Println("NewTeam endpoint hit")
-	var newTeamReq requests.NewTeamReq
+	var newTeamReq requests.NewTeamRequest
 	json.NewDecoder(r.Body).Decode(&newTeamReq)
 	teamID, err := controllers.CreateNewTeam(r.Context(), newTeamReq)
 	if err != nil {

@@ -15,7 +15,7 @@ import (
 // unique adds new team with given data.
 func AddMember(w http.ResponseWriter, r *http.Request) {
 	log.Println("AddMember endpoint hit")
-	var newMemberReq requests.AddMemberReq
+	var newMemberReq requests.AddMemberRequest
 	json.NewDecoder(r.Body).Decode(&newMemberReq)
 	ok, err := controllers.AddMember(r.Context(), newMemberReq)
 	if err != nil {
@@ -23,7 +23,7 @@ func AddMember(w http.ResponseWriter, r *http.Request) {
 		apiErrors.APIErrorResponse(w, err)
 		return
 	}
-	res := responses.AddMemberRes{
+	res := responses.AddMemberResponse{
 		TeamID:          newMemberReq.TeamID,
 		NumMembersAdded: 0,
 	}
