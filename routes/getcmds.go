@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/controllers"
-	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/errors"
 	"github.com/gorilla/mux"
 )
 
@@ -19,7 +19,7 @@ func GetCmds(w http.ResponseWriter, r *http.Request) {
 	cmds, err := controllers.GetAllCmds(r.Context(), user)
 	if err != nil {
 		log.Printf("error returned while trying to get cmds: %v", err)
-		apiErrors.APIErrorResponse(w, err)
+		errors.APIErrorResponse(w, err)
 		return
 	}
 	log.Printf("successfully retrieved cmds: %v", cmds)

@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/controllers"
-	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/errors"
 	"github.com/conalli/bookshelf-backend/models/requests"
 )
 
@@ -19,7 +19,7 @@ func NewTeam(w http.ResponseWriter, r *http.Request) {
 	teamID, err := controllers.CreateNewTeam(r.Context(), newTeamReq)
 	if err != nil {
 		log.Printf("error returned while trying to create a new user: %v", err)
-		apiErrors.APIErrorResponse(w, err)
+		errors.APIErrorResponse(w, err)
 		return
 	}
 	log.Printf("successfully created a new user: %s", teamID)

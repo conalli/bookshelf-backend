@@ -8,7 +8,7 @@ import (
 
 	"github.com/conalli/bookshelf-backend/auth/jwtauth"
 	"github.com/conalli/bookshelf-backend/controllers"
-	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/errors"
 	"github.com/conalli/bookshelf-backend/models/requests"
 	"github.com/conalli/bookshelf-backend/models/responses"
 )
@@ -22,7 +22,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	userID, apiKey, err := controllers.CreateNewUser(r.Context(), newUserReq)
 	if err != nil {
 		log.Printf("error returned while trying to create a new user: %v", err)
-		apiErrors.APIErrorResponse(w, err)
+		errors.APIErrorResponse(w, err)
 		return
 	}
 	log.Printf("successfully created a new user: %s", userID)
@@ -30,7 +30,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	token, err = jwtauth.NewToken(apiKey)
 	if err != nil {
 		log.Printf("error returned while trying to create a new token: %v", err)
-		apiErrors.APIErrorResponse(w, err)
+		errors.APIErrorResponse(w, err)
 		return
 	}
 	cookie := http.Cookie{

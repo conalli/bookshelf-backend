@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/controllers"
-	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/errors"
 	"github.com/conalli/bookshelf-backend/models/requests"
 	"github.com/conalli/bookshelf-backend/models/responses"
 	"github.com/gorilla/mux"
@@ -24,13 +24,13 @@ func SetCmd(w http.ResponseWriter, r *http.Request) {
 	numUpdated, err := controllers.AddCmd(r.Context(), setCmdReq, user)
 	if err != nil {
 		log.Printf("error returned while trying to add a new cmd: %v", err)
-		apiErrors.APIErrorResponse(w, err)
+		errors.APIErrorResponse(w, err)
 		return
 	}
 	if numUpdated == 0 {
 		log.Printf("could not update cmds... maybe %s:%s already exists?", setCmdReq.Cmd, setCmdReq.URL)
-		err := apiErrors.NewBadRequestError("error: could not update cmds")
-		apiErrors.APIErrorResponse(w, err)
+		err := errors.NewBadRequestError("error: could not update cmds")
+		errors.APIErrorResponse(w, err)
 		return
 	}
 	log.Printf("successfully set cmd: %s, url: %s", setCmdReq.Cmd, setCmdReq.URL)

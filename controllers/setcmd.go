@@ -5,14 +5,14 @@ import (
 	"log"
 
 	"github.com/conalli/bookshelf-backend/db"
-	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/errors"
 	"github.com/conalli/bookshelf-backend/models/requests"
 	"github.com/conalli/bookshelf-backend/models/user"
 )
 
 // AddCmd attempts to either add or update a cmd for the user, returning the number
 // of updated cmds.
-func AddCmd(reqCtx context.Context, requestData requests.AddCmdRequest, apiKey string) (int, apiErrors.ApiErr) {
+func AddCmd(reqCtx context.Context, requestData requests.AddCmdRequest, apiKey string) (int, errors.ApiErr) {
 	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
 	client := db.NewMongoClient(ctx)
 	defer cancelFunc()
@@ -22,7 +22,7 @@ func AddCmd(reqCtx context.Context, requestData requests.AddCmdRequest, apiKey s
 
 	result, err := user.AddCmdToUser(ctx, &collection, requestData.ID, requestData.Cmd, requestData.URL)
 	if err != nil {
-		return 0, apiErrors.NewInternalServerError()
+		return 0, errors.NewInternalServerError()
 	}
 	var numUpdated int
 	if int(result.UpsertedCount) >= int(result.ModifiedCount) {

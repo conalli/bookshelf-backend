@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/errors"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
 )
@@ -21,7 +21,7 @@ type CustomClaims struct {
 
 // NewToken creates a new token based on the CustomClaims and returns the token
 // as a string signed with the secret.
-func NewToken(name string) (string, apiErrors.ApiErr) {
+func NewToken(name string) (string, errors.ApiErr) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, CustomClaims{
 		Name: name,
 		StandardClaims: jwt.StandardClaims{
@@ -36,7 +36,7 @@ func NewToken(name string) (string, apiErrors.ApiErr) {
 	tkn, err := token.SignedString(signingKey)
 	if err != nil {
 		log.Printf("error when trying to sign token %+v", token)
-		return tkn, apiErrors.NewInternalServerError()
+		return tkn, errors.NewInternalServerError()
 	}
 	return tkn, nil
 }
@@ -50,31 +50,31 @@ func Authorized(next http.HandlerFunc) http.HandlerFunc {
 		cookies := r.Cookies()
 		if len(cookies) < 1 {
 			log.Println("error: no cookies in request")
-			apiErrors.APIErrorResponse(w, apiErrors.NewBadRequestError("error: no cookies in request"))
+			errors.APIErrorResponse(w, errors.NewBadRequestError("error: no cookies in request"))
 			return
 		}
 		bookshelfCookie := filterCookies("bookshelfjwt", cookies)
 		if bookshelfCookie == nil {
 			log.Println("error: did not find bookshelf cookie")
-			apiErrors.APIErrorResponse(w, apiErrors.NewBadRequestError("error: did not find bookshelf cookie"))
+			errors.APIErrorResponse(w, errors.NewBadRequestError("error: did not find bookshelf cookie"))
 			return
 		}
 		token, err := jwt.ParseWithClaims(bookshelfCookie.Value, &CustomClaims{}, func(t *jwt.Token) (interface{}, error) { return signingKey, nil })
 		if err != nil {
 			log.Println("error: failed to parse with claims")
 			log.Printf("error: %+v\n", err)
-			apiErrors.APIErrorResponse(w, apiErrors.NewJWTClaimsError("error: failed to parse with claims"))
+			errors.APIErrorResponse(w, errors.NewJWTClaimsError("error: failed to parse with claims"))
 			return
 		}
 		tkn, ok := token.Claims.(*CustomClaims)
 		if !ok {
 			log.Println("error: failed to convert token to CustomClaims")
-			apiErrors.APIErrorResponse(w, apiErrors.NewJWTClaimsError("error: failed to convert token to CustomClaims"))
+			errors.APIErrorResponse(w, errors.NewJWTClaimsError("error: failed to convert token to CustomClaims"))
 			return
 		}
 		if err = tkn.Valid(); err != nil || tkn.Name != name || tkn.Subject != name {
 			log.Println("error: token not valid")
-			apiErrors.APIErrorResponse(w, apiErrors.NewJWTTokenError("error: token not valid"))
+			errors.APIErrorResponse(w, errors.NewJWTTokenError("error: token not valid"))
 			return
 		}
 		next(w, r)

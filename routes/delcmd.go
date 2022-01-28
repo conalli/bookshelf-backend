@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/controllers"
-	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/errors"
 	"github.com/conalli/bookshelf-backend/models/requests"
 	"github.com/conalli/bookshelf-backend/models/responses"
 	"github.com/gorilla/mux"
@@ -24,13 +24,13 @@ func DelCmd(w http.ResponseWriter, r *http.Request) {
 	result, err := controllers.DelCmd(r.Context(), delCmdReq, user)
 	if err != nil {
 		log.Printf("error returned while trying to remove a cmd: %v", err)
-		apiErrors.APIErrorResponse(w, err)
+		errors.APIErrorResponse(w, err)
 		return
 	}
 	if result == 0 {
 		log.Printf("could not remove cmd... maybe %s doesn't exists?", delCmdReq.Cmd)
-		err := apiErrors.NewBadRequestError("error: could not remove cmd")
-		apiErrors.APIErrorResponse(w, err)
+		err := errors.NewBadRequestError("error: could not remove cmd")
+		errors.APIErrorResponse(w, err)
 		return
 	}
 	log.Printf("successfully updates cmds: %s, removed %d", delCmdReq.Cmd, result)

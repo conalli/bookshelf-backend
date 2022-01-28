@@ -8,7 +8,7 @@ import (
 
 	"github.com/conalli/bookshelf-backend/auth/jwtauth"
 	"github.com/conalli/bookshelf-backend/controllers"
-	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/errors"
 	"github.com/conalli/bookshelf-backend/models/requests"
 	"github.com/conalli/bookshelf-backend/models/responses"
 )
@@ -23,13 +23,13 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 	user, err := controllers.CheckCredentials(r.Context(), logInReq)
 	if err != nil {
 		log.Printf("error returned while trying to get check credentials: %v", err)
-		apiErrors.APIErrorResponse(w, err)
+		errors.APIErrorResponse(w, err)
 		return
 	}
 	token, err := jwtauth.NewToken(user.APIKey)
 	if err != nil {
 		log.Printf("error returned while trying to create a new token: %v", err)
-		apiErrors.APIErrorResponse(w, err)
+		errors.APIErrorResponse(w, err)
 		return
 	}
 	// Use Secure during production.

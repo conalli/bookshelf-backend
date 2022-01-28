@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/controllers"
-	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/errors"
 	"github.com/conalli/bookshelf-backend/models/requests"
 	"github.com/conalli/bookshelf-backend/models/responses"
 	"github.com/gorilla/mux"
@@ -23,7 +23,7 @@ func DelUser(w http.ResponseWriter, r *http.Request) {
 	numDeleted, err := controllers.DelUser(r.Context(), delAccReq, user)
 	if err != nil {
 		log.Printf("error returned while trying to delete user: %v", err)
-		apiErrors.APIErrorResponse(w, err)
+		errors.APIErrorResponse(w, err)
 		return
 	}
 	log.Printf("successfully deleted %d users: %v", numDeleted, delAccReq)
