@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/conalli/bookshelf-backend/auth/jwtauth"
-	"github.com/conalli/bookshelf-backend/controllers"
 	"github.com/conalli/bookshelf-backend/models/errors"
 	"github.com/conalli/bookshelf-backend/models/requests"
 	"github.com/conalli/bookshelf-backend/models/responses"
+	"github.com/conalli/bookshelf-backend/models/user"
 )
 
 // LogIn is the handler for the login endpoint. Checks credentials and if
@@ -20,13 +20,13 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 	var logInReq requests.CredentialsRequest
 	json.NewDecoder(r.Body).Decode(&logInReq)
 
-	user, err := controllers.CheckCredentials(r.Context(), logInReq)
+	currUser, err := user.CheckCredentials(r.Context(), logInReq)
 	if err != nil {
 		log.Printf("error returned while trying to get check credentials: %v", err)
 		errors.APIErrorResponse(w, err)
 		return
 	}
-	token, err := jwtauth.NewToken(user.APIKey)
+	token, err := jwtauth.NewToken(currUser.APIKey)
 	if err != nil {
 		log.Printf("error returned while trying to create a new token: %v", err)
 		errors.APIErrorResponse(w, err)
@@ -46,8 +46,8 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	res := responses.LogInResponse{
-		ID:     user.ID,
-		APIKey: user.APIKey,
+		ID:     currUser.ID,
+		APIKey: currUser.APIKey,
 	}
 	json.NewEncoder(w).Encode(res)
 	return
