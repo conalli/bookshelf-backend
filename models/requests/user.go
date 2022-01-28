@@ -6,8 +6,8 @@ type CredentialsRequest struct {
 	Password string `json:"password"`
 }
 
-// SetCmdRequest represents the expected fields needed for the setcmd request to be completed.
-type SetCmdRequest struct {
+// AddCmdRequest represents the expected fields needed for the setcmd request to be completed.
+type AddCmdRequest struct {
 	ID  string `json:"id" bson:"_id"`
 	Cmd string `json:"cmd" bson:"cmd"`
 	URL string `json:"url" bson:"url"`
@@ -19,8 +19,8 @@ type DelCmdRequest struct {
 	Cmd string `json:"cmd" bson:"cmd"`
 }
 
-// DelAccRequest represents the request body for the DelAcc endpoint.
-type DelAccRequest struct {
+// DelUserRequest represents the request body for the DelUser endpoint.
+type DelUserRequest struct {
 	ID       string `json:"id" bson:"_id"`
 	Name     string `json:"name" bson:"name"`
 	Password string `json:"password" bson:"password"`

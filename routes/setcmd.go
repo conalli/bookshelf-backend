@@ -18,7 +18,7 @@ func SetCmd(w http.ResponseWriter, r *http.Request) {
 	log.Println("SetCmd endpoint hit")
 	vars := mux.Vars(r)
 	user := vars["apiKey"]
-	var setCmdReq requests.SetCmdRequest
+	var setCmdReq requests.AddCmdRequest
 	json.NewDecoder(r.Body).Decode(&setCmdReq)
 
 	numUpdated, err := controllers.AddCmd(r.Context(), setCmdReq, user)
@@ -36,7 +36,7 @@ func SetCmd(w http.ResponseWriter, r *http.Request) {
 	log.Printf("successfully set cmd: %s, url: %s", setCmdReq.Cmd, setCmdReq.URL)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	res := responses.SetCmdResponse{
+	res := responses.AddCmdResponse{
 		CmdsSet: numUpdated,
 		Cmd:     setCmdReq.Cmd,
 		URL:     setCmdReq.URL,

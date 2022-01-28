@@ -11,8 +11,8 @@ import (
 	"github.com/conalli/bookshelf-backend/models/user"
 )
 
-// DelAcc attempts to delete a user from the db, returning the number of deleted users.
-func DelAcc(reqCtx context.Context, requestData requests.DelAccRequest, apiKey string) (int, apiErrors.ApiErr) {
+// DelUser attempts to delete a user from the db, returning the number of deleted users.
+func DelUser(reqCtx context.Context, requestData requests.DelUserRequest, apiKey string) (int, apiErrors.ApiErr) {
 	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
 	client := db.NewMongoClient(ctx)
 	defer cancelFunc()

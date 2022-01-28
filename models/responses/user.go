@@ -12,8 +12,8 @@ type LogInResponse struct {
 	APIKey string `json:"apiKey"`
 }
 
-// SetCmdResponse represents the number of commands that have been updated by the setcmd request.
-type SetCmdResponse struct {
+// AddCmdResponse represents the number of commands that have been updated by the setcmd request.
+type AddCmdResponse struct {
 	CmdsSet int    `json:"cmdsSet"`
 	Cmd     string `json:"cmd"`
 	URL     string `json:"url"`
@@ -25,8 +25,8 @@ type DelCmdResponse struct {
 	Cmd        string `json:"cmd"`
 }
 
-// DelAccResponse represents the response from the DelAcc endpoint.
-type DelAccResponse struct {
+// DelUserResponse represents the response from the DelUser endpoint.
+type DelUserResponse struct {
 	Name       string `json:"name"`
 	NumDeleted int    `json:"numDeleted"`
 }
