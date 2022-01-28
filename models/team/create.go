@@ -13,16 +13,16 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// CreateNewTeam checks whether a team name alreadys exists in the db. If not, a new team
+// New checks whether a team name alreadys exists in the db. If not, a new team
 // is created based upon the request data.
-func CreateNewTeam(reqContext context.Context, requestData requests.NewTeamRequest) (string, errors.ApiErr) {
+func New(reqContext context.Context, requestData requests.NewTeamRequest) (string, errors.ApiErr) {
 	ctx, cancelFunc := db.ReqContextWithTimeout(reqContext)
 	client := db.NewMongoClient(ctx)
 	defer cancelFunc()
 	defer client.DB.Disconnect(ctx)
 
 	collection := client.MongoCollection("teams")
-	teamExists := user.UserFieldAlreadyExists(ctx, &collection, "name", requestData.Name)
+	teamExists := user.DataAlreadyExists(ctx, &collection, "name", requestData.Name)
 	if teamExists {
 		log.Println("team already exists")
 		return "", errors.NewBadRequestError(fmt.Sprintf("error creating new user; user with name %v already exists", requestData.Name))

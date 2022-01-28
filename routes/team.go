@@ -16,7 +16,7 @@ func NewTeam(w http.ResponseWriter, r *http.Request) {
 	log.Println("NewTeam endpoint hit")
 	var newTeamReq requests.NewTeamRequest
 	json.NewDecoder(r.Body).Decode(&newTeamReq)
-	teamID, err := team.CreateNewTeam(r.Context(), newTeamReq)
+	teamID, err := team.New(r.Context(), newTeamReq)
 	if err != nil {
 		log.Printf("error returned while trying to create a new user: %v", err)
 		errors.APIErrorResponse(w, err)

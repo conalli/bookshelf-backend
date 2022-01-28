@@ -20,8 +20,8 @@ type NewTeamData struct {
 	Bookmarks map[string]string `json:"bookmarks" bson:"bookmarks"`
 }
 
-// TeamData represents the db fields associated with each team.
-type TeamData struct {
+// Team represents the db fields associated with each team.
+type Team struct {
 	ID        string            `json:"id" bson:"_id"`
 	Name      string            `json:"name" bson:"name"`
 	Password  string            `json:"password" bson:"password"`

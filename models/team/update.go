@@ -20,7 +20,7 @@ func AddMember(reqCtx context.Context, requestData requests.AddMemberRequest) (b
 
 	userCollection := client.MongoCollection("users")
 	teamCollection := client.MongoCollection("teams")
-	user, err := user.GetUserByKey(ctx, &userCollection, "name", requestData.MemberName)
+	user, err := user.GetByKey(ctx, &userCollection, "name", requestData.MemberName)
 	if err != nil {
 		return false, errors.NewBadRequestError("couldnt find user with name " + requestData.MemberName)
 	}
