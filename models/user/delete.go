@@ -1,4 +1,4 @@
-package controllers
+package user
 
 import (
 	"context"
@@ -8,18 +8,21 @@ import (
 	"github.com/conalli/bookshelf-backend/db"
 	"github.com/conalli/bookshelf-backend/models/errors"
 	"github.com/conalli/bookshelf-backend/models/requests"
-	"github.com/conalli/bookshelf-backend/models/user"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// DelUser attempts to delete a user from the db, returning the number of deleted users.
-func DelUser(reqCtx context.Context, requestData requests.DelUserRequest, apiKey string) (int, errors.ApiErr) {
+// Delete attempts to delete a user from the db, returning the number of deleted users.
+func Delete(reqCtx context.Context, requestData requests.DelUserRequest, apiKey string) (int, errors.ApiErr) {
 	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
 	client := db.NewMongoClient(ctx)
 	defer cancelFunc()
 	defer client.DB.Disconnect(ctx)
 
 	collection := client.MongoCollection("users")
-	userData, err := user.GetUserByID(ctx, &collection, requestData.ID)
+	userData, err := GetUserByID(ctx, &collection, requestData.ID)
 	if err != nil {
 		log.Printf("error deleting user: couldn't find user -> %v", err)
 		return 0, errors.NewBadRequestError("could not find user to delete")
@@ -29,7 +32,7 @@ func DelUser(reqCtx context.Context, requestData requests.DelUserRequest, apiKey
 		log.Printf("error deleting user: password incorrect -> %v", err)
 		return 0, errors.NewWrongCredentialsError("password incorrect")
 	}
-	result, err := user.DeleteUser(ctx, &collection, requestData.ID)
+	result, err := DeleteUserFromDB(ctx, &collection, requestData.ID)
 	if err != nil {
 		log.Printf("error deleting user: error -> %v", err)
 		return 0, errors.NewInternalServerError()
@@ -41,4 +44,23 @@ func DelUser(reqCtx context.Context, requestData requests.DelUserRequest, apiKey
 	cache := db.NewRedisClient()
 	cache.DelCachedCmds(ctx, apiKey)
 	return int(result.DeletedCount), nil
+}
+
+// DeleteUserFromDB takes a given userID and removes the user from the database.
+func DeleteUserFromDB(ctx context.Context, collection *mongo.Collection, userID string) (*mongo.DeleteResult, error) {
+	opts := options.Delete().SetCollation(&options.Collation{
+		Locale:    "en_US",
+		Strength:  1,
+		CaseLevel: false,
+	})
+	id, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, err
+	}
+	filter := bson.D{primitive.E{Key: "_id", Value: id}}
+	result, err := collection.DeleteOne(ctx, filter, opts)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
