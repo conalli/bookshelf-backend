@@ -16,22 +16,22 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// CreateNewUser checks whether a username alreadys exists in the db. If not, a new user
+// New checks whether a username alreadys exists in the db. If not, a new user
 // is created based upon the request data.
-func CreateNewUser(reqCtx context.Context, requestData requests.CredentialsRequest) (string, string, errors.ApiErr) {
+func New(reqCtx context.Context, requestData requests.CredentialsRequest) (string, string, errors.ApiErr) {
 	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
 	client := db.NewMongoClient(ctx)
 	defer cancelFunc()
 	defer client.DB.Disconnect(ctx)
 
 	collection := client.MongoCollection("users")
-	userExists := UserFieldAlreadyExists(ctx, &collection, "name", requestData.Name)
+	userExists := DataAlreadyExists(ctx, &collection, "name", requestData.Name)
 
 	if userExists {
 		return "", "", errors.NewBadRequestError(fmt.Sprintf("error creating new user; user with name %v already exists", requestData.Name))
 	}
 	apiKey := GenerateAPIKey()
-	for UserFieldAlreadyExists(ctx, &collection, "apiKey", apiKey) {
+	for DataAlreadyExists(ctx, &collection, "apiKey", apiKey) {
 		apiKey = GenerateAPIKey()
 	}
 	hashedPassword, err := password.HashPassword(requestData.Password)
@@ -58,9 +58,9 @@ func CreateNewUser(reqCtx context.Context, requestData requests.CredentialsReque
 	return oid.Hex(), apiKey, nil
 }
 
-// UserFieldAlreadyExists attempts to find a user based on a given key-value pair, returning wether they
+// DataAlreadyExists attempts to find a user based on a given key-value pair, returning wether they
 // already exist in the db or not.
-func UserFieldAlreadyExists(ctx context.Context, collection *mongo.Collection, key, value string) bool {
+func DataAlreadyExists(ctx context.Context, collection *mongo.Collection, key, value string) bool {
 	var result bson.M
 	err := collection.FindOne(ctx, bson.D{primitive.E{Key: key, Value: value}}).Decode(&result)
 	if err != nil {
@@ -72,6 +72,7 @@ func UserFieldAlreadyExists(ctx context.Context, collection *mongo.Collection, k
 }
 
 // GenerateAPIKey generates a random URL-safe string of random length for use as an API key.
+// TODO: Refactor method for generating keys.
 func GenerateAPIKey() string {
 	chars := strings.Split("QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm0123456789-", "")
 	rand.Shuffle(len(chars), func(a, b int) {

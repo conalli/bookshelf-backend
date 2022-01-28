@@ -19,7 +19,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	log.Println("SignUp endpoint hit")
 	var newUserReq requests.CredentialsRequest
 	json.NewDecoder(r.Body).Decode(&newUserReq)
-	userID, apiKey, err := user.CreateNewUser(r.Context(), newUserReq)
+	userID, apiKey, err := user.New(r.Context(), newUserReq)
 	if err != nil {
 		log.Printf("error returned while trying to create a new user: %v", err)
 		errors.APIErrorResponse(w, err)
