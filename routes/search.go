@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/conalli/bookshelf-backend/controllers"
+	"github.com/conalli/bookshelf-backend/models/search"
 	"github.com/gorilla/mux"
 )
 
@@ -15,7 +15,7 @@ func Search(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	apiKey := vars["apiKey"]
 	cmd := vars["cmd"]
-	url, err := controllers.GetURL(r.Context(), apiKey, cmd)
+	url, err := search.GetURL(r.Context(), apiKey, cmd)
 	if err != nil {
 		log.Printf("%d: %s", err.Status(), err.Error())
 	}
