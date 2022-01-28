@@ -14,48 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// CreateNewUser checks whether a username alreadys exists in the db. If not, a new user
-// is created based upon the request data.
-func CreateNewUser(reqCtx context.Context, requestData requests.CredentialsRequest) (string, string, errors.ApiErr) {
-	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
-	client := db.NewMongoClient(ctx)
-	defer cancelFunc()
-	defer client.DB.Disconnect(ctx)
-
-	collection := client.MongoCollection("users")
-	userExists := user.UserFieldAlreadyExists(ctx, &collection, "name", requestData.Name)
-
-	if userExists {
-		return "", "", errors.NewBadRequestError(fmt.Sprintf("error creating new user; user with name %v already exists", requestData.Name))
-	}
-	apiKey := user.GenerateAPIKey()
-	for user.UserFieldAlreadyExists(ctx, &collection, "apiKey", apiKey) {
-		apiKey = user.GenerateAPIKey()
-	}
-	hashedPassword, err := password.HashPassword(requestData.Password)
-	if err != nil {
-		log.Println("error hashing password")
-		return "", "", errors.NewInternalServerError()
-	}
-	newUserData := user.NewUserData{
-		Name:      requestData.Name,
-		Password:  hashedPassword,
-		APIKey:    apiKey,
-		Bookmarks: map[string]string{},
-	}
-	res, err := collection.InsertOne(ctx, newUserData)
-	if err != nil {
-		log.Printf("error creating new user with data: \n username: %v\n password: %v", requestData.Name, requestData.Password)
-		return "", "", errors.NewInternalServerError()
-	}
-	oid, ok := res.InsertedID.(primitive.ObjectID)
-	if !ok {
-		log.Println("error getting objectID from newly inserted user")
-		return "", "", errors.NewInternalServerError()
-	}
-	return oid.Hex(), apiKey, nil
-}
-
 // CreateNewTeam checks whether a team name alreadys exists in the db. If not, a new team
 // is created based upon the request data.
 func CreateNewTeam(reqContext context.Context, requestData requests.NewTeamRequest) (string, errors.ApiErr) {
