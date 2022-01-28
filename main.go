@@ -7,8 +7,8 @@ import (
 	"os"
 
 	"github.com/conalli/bookshelf-backend/auth/jwtauth"
+	"github.com/conalli/bookshelf-backend/controllers"
 	"github.com/conalli/bookshelf-backend/middleware"
-	"github.com/conalli/bookshelf-backend/routes"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 )
@@ -20,16 +20,16 @@ func main() {
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello"))
 	}).Methods("GET")
-	router.HandleFunc("/signup", routes.SignUp).Methods("POST")
-	router.HandleFunc("/login", routes.LogIn).Methods("POST")
-	router.HandleFunc("/getcmds/{apiKey}", jwtauth.Authorized(routes.GetCmds)).Methods("GET")
-	router.HandleFunc("/setcmd/{apiKey}", jwtauth.Authorized(routes.SetCmd)).Methods("PATCH")
-	router.HandleFunc("/delcmd/{apiKey}", jwtauth.Authorized(routes.DelCmd)).Methods("PATCH")
-	router.HandleFunc("/delacc/{apiKey}", jwtauth.Authorized(routes.DelUser)).Methods("DELETE")
-	router.HandleFunc("/search/{apiKey}/{cmd}", routes.Search).Methods("GET")
+	router.HandleFunc("/signup", controllers.SignUp).Methods("POST")
+	router.HandleFunc("/login", controllers.LogIn).Methods("POST")
+	router.HandleFunc("/getcmds/{apiKey}", jwtauth.Authorized(controllers.GetCmds)).Methods("GET")
+	router.HandleFunc("/setcmd/{apiKey}", jwtauth.Authorized(controllers.SetCmd)).Methods("PATCH")
+	router.HandleFunc("/delcmd/{apiKey}", jwtauth.Authorized(controllers.DelCmd)).Methods("PATCH")
+	router.HandleFunc("/delacc/{apiKey}", jwtauth.Authorized(controllers.DelUser)).Methods("DELETE")
+	router.HandleFunc("/search/{apiKey}/{cmd}", controllers.Search).Methods("GET")
 
-	router.HandleFunc("/team/{apiKey}", jwtauth.Authorized(routes.NewTeam)).Methods("POST")
-	router.HandleFunc("/team/addmember/{apiKey}", jwtauth.Authorized(routes.AddMember)).Methods("PUT")
+	router.HandleFunc("/team/{apiKey}", jwtauth.Authorized(controllers.NewTeam)).Methods("POST")
+	router.HandleFunc("/team/addmember/{apiKey}", jwtauth.Authorized(controllers.AddMember)).Methods("PUT")
 
 	http.Handle("/", router)
 
