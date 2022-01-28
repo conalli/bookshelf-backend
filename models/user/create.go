@@ -44,6 +44,7 @@ func New(reqCtx context.Context, requestData requests.CredentialsRequest) (strin
 		Password:  hashedPassword,
 		APIKey:    apiKey,
 		Bookmarks: map[string]string{},
+		Teams:     map[string]string{},
 	}
 	res, err := collection.InsertOne(ctx, newUserData)
 	if err != nil {

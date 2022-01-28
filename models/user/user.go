@@ -16,6 +16,7 @@ type NewUserData struct {
 	Password  string            `json:"password" bson:"password"`
 	APIKey    string            `json:"apiKey" bson:"apiKey"`
 	Bookmarks map[string]string `json:"bookmarks" bson:"bookmarks"`
+	Teams     map[string]string `json:"teams" bson:"teams"`
 }
 
 // User represents the db fields associated with each user.
@@ -25,6 +26,7 @@ type User struct {
 	Password  string            `json:"password" bson:"password"`
 	APIKey    string            `json:"apiKey" bson:"apiKey"`
 	Bookmarks map[string]string `json:"bookmarks" bson:"bookmarks"`
+	Teams     map[string]string `json:"teams" bson:"teams"`
 }
 
 // CheckCredentials takes in request data, checks the db and returns the username and apikey is successful.
