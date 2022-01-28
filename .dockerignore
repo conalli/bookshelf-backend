@@ -1,5 +1,7 @@
 docker
 docker-compose.yml
+docker-compose.dev.yml
+docker-compose.test.yml
 README.md
 .gitignore
 .gitattributes
