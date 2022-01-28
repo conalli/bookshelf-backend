@@ -13,7 +13,7 @@ services:
       LOCAL: "dev"
       REDIS_HOST: redis
     volumes:
-      - ./:/go/src/github.com/bookshelf-backend
+      - ../:/go/src/github.com/bookshelf-backend
   redis:
     image: redis:alpine
     container_name: bookshelf_dev_redis
