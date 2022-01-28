@@ -18,8 +18,8 @@ type NewUserData struct {
 	Bookmarks map[string]string `json:"bookmarks" bson:"bookmarks"`
 }
 
-// UserData represents the db fields associated with each user.
-type UserData struct {
+// User represents the db fields associated with each user.
+type User struct {
 	ID        string            `json:"id" bson:"_id"`
 	Name      string            `json:"name" bson:"name"`
 	Password  string            `json:"password" bson:"password"`
@@ -28,7 +28,7 @@ type UserData struct {
 }
 
 // CheckCredentials takes in request data, checks the db and returns the username and apikey is successful.
-func CheckCredentials(reqCtx context.Context, requestData requests.CredentialsRequest) (UserData, errors.ApiErr) {
+func CheckCredentials(reqCtx context.Context, requestData requests.CredentialsRequest) (User, errors.ApiErr) {
 	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
 	client := db.NewMongoClient(ctx)
 	defer cancelFunc()
@@ -37,7 +37,7 @@ func CheckCredentials(reqCtx context.Context, requestData requests.CredentialsRe
 	collection := client.MongoCollection("users")
 	currUser, err := GetByKey(ctx, &collection, "name", requestData.Name)
 	if err != nil || !password.CheckHashedPassword(currUser.Password, requestData.Password) {
-		return UserData{}, errors.NewApiError(http.StatusUnauthorized, errors.ErrWrongCredentials.Error(), "error: name or password incorrect")
+		return User{}, errors.NewApiError(http.StatusUnauthorized, errors.ErrWrongCredentials.Error(), "error: name or password incorrect")
 	}
 	return currUser, nil
 }

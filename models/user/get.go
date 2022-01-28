@@ -11,12 +11,12 @@ import (
 )
 
 // GetByID finds and returns user data based on a the users _id.
-func GetByID(ctx context.Context, collection *mongo.Collection, userID string) (UserData, error) {
+func GetByID(ctx context.Context, collection *mongo.Collection, userID string) (User, error) {
 	id, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
-		return UserData{}, err
+		return User{}, err
 	}
-	var result UserData
+	var result User
 	err = collection.FindOne(ctx, bson.M{"_id": id}).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -28,8 +28,8 @@ func GetByID(ctx context.Context, collection *mongo.Collection, userID string) (
 }
 
 // GetByKey finds and returns user data based on a key-value pair.
-func GetByKey(ctx context.Context, collection *mongo.Collection, reqKey, reqValue string) (UserData, error) {
-	var result UserData
+func GetByKey(ctx context.Context, collection *mongo.Collection, reqKey, reqValue string) (User, error) {
+	var result User
 	err := collection.FindOne(ctx, bson.D{primitive.E{Key: reqKey, Value: reqValue}}).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
