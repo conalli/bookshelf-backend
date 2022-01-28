@@ -1,13 +1,17 @@
-package controllers
+package user
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/conalli/bookshelf-backend/db"
 	"github.com/conalli/bookshelf-backend/models/errors"
 	"github.com/conalli/bookshelf-backend/models/requests"
-	"github.com/conalli/bookshelf-backend/models/user"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // DelCmd attempts to either rempve a cmd from the user, returning the number
@@ -19,7 +23,7 @@ func DelCmd(reqCtx context.Context, requestData requests.DelCmdRequest, apiKey s
 	defer client.DB.Disconnect(ctx)
 
 	collection := client.MongoCollection("users")
-	result, err := user.RemoveCmdFromUser(ctx, &collection, requestData.ID, requestData.Cmd)
+	result, err := RemoveCmdFromUser(ctx, &collection, requestData.ID, requestData.Cmd)
 	if err != nil {
 		return 0, errors.NewInternalServerError()
 	}
@@ -34,4 +38,19 @@ func DelCmd(reqCtx context.Context, requestData requests.DelCmdRequest, apiKey s
 		log.Printf("successfully removed cmd: %s from cache \n", requestData.Cmd)
 	}
 	return int(result.ModifiedCount), nil
+}
+
+// RemoveCmdFromUser takes a given username along with the cmd and removes the cmd from their bookmarks.
+func RemoveCmdFromUser(ctx context.Context, collection *mongo.Collection, userID, cmd string) (*mongo.UpdateResult, error) {
+	opts := options.Update().SetUpsert(true)
+	filter, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, err
+	}
+	update := bson.D{primitive.E{Key: "$unset", Value: bson.D{primitive.E{Key: fmt.Sprintf("bookmarks.%s", cmd), Value: ""}}}}
+	result, err := collection.UpdateByID(ctx, filter, update, opts)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
