@@ -19,7 +19,7 @@ func AddMember(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&newMemberReq)
 	ok, err := team.AddMember(r.Context(), newMemberReq)
 	if err != nil {
-		log.Printf("error returned while trying to create a new user: %v", err)
+		log.Printf("error returned while trying to add a new member: %v", err)
 		errors.APIErrorResponse(w, err)
 		return
 	}
