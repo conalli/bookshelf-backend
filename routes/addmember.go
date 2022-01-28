@@ -5,10 +5,10 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/conalli/bookshelf-backend/controllers"
 	"github.com/conalli/bookshelf-backend/models/errors"
 	"github.com/conalli/bookshelf-backend/models/requests"
 	"github.com/conalli/bookshelf-backend/models/responses"
+	"github.com/conalli/bookshelf-backend/models/team"
 )
 
 // AddMember is the handler for the addmember endpoint. Checks db for team name and if
@@ -17,7 +17,7 @@ func AddMember(w http.ResponseWriter, r *http.Request) {
 	log.Println("AddMember endpoint hit")
 	var newMemberReq requests.AddMemberRequest
 	json.NewDecoder(r.Body).Decode(&newMemberReq)
-	ok, err := controllers.AddMember(r.Context(), newMemberReq)
+	ok, err := team.AddMember(r.Context(), newMemberReq)
 	if err != nil {
 		log.Printf("error returned while trying to create a new user: %v", err)
 		errors.APIErrorResponse(w, err)

@@ -1,4 +1,4 @@
-package controllers
+package team
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"github.com/conalli/bookshelf-backend/db"
 	"github.com/conalli/bookshelf-backend/models/errors"
 	"github.com/conalli/bookshelf-backend/models/requests"
-	"github.com/conalli/bookshelf-backend/models/team"
 	"github.com/conalli/bookshelf-backend/models/user"
 )
 
@@ -26,7 +25,7 @@ func AddMember(reqCtx context.Context, requestData requests.AddMemberRequest) (b
 		return false, errors.NewBadRequestError("couldnt find user with name " + requestData.MemberName)
 	}
 
-	ok, err := team.AddMemberToTeam(ctx, &teamCollection, requestData.TeamID, user.ID, requestData.Role)
+	ok, err := AddMemberToTeam(ctx, &teamCollection, requestData.TeamID, user.ID, requestData.Role)
 	if err != nil {
 		log.Printf("error adding member with name: %s to team with id: %s\n error: %+v\n", requestData.MemberName, requestData.TeamID, err)
 		return false, errors.NewInternalServerError()
