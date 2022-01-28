@@ -14,6 +14,22 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type UpdateEmbedOptions struct {
+	UserKey, UserValue, Embedded, Key, Value string
+}
+
+func UpdateEmbedByField(ctx context.Context, collection *mongo.Collection, data UpdateEmbedOptions) (User, error) {
+	options := options.FindOneAndUpdate().SetUpsert(true)
+	filter := bson.M{data.UserKey: data.UserValue}
+	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: fmt.Sprintf("%s.%s", data.Embedded, data.Key), Value: data.Value}}}}
+	var result User
+	err := collection.FindOneAndUpdate(ctx, filter, update, options).Decode(&result)
+	if err != nil {
+		return User{}, err
+	}
+	return result, nil
+}
+
 // AddCmd attempts to either add or update a cmd for the user, returning the number
 // of updated cmds.
 func AddCmd(reqCtx context.Context, requestData requests.AddCmdRequest, apiKey string) (int, errors.ApiErr) {
