@@ -6,8 +6,9 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/controllers"
-	"github.com/conalli/bookshelf-backend/models"
 	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/requests"
+	"github.com/conalli/bookshelf-backend/models/responses"
 	"github.com/gorilla/mux"
 )
 
@@ -17,7 +18,7 @@ func DelAcc(w http.ResponseWriter, r *http.Request) {
 	log.Println("delacc endpoint hit")
 	vars := mux.Vars(r)
 	user := vars["apiKey"]
-	var delAccReq models.DelAccRequest
+	var delAccReq requests.DelAccRequest
 	json.NewDecoder(r.Body).Decode(&delAccReq)
 	numDeleted, err := controllers.DelAcc(r.Context(), delAccReq, user)
 	if err != nil {
@@ -28,7 +29,7 @@ func DelAcc(w http.ResponseWriter, r *http.Request) {
 	log.Printf("successfully deleted %d users: %v", numDeleted, delAccReq)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	res := models.DelAccResponse{
+	res := responses.DelAccResponse{
 		Name:       delAccReq.Name,
 		NumDeleted: numDeleted,
 	}

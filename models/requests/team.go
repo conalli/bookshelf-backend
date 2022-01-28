@@ -1,4 +1,4 @@
-package models
+package requests
 
 // NewTeamReq reprents the clients new team request.
 type NewTeamReq struct {

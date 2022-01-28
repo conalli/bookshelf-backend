@@ -6,15 +6,16 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/controllers"
-	"github.com/conalli/bookshelf-backend/models"
 	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/requests"
+	"github.com/conalli/bookshelf-backend/models/responses"
 )
 
 // AddMember is the handler for the addmember endpoint. Checks db for team name and if
 // unique adds new team with given data.
 func AddMember(w http.ResponseWriter, r *http.Request) {
 	log.Println("AddMember endpoint hit")
-	var newMemberReq models.AddMemberReq
+	var newMemberReq requests.AddMemberReq
 	json.NewDecoder(r.Body).Decode(&newMemberReq)
 	ok, err := controllers.AddMember(r.Context(), newMemberReq)
 	if err != nil {
@@ -22,7 +23,7 @@ func AddMember(w http.ResponseWriter, r *http.Request) {
 		apiErrors.APIErrorResponse(w, err)
 		return
 	}
-	res := models.AddMemberRes{
+	res := responses.AddMemberRes{
 		TeamID:          newMemberReq.TeamID,
 		NumMembersAdded: 0,
 	}

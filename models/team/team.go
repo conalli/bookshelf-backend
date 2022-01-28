@@ -1,4 +1,4 @@
-package models
+package team
 
 import (
 	"context"

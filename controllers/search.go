@@ -5,8 +5,9 @@ import (
 	"fmt"
 
 	"github.com/conalli/bookshelf-backend/db"
-	"github.com/conalli/bookshelf-backend/models"
 	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/search"
+	"github.com/conalli/bookshelf-backend/models/user"
 )
 
 // GetURL takes in an apiKey and cmd and returns either a correctly formatted url from the db,
@@ -22,19 +23,19 @@ func GetURL(reqCtx context.Context, apiKey, cmd string) (string, apiErrors.ApiEr
 		defer client.DB.Disconnect(ctx)
 		collection := client.MongoCollection("users")
 
-		user, err := models.GetUserByKey(ctx, &collection, "apiKey", apiKey)
+		currUser, err := user.GetUserByKey(ctx, &collection, "apiKey", apiKey)
 		defaultSearch := fmt.Sprintf("http://www.google.com/search?q=%s", cmd)
 		if err != nil {
 			return defaultSearch, apiErrors.ParseGetUserError(apiKey, err)
 		}
 
-		cache.SetCacheCmds(ctx, apiKey, user.Bookmarks)
+		cache.SetCacheCmds(ctx, apiKey, currUser.Bookmarks)
 
-		url, found := user.Bookmarks[cmd]
+		url, found := currUser.Bookmarks[cmd]
 		if !found {
 			return defaultSearch, apiErrors.NewBadRequestError("error: command: " + cmd + " not registered")
 		}
-		return models.FormatURL(url), nil
+		return search.FormatURL(url), nil
 	}
-	return models.FormatURL(url), nil
+	return search.FormatURL(url), nil
 }

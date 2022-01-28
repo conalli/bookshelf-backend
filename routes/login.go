@@ -8,15 +8,16 @@ import (
 
 	"github.com/conalli/bookshelf-backend/auth/jwtauth"
 	"github.com/conalli/bookshelf-backend/controllers"
-	"github.com/conalli/bookshelf-backend/models"
 	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/requests"
+	"github.com/conalli/bookshelf-backend/models/responses"
 )
 
 // LogIn is the handler for the login endpoint. Checks credentials and if
 // correct returns JWT cookie for use with getcmds and setcmd.
 func LogIn(w http.ResponseWriter, r *http.Request) {
 	log.Println("LogIn endpoint hit")
-	var logInReq models.CredentialsRequest
+	var logInReq requests.CredentialsRequest
 	json.NewDecoder(r.Body).Decode(&logInReq)
 
 	user, err := controllers.CheckCredentials(r.Context(), logInReq)
@@ -44,7 +45,7 @@ func LogIn(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &cookie)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	res := models.LogInResponse{
+	res := responses.LogInResponse{
 		ID:     user.ID,
 		APIKey: user.APIKey,
 	}

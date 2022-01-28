@@ -8,15 +8,16 @@ import (
 
 	"github.com/conalli/bookshelf-backend/auth/jwtauth"
 	"github.com/conalli/bookshelf-backend/controllers"
-	"github.com/conalli/bookshelf-backend/models"
 	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/requests"
+	"github.com/conalli/bookshelf-backend/models/responses"
 )
 
 // SignUp is the handler for the signup endpoint. Checks db for username and if
 // unique adds new user with given credentials.
 func SignUp(w http.ResponseWriter, r *http.Request) {
 	log.Println("SignUp endpoint hit")
-	var newUserReq models.CredentialsRequest
+	var newUserReq requests.CredentialsRequest
 	json.NewDecoder(r.Body).Decode(&newUserReq)
 	userID, apiKey, err := controllers.CreateNewUser(r.Context(), newUserReq)
 	if err != nil {
@@ -44,7 +45,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &cookie)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	res := models.SignUpResponse{
+	res := responses.SignUpResponse{
 		ID:     userID,
 		APIKey: apiKey,
 	}

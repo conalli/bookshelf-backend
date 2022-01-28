@@ -6,8 +6,9 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/controllers"
-	"github.com/conalli/bookshelf-backend/models"
 	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/requests"
+	"github.com/conalli/bookshelf-backend/models/responses"
 	"github.com/gorilla/mux"
 )
 
@@ -17,7 +18,7 @@ func DelCmd(w http.ResponseWriter, r *http.Request) {
 	log.Println("DelCmd endpoint hit")
 	vars := mux.Vars(r)
 	user := vars["apiKey"]
-	var delCmdReq models.DelCmdRequest
+	var delCmdReq requests.DelCmdRequest
 	json.NewDecoder(r.Body).Decode(&delCmdReq)
 
 	result, err := controllers.DelCmd(r.Context(), delCmdReq, user)
@@ -35,7 +36,7 @@ func DelCmd(w http.ResponseWriter, r *http.Request) {
 	log.Printf("successfully updates cmds: %s, removed %d", delCmdReq.Cmd, result)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	res := models.DelCmdResponse{
+	res := responses.DelCmdResponse{
 		NumDeleted: result,
 		Cmd:        delCmdReq.Cmd,
 	}

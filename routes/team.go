@@ -6,15 +6,15 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/controllers"
-	"github.com/conalli/bookshelf-backend/models"
 	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/requests"
 )
 
 // NewTeam is the handler for the newteam endpoint. Checks db for team name and if
 // unique adds new team with given data.
 func NewTeam(w http.ResponseWriter, r *http.Request) {
 	log.Println("NewTeam endpoint hit")
-	var newTeamReq models.NewTeamReq
+	var newTeamReq requests.NewTeamReq
 	json.NewDecoder(r.Body).Decode(&newTeamReq)
 	teamID, err := controllers.CreateNewTeam(r.Context(), newTeamReq)
 	if err != nil {

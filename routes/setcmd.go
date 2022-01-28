@@ -6,8 +6,9 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/controllers"
-	"github.com/conalli/bookshelf-backend/models"
 	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/requests"
+	"github.com/conalli/bookshelf-backend/models/responses"
 	"github.com/gorilla/mux"
 )
 
@@ -17,7 +18,7 @@ func SetCmd(w http.ResponseWriter, r *http.Request) {
 	log.Println("SetCmd endpoint hit")
 	vars := mux.Vars(r)
 	user := vars["apiKey"]
-	var setCmdReq models.SetCmdRequest
+	var setCmdReq requests.SetCmdRequest
 	json.NewDecoder(r.Body).Decode(&setCmdReq)
 
 	numUpdated, err := controllers.AddCmd(r.Context(), setCmdReq, user)
@@ -35,7 +36,7 @@ func SetCmd(w http.ResponseWriter, r *http.Request) {
 	log.Printf("successfully set cmd: %s, url: %s", setCmdReq.Cmd, setCmdReq.URL)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	res := models.SetCmdResponse{
+	res := responses.SetCmdResponse{
 		CmdsSet: numUpdated,
 		Cmd:     setCmdReq.Cmd,
 		URL:     setCmdReq.URL,

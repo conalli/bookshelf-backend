@@ -1,4 +1,4 @@
-package models
+package responses
 
 // AddMemberRes represents the result of a request to the addmember endpoint.
 type AddMemberRes struct {

@@ -1,4 +1,4 @@
-package models
+package responses
 
 // SignUpResponse represents the fields returned when a user signs up.
 type SignUpResponse struct {

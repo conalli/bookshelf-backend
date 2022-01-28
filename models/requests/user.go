@@ -1,4 +1,4 @@
-package models
+package requests
 
 // CredentialsRequest represents the fields needed in the request in order to attempt to sign up or log in.
 type CredentialsRequest struct {

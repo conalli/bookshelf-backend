@@ -5,13 +5,14 @@ import (
 	"log"
 
 	"github.com/conalli/bookshelf-backend/db"
-	"github.com/conalli/bookshelf-backend/models"
 	"github.com/conalli/bookshelf-backend/models/apiErrors"
+	"github.com/conalli/bookshelf-backend/models/requests"
+	"github.com/conalli/bookshelf-backend/models/user"
 )
 
 // AddCmd attempts to either add or update a cmd for the user, returning the number
 // of updated cmds.
-func AddCmd(reqCtx context.Context, requestData models.SetCmdRequest, apiKey string) (int, apiErrors.ApiErr) {
+func AddCmd(reqCtx context.Context, requestData requests.SetCmdRequest, apiKey string) (int, apiErrors.ApiErr) {
 	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
 	client := db.NewMongoClient(ctx)
 	defer cancelFunc()
@@ -19,7 +20,7 @@ func AddCmd(reqCtx context.Context, requestData models.SetCmdRequest, apiKey str
 
 	collection := client.MongoCollection("users")
 
-	result, err := models.AddCmdToUser(ctx, &collection, requestData.ID, requestData.Cmd, requestData.URL)
+	result, err := user.AddCmdToUser(ctx, &collection, requestData.ID, requestData.Cmd, requestData.URL)
 	if err != nil {
 		return 0, apiErrors.NewInternalServerError()
 	}
