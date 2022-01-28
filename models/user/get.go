@@ -1,11 +1,10 @@
-package controllers
+package user
 
 import (
 	"context"
 
 	"github.com/conalli/bookshelf-backend/db"
 	"github.com/conalli/bookshelf-backend/models/errors"
-	"github.com/conalli/bookshelf-backend/models/user"
 )
 
 // GetAllCmds uses req info to get all users current cmds from the db.
@@ -20,7 +19,7 @@ func GetAllCmds(reqCtx context.Context, apiKey string) (map[string]string, error
 		defer client.DB.Disconnect(ctx)
 
 		collection := client.MongoCollection("users")
-		user, err := user.GetUserByKey(ctx, &collection, "apiKey", apiKey)
+		user, err := GetUserByKey(ctx, &collection, "apiKey", apiKey)
 		if err != nil {
 			return nil, errors.ParseGetUserError(apiKey, err)
 		}
