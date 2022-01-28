@@ -1,4 +1,4 @@
-package controllers
+package team
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 	"github.com/conalli/bookshelf-backend/db"
 	"github.com/conalli/bookshelf-backend/models/errors"
 	"github.com/conalli/bookshelf-backend/models/requests"
-	"github.com/conalli/bookshelf-backend/models/team"
 	"github.com/conalli/bookshelf-backend/models/user"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -33,7 +32,7 @@ func CreateNewTeam(reqContext context.Context, requestData requests.NewTeamReque
 		log.Printf("couldnt hash password: %+v\n", err)
 		return "", errors.NewInternalServerError()
 	}
-	newTeamData := team.NewTeamData{
+	newTeamData := NewTeamData{
 		Name:      requestData.Name,
 		Password:  hashedPassword,
 		ShortName: requestData.ShortName,
