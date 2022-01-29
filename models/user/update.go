@@ -15,12 +15,21 @@ import (
 )
 
 type UpdateEmbedOptions struct {
-	UserKey, UserValue, Embedded, Key, Value string
+	FilterKey, FilterValue, Embedded, Key, Value string
 }
 
 func UpdateEmbedByField(ctx context.Context, collection *mongo.Collection, data UpdateEmbedOptions) (User, error) {
 	options := options.FindOneAndUpdate().SetUpsert(true)
-	filter := bson.M{data.UserKey: data.UserValue}
+	var filter primitive.M
+	if data.FilterKey == "_id" {
+		userID, err := primitive.ObjectIDFromHex(data.FilterValue)
+		if err != nil {
+			return User{}, err
+		}
+		filter = bson.M{data.FilterKey: userID}
+	} else {
+		filter = bson.M{data.FilterKey: data.FilterValue}
+	}
 	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: fmt.Sprintf("%s.%s", data.Embedded, data.Key), Value: data.Value}}}}
 	var result User
 	err := collection.FindOneAndUpdate(ctx, filter, update, options).Decode(&result)
