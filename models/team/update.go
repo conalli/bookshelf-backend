@@ -13,8 +13,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readconcern"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 // AddMember checks whether a username alreadys exists in the db. If not, a new user
@@ -24,22 +22,14 @@ func AddMember(reqCtx context.Context, requestData requests.AddMemberRequest) (b
 	client := db.NewMongoClient(ctx)
 	defer cancelFunc()
 	defer client.DB.Disconnect(ctx)
-	opts := options.Session().SetDefaultReadConcern(readconcern.Majority())
-	sess, err := client.DB.StartSession(opts)
-	defer sess.EndSession(ctx)
-	if err != nil {
-		log.Println("could not start db session")
-		return false, errors.NewInternalServerError()
-	}
-	txnOpts := options.Transaction().SetReadPreference(readpref.PrimaryPreferred())
-	res, err := sess.WithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
+	res, err := client.SessionWithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
 		userCollection := client.MongoCollection("users")
 		update := user.UpdateEmbedOptions{
-			UserKey:   "name",
-			UserValue: requestData.MemberName,
-			Embedded:  "teams",
-			Key:       requestData.TeamID,
-			Value:     requestData.Role,
+			FilterKey:   "name",
+			FilterValue: requestData.MemberName,
+			Embedded:    "teams",
+			Key:         requestData.TeamID,
+			Value:       requestData.Role,
 		}
 		user, err := user.UpdateEmbedByField(sessCtx, &userCollection, update)
 		if err != nil {
@@ -53,7 +43,7 @@ func AddMember(reqCtx context.Context, requestData requests.AddMemberRequest) (b
 			return false, errors.NewInternalServerError()
 		}
 		return ok, nil
-	}, txnOpts)
+	})
 	if err != nil {
 		log.Println("error could not start db transaction")
 		return false, errors.NewInternalServerError()

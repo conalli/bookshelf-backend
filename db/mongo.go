@@ -5,8 +5,11 @@ import (
 	"log"
 	"os"
 
+	"github.com/conalli/bookshelf-backend/models/errors"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readconcern"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 // Client represents a mongo db client.
@@ -42,4 +45,18 @@ func (c *Client) MongoCollection(collectionName string) mongo.Collection {
 	}
 	collection := c.DB.Database(db).Collection(collectionName)
 	return *collection
+}
+
+// SessionWithTransaction takes a context and transaction func and returns the result of the transaction.
+func (c *Client) SessionWithTransaction(ctx context.Context, transactionFunc func(sessCtx mongo.SessionContext) (interface{}, error)) (interface{}, error) {
+	opts := options.Session().SetDefaultReadConcern(readconcern.Majority())
+	sess, err := c.DB.StartSession(opts)
+	defer sess.EndSession(ctx)
+	if err != nil {
+		log.Println("could not start db session")
+		return nil, errors.NewInternalServerError()
+	}
+	txnOpts := options.Transaction().SetReadPreference(readpref.PrimaryPreferred())
+	res, err := sess.WithTransaction(ctx, transactionFunc, txnOpts)
+	return res, err
 }
