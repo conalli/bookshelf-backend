@@ -56,7 +56,7 @@ func (c *Client) SessionWithTransaction(ctx context.Context, transactionFunc fun
 		log.Println("could not start db session")
 		return nil, errors.NewInternalServerError()
 	}
-	txnOpts := options.Transaction().SetReadPreference(readpref.PrimaryPreferred())
+	txnOpts := options.Transaction().SetReadPreference(readpref.Primary())
 	res, err := sess.WithTransaction(ctx, transactionFunc, txnOpts)
 	return res, err
 }
