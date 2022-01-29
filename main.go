@@ -23,6 +23,7 @@ func main() {
 	router.HandleFunc("/signup", controllers.SignUp).Methods("POST")
 	router.HandleFunc("/login", controllers.LogIn).Methods("POST")
 	router.HandleFunc("/getcmds/{apiKey}", jwtauth.Authorized(controllers.GetCmds)).Methods("GET")
+	router.HandleFunc("/teams/{apiKey}", jwtauth.Authorized(controllers.GetAllTeams)).Methods("GET")
 	router.HandleFunc("/setcmd/{apiKey}", jwtauth.Authorized(controllers.SetCmd)).Methods("PATCH")
 	router.HandleFunc("/delcmd/{apiKey}", jwtauth.Authorized(controllers.DelCmd)).Methods("PATCH")
 	router.HandleFunc("/delacc/{apiKey}", jwtauth.Authorized(controllers.DelUser)).Methods("DELETE")
