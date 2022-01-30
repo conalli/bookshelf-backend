@@ -15,3 +15,11 @@ type AddMemberRequest struct {
 	MemberName string `json:"memberName"`
 	Role       string `json:"role"`
 }
+
+// AddTeamCmdRequest represents the clients request to add a new cmd to a team.
+type AddTeamCmdRequest struct {
+	ID       string `json:"id"`
+	MemberID string `json:"memberId"`
+	Cmd      string `json:"cmd"`
+	URL      string `json:"url"`
+}

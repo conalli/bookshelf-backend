@@ -78,3 +78,40 @@ func AddMemberToTeam(ctx context.Context, collection *mongo.Collection, teamID, 
 	}
 	return true, nil
 }
+
+// AddCmd takes request data and attempts to add a new cmd to the teams bookmarks.
+// TODO: improve validation.
+func AddCmd(ctx context.Context, requestData requests.AddTeamCmdRequest) (int, errors.ApiErr) {
+	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
+	client := db.NewMongoClient(reqCtx)
+	defer cancelFunc()
+	defer client.DB.Disconnect(reqCtx)
+
+	collection := client.MongoCollection("teams")
+
+	result, err := addCmdToTeam(reqCtx, &collection, requestData.ID, requestData.Cmd, requestData.URL)
+	if err != nil {
+		return 0, errors.NewInternalServerError()
+	}
+	var numUpdated int
+	if int(result.UpsertedCount) >= int(result.ModifiedCount) {
+		numUpdated = int(result.UpsertedCount)
+	} else {
+		numUpdated = int(result.ModifiedCount)
+	}
+	return numUpdated, nil
+}
+
+func addCmdToTeam(ctx context.Context, collection *mongo.Collection, userID, key, value string) (*mongo.UpdateResult, error) {
+	opts := options.Update().SetUpsert(true)
+	filter, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, err
+	}
+	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: fmt.Sprintf("bookmarks.%s", key), Value: value}}}}
+	result, err := collection.UpdateByID(ctx, filter, update, opts)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}

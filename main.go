@@ -31,6 +31,7 @@ func main() {
 
 	router.HandleFunc("/team/{apiKey}", jwtauth.Authorized(controllers.NewTeam)).Methods("POST")
 	router.HandleFunc("/team/addmember/{apiKey}", jwtauth.Authorized(controllers.AddMember)).Methods("PATCH")
+	router.HandleFunc("/team/addcmd/{apiKey}", jwtauth.Authorized(controllers.AddTeamCmd)).Methods("PATCH")
 
 	http.Handle("/", router)
 
