@@ -23,3 +23,10 @@ type AddTeamCmdRequest struct {
 	Cmd      string `json:"cmd"`
 	URL      string `json:"url"`
 }
+
+// DelTeamCmdRequest represents the expected fields needed for the team/delcmd request to be completed.
+type DelTeamCmdRequest struct {
+	ID       string `json:"id"`
+	MemberID string `json:"memberId"`
+	Cmd      string `json:"cmd"`
+}

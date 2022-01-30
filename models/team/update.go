@@ -115,3 +115,35 @@ func addCmdToTeam(ctx context.Context, collection *mongo.Collection, userID, key
 	}
 	return result, nil
 }
+
+// DelCmd attempts to either rempve a cmd from the user, returning the number
+// of updated cmds.
+// TODO: improve validation
+func DelCmd(reqCtx context.Context, requestData requests.DelTeamCmdRequest, apiKey string) (int, errors.ApiErr) {
+	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
+	client := db.NewMongoClient(ctx)
+	defer cancelFunc()
+	defer client.DB.Disconnect(ctx)
+
+	collection := client.MongoCollection("teams")
+	result, err := removeCmdFromTeam(ctx, &collection, requestData.ID, requestData.Cmd)
+	if err != nil {
+		return 0, errors.NewInternalServerError()
+	}
+	return int(result.ModifiedCount), nil
+}
+
+// removeCmdFromUser takes a given username along with the cmd and removes the cmd from their bookmarks.
+func removeCmdFromTeam(ctx context.Context, collection *mongo.Collection, teamID, cmd string) (*mongo.UpdateResult, error) {
+	opts := options.Update().SetUpsert(true)
+	filter, err := primitive.ObjectIDFromHex(teamID)
+	if err != nil {
+		return nil, err
+	}
+	update := bson.D{primitive.E{Key: "$unset", Value: bson.D{primitive.E{Key: fmt.Sprintf("bookmarks.%s", cmd), Value: ""}}}}
+	result, err := collection.UpdateByID(ctx, filter, update, opts)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
