@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"log"
-	"os"
 
 	"github.com/conalli/bookshelf-backend/models/errors"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,7 +18,7 @@ type Client struct {
 
 // NewMongoClient uses a context to create a new client connection based on the MONGO_URI env var.
 func NewMongoClient(ctx context.Context) *Client {
-	mongoURI := os.Getenv("MONGO_URI")
+	mongoURI := resolveEnv("uri")
 	client, err := mongo.NewClient(options.Client().ApplyURI(mongoURI))
 	if err != nil {
 		log.Fatal(err)
@@ -35,14 +34,7 @@ func NewMongoClient(ctx context.Context) *Client {
 
 // MongoCollection uses the DB_NAME env var, and returns a collection based on the collectionName and client.
 func (c *Client) MongoCollection(collectionName string) mongo.Collection {
-	var db string
-	if os.Getenv("LOCAL") == "dev" {
-		db = os.Getenv("DEV_DB_NAME")
-	} else if os.Getenv("LOCAL") == "test" {
-		db = os.Getenv("TEST_DB_NAME")
-	} else {
-		db = os.Getenv("DB_NAME")
-	}
+	db := resolveEnv("db")
 	collection := c.DB.Database(db).Collection(collectionName)
 	return *collection
 }
