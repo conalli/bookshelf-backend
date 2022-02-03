@@ -6,7 +6,7 @@ services:
     build:
       context: ../
       dockerfile: ./build/Dockerfile.dev
-    env_file: ../config/.env
+    env_file: ../.env
     ports: 
      - 8080:8080
     environment:
@@ -17,3 +17,23 @@ services:
   redis:
     image: redis:alpine
     container_name: bookshelf_dev_redis
+  mongo:
+    container_name: bookshelf_dev_mongo
+    image: mongo
+    ports:
+     - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+  mongo-express:
+    container_name: bookshelf_dev_mongo-express
+    image: mongo-express
+    restart: always
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+      ME_CONFIG_MONGODB_URL: "mongodb://admin:password@mongo:27017"
+    depends_on:
+      - mongo
+    ports:
+      - 8081:8081
