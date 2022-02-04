@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/conalli/bookshelf-backend/models/errors"
+	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
 )
@@ -46,7 +46,7 @@ func NewToken(name string) (string, errors.ApiErr) {
 func Authorized(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		name := vars["apiKey"]
+		name := vars["APIKey"]
 		cookies := r.Cookies()
 		if len(cookies) < 1 {
 			log.Println("error: no cookies in request")

@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/conalli/bookshelf-backend/auth/jwtauth"
+	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/golang-jwt/jwt/v4"
 )
 

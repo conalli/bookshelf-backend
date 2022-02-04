@@ -3,7 +3,7 @@ package password_test
 import (
 	"testing"
 
-	"github.com/conalli/bookshelf-backend/auth/password"
+	"github.com/conalli/bookshelf-backend/pkg/password"
 )
 
 func TestHashPassword(t *testing.T) {
