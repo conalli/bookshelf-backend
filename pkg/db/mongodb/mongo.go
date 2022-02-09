@@ -127,10 +127,12 @@ func GetUserByKey(ctx context.Context, collection *mongo.Collection, reqKey, req
 	return result, nil
 }
 
+// UpdateEmbedOptions gives options for the UpdateEmbedByField function.
 type UpdateEmbedOptions struct {
 	FilterKey, FilterValue, Embedded, Key, Value string
 }
 
+// UpdateEmbedByField updates a given embedded object with the given key and value.
 func UpdateEmbedByField(ctx context.Context, collection *mongo.Collection, data UpdateEmbedOptions) (*mongo.SingleResult, error) {
 	options := options.FindOneAndUpdate().SetUpsert(true)
 	var filter primitive.M
@@ -147,6 +149,7 @@ func UpdateEmbedByField(ctx context.Context, collection *mongo.Collection, data 
 	return collection.FindOneAndUpdate(ctx, filter, update, options), nil
 }
 
+// DecodeUser decodes the update result to the User type.
 func DecodeUser(res *mongo.SingleResult) (User, error) {
 	var user User
 	err := res.Decode(&user)
@@ -156,6 +159,7 @@ func DecodeUser(res *mongo.SingleResult) (User, error) {
 	return user, nil
 }
 
+// DecodeTeam decodes the update result to the Team type.
 func DecodeTeam(res *mongo.SingleResult) (Team, error) {
 	var team Team
 	err := res.Decode(&team)

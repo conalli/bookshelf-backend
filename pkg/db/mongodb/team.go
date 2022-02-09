@@ -228,7 +228,6 @@ func (m *Mongo) DelCmdFromTeam(ctx context.Context, requestData team.DelTeamCmdR
 	return int(result.ModifiedCount), nil
 }
 
-// removeCmdFromUser takes a given username along with the cmd and removes the cmd from their bookmarks.
 func removeCmdFromTeam(ctx context.Context, collection *mongo.Collection, teamID, cmd string) (*mongo.UpdateResult, error) {
 	opts := options.Update().SetUpsert(true)
 	filter, err := primitive.ObjectIDFromHex(teamID)
