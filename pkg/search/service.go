@@ -6,7 +6,7 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/db"
 )
 
-// Repository provides access to the search storage.
+// Repository provides access to storage.
 type Repository interface {
 	Search(ctx context.Context, APIKey, cmd string) (string, error)
 }
