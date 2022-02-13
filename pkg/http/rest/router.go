@@ -27,8 +27,8 @@ func Router() *mux.Router {
 	}).Methods("GET")
 	router.HandleFunc("/user/signup", handlers.SignUp(u)).Methods("POST")
 	router.HandleFunc("/user/login", handlers.LogIn(u)).Methods("POST")
-	router.HandleFunc("/user/getcmds/{APIKey}", jwtauth.Authorized(handlers.GetCmds(u))).Methods("GET")
 	router.HandleFunc("/user/teams/{APIKey}", jwtauth.Authorized(handlers.GetAllTeams(u))).Methods("GET")
+	router.HandleFunc("/user/cmds/{APIKey}", jwtauth.Authorized(handlers.GetCmds(u))).Methods("GET")
 	router.HandleFunc("/user/addcmd/{APIKey}", jwtauth.Authorized(handlers.AddCmd(u))).Methods("PATCH")
 	router.HandleFunc("/user/delcmd/{APIKey}", jwtauth.Authorized(handlers.DelCmd(u))).Methods("PATCH")
 	router.HandleFunc("/user/del/{APIKey}", jwtauth.Authorized(handlers.DelUser(u))).Methods("DELETE")
@@ -37,6 +37,7 @@ func Router() *mux.Router {
 
 	router.HandleFunc("/team/{APIKey}", jwtauth.Authorized(handlers.NewTeam(t))).Methods("POST")
 	router.HandleFunc("/team/addmember/{APIKey}", jwtauth.Authorized(handlers.AddMember(t))).Methods("PATCH")
+	router.HandleFunc("/team/delself/{APIKey}", jwtauth.Authorized(handlers.DelSelf(t))).Methods("PATCH")
 	router.HandleFunc("/team/addcmd/{APIKey}", jwtauth.Authorized(handlers.AddTeamCmd(t))).Methods("PATCH")
 	router.HandleFunc("/team/delcmd/{APIKey}", jwtauth.Authorized(handlers.DelTeamCmd(t))).Methods("PATCH")
 
