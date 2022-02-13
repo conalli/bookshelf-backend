@@ -270,6 +270,7 @@ func RemoveCmdFromUser(ctx context.Context, collection *mongo.Collection, userID
 }
 
 // Delete attempts to delete a user from the db, returning the number of deleted users.
+// TODO: remove user from all users teams.
 func (m *Mongo) Delete(reqCtx context.Context, requestData user.DelUserRequest, APIKey string) (int, errors.ApiErr) {
 	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
 	defer cancelFunc()
