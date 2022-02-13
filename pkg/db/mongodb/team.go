@@ -168,6 +168,77 @@ func addMemberToTeam(ctx context.Context, collection *mongo.Collection, teamID, 
 	return true, nil
 }
 
+// DelSelf takes a request and attemps to remove a member from the given team.
+func (m *Mongo) DelSelf(ctx context.Context, requestData team.DelSelfRequest) (bool, errors.ApiErr) {
+	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
+	defer cancelFunc()
+	m.Initialize()
+	err := m.client.Connect(reqCtx)
+	if err != nil {
+		log.Printf("couldn't connect to db on new team, %+v", err)
+	}
+	defer m.client.Disconnect(reqCtx)
+	res, err := m.SessionWithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
+		userCollection := m.db.Collection(CollectionUsers)
+		update := UpdateEmbedOptions{
+			FilterKey:   "_id",
+			FilterValue: requestData.ID,
+			Embedded:    "teams",
+			Key:         requestData.TeamID,
+			Value:       "",
+		}
+		res, err := UpdateEmbedByField(sessCtx, userCollection, update)
+		if err != nil {
+			log.Println("couldnt remove user with id: " + requestData.ID + "from team: " + requestData.TeamID)
+			return false, errors.NewBadRequestError("couldnt remove user from team")
+		}
+		user, err := DecodeUser(res)
+		if err != nil {
+			log.Printf("couldnt decode user from single update result: %+v", err)
+			return false, err
+		}
+		teamCollection := m.db.Collection(CollectionTeams)
+		ok, err := removeMemberFromTeam(sessCtx, teamCollection, requestData.TeamID, user.ID)
+		if err != nil {
+			log.Printf("error adding member with name: %s to team with id: %s\n error: %+v\n", requestData.ID, requestData.TeamID, err)
+			return false, errors.NewInternalServerError()
+		}
+		return ok, nil
+	})
+	if err != nil {
+		log.Println("error could not start db transaction")
+		return false, errors.NewInternalServerError()
+	}
+	if v, ok := res.(bool); ok {
+		if !v {
+			return false, nil
+		}
+	} else {
+		return false, nil
+	}
+	return true, nil
+}
+
+func removeMemberFromTeam(ctx context.Context, collection *mongo.Collection, teamID, memberID string) (bool, error) {
+	opts := options.Update().SetUpsert(true)
+	filter, err := primitive.ObjectIDFromHex(teamID)
+	if err != nil {
+		log.Printf("error getting objectid from hex: %+v\n", err)
+		return false, err
+	}
+	update := bson.D{primitive.E{Key: "$unset", Value: bson.D{primitive.E{Key: fmt.Sprintf("members.%s", memberID), Value: ""}}}}
+	result, err := collection.UpdateByID(ctx, filter, update, opts)
+	if err != nil {
+		log.Printf("error attempting to add user: %s to team: %s: %+v\n", memberID, teamID, err)
+		return false, err
+	}
+	if result.ModifiedCount == 0 && result.UpsertedCount == 0 {
+		log.Printf("error attempting to add user: %s to team: %s, team was not modified\n", memberID, teamID)
+		return false, nil
+	}
+	return true, nil
+}
+
 // AddCmdToTeam takes request data and attempts to add a new cmd to the teams bookmarks.
 // TODO: improve validation.
 func (m *Mongo) AddCmdToTeam(ctx context.Context, requestData team.AddTeamCmdRequest) (int, errors.ApiErr) {

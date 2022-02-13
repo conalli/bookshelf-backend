@@ -10,6 +10,7 @@ import (
 type Repository interface {
 	New(ctx context.Context, requestData NewTeamRequest) (string, errors.ApiErr)
 	AddMember(ctx context.Context, requestData AddMemberRequest) (bool, errors.ApiErr)
+	DelSelf(ctx context.Context, requestData DelSelfRequest) (bool, errors.ApiErr)
 	AddCmdToTeam(ctx context.Context, requestData AddTeamCmdRequest) (int, errors.ApiErr)
 	DelCmdFromTeam(ctx context.Context, requestData DelTeamCmdRequest, APIKey string) (int, errors.ApiErr)
 }
@@ -18,6 +19,7 @@ type Repository interface {
 type Service interface {
 	New(ctx context.Context, requestData NewTeamRequest) (string, errors.ApiErr)
 	AddMember(ctx context.Context, requestData AddMemberRequest) (bool, errors.ApiErr)
+	DelSelf(ctx context.Context, requestData DelSelfRequest) (bool, errors.ApiErr)
 	AddCmdToTeam(ctx context.Context, requestData AddTeamCmdRequest) (int, errors.ApiErr)
 	DelCmdFromTeam(ctx context.Context, requestData DelTeamCmdRequest, APIKey string) (int, errors.ApiErr)
 }
@@ -40,6 +42,11 @@ func (s *service) New(ctx context.Context, requestData NewTeamRequest) (string, 
 // AddMember calls the repository method for adding a member to a new team.
 func (s *service) AddMember(ctx context.Context, requestData AddMemberRequest) (bool, errors.ApiErr) {
 	ok, err := s.r.AddMember(ctx, requestData)
+	return ok, err
+}
+
+func (s *service) DelSelf(ctx context.Context, requestData DelSelfRequest) (bool, errors.ApiErr) {
+	ok, err := s.r.DelSelf(ctx, requestData)
 	return ok, err
 }
 
