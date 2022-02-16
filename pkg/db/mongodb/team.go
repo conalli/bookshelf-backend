@@ -51,7 +51,7 @@ func (m *Mongo) New(ctx context.Context, requestData team.NewTeamRequest) (strin
 		Name:      requestData.Name,
 		Password:  hashedPassword,
 		ShortName: requestData.ShortName,
-		Members:   map[string]string{requestData.ID: "admin"},
+		Members:   map[string]string{requestData.ID: team.RoleAdmin},
 		Bookmarks: map[string]string{},
 	}
 	res, err := m.SessionWithTransaction(reqCtx, func(sessCtx mongo.SessionContext) (interface{}, error) {
@@ -148,6 +148,7 @@ func (m *Mongo) AddMember(ctx context.Context, requestData team.AddMemberRequest
 	return true, nil
 }
 
+// TODO: add validation for role
 func addMemberToTeam(ctx context.Context, collection *mongo.Collection, teamID, memberID, role string) (bool, error) {
 	opts := options.Update().SetUpsert(true)
 	filter, err := primitive.ObjectIDFromHex(teamID)
@@ -200,7 +201,58 @@ func (m *Mongo) DelSelf(ctx context.Context, requestData team.DelSelfRequest) (b
 		teamCollection := m.db.Collection(CollectionTeams)
 		ok, err := removeMemberFromTeam(sessCtx, teamCollection, requestData.TeamID, user.ID)
 		if err != nil {
-			log.Printf("error adding member with name: %s to team with id: %s\n error: %+v\n", requestData.ID, requestData.TeamID, err)
+			log.Printf("error removing user with name: %s from team with id: %s\n error: %+v\n", requestData.ID, requestData.TeamID, err)
+			return false, errors.NewInternalServerError()
+		}
+		return ok, nil
+	})
+	if err != nil {
+		log.Println("error could not start db transaction")
+		return false, errors.NewInternalServerError()
+	}
+	if v, ok := res.(bool); ok {
+		if !v {
+			return false, nil
+		}
+	} else {
+		return false, nil
+	}
+	return true, nil
+}
+
+// DelMember takes a request and attemps to remove a member from the given team.
+func (m *Mongo) DelMember(ctx context.Context, requestData team.DelMemberRequest) (bool, errors.ApiErr) {
+	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
+	defer cancelFunc()
+	m.Initialize()
+	err := m.client.Connect(reqCtx)
+	if err != nil {
+		log.Printf("couldn't connect to db on new team, %+v", err)
+	}
+	defer m.client.Disconnect(reqCtx)
+	res, err := m.SessionWithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
+		userCollection := m.db.Collection(CollectionUsers)
+		update := UpdateEmbedOptions{
+			FilterKey:   "name",
+			FilterValue: requestData.MemberName,
+			Embedded:    "teams",
+			Key:         requestData.TeamID,
+			Value:       "",
+		}
+		res, err := UpdateEmbedByField(sessCtx, userCollection, update)
+		if err != nil {
+			log.Println("couldnt remove user with id: " + requestData.ID + "from team: " + requestData.TeamID)
+			return false, errors.NewBadRequestError("couldnt remove user from team")
+		}
+		user, err := DecodeUser(res)
+		if err != nil {
+			log.Printf("couldnt decode user from single update result: %+v", err)
+			return false, err
+		}
+		teamCollection := m.db.Collection(CollectionTeams)
+		ok, err := removeMemberFromTeam(sessCtx, teamCollection, requestData.TeamID, user.ID)
+		if err != nil {
+			log.Printf("error removing member with name: %s from team with id: %s\n error: %+v\n", requestData.MemberName, requestData.TeamID, err)
 			return false, errors.NewInternalServerError()
 		}
 		return ok, nil
