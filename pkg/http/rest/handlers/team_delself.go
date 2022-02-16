@@ -17,12 +17,12 @@ type delSelfResponse struct {
 // DelSelf is the handler for the delSelf endpoint. Removes member from team.
 func DelSelf(t team.Service) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("AddMember endpoint hit")
+		log.Println("DelSelf endpoint hit")
 		var delSelfReq team.DelSelfRequest
 		json.NewDecoder(r.Body).Decode(&delSelfReq)
 		ok, err := t.DelSelf(r.Context(), delSelfReq)
 		if err != nil {
-			log.Printf("error returned while trying to add a new member: %v", err)
+			log.Printf("error returned while trying to delete self from team: %v", err)
 			errors.APIErrorResponse(w, err)
 			return
 		}
@@ -31,13 +31,13 @@ func DelSelf(t team.Service) func(w http.ResponseWriter, r *http.Request) {
 			NumMembersDeleted: 0,
 		}
 		if !ok {
-			log.Printf("failed to delete member: %s\n", delSelfReq.ID)
+			log.Printf("failed to delete self from team: %s\n", delSelfReq.ID)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(res)
 			return
 		}
-		log.Printf("successfully deleted member: %s\n", delSelfReq.ID)
+		log.Printf("successfully deleted self from team: %s\n", delSelfReq.ID)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		res.NumMembersDeleted = 1
