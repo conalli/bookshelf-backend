@@ -9,3 +9,9 @@ type Team struct {
 	Members   map[string]string `json:"members" bson:"members"`
 	Bookmarks map[string]string `json:"bookmarks" bson:"bookmarks"`
 }
+
+// Represents the current authorization roles for team members.
+const (
+	RoleAdmin = "ADMIN"
+	RoleUser  = "USER"
+)
