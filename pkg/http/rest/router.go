@@ -38,6 +38,7 @@ func Router() *mux.Router {
 	router.HandleFunc("/team/{APIKey}", jwtauth.Authorized(handlers.NewTeam(t))).Methods("POST")
 	router.HandleFunc("/team/addmember/{APIKey}", jwtauth.Authorized(handlers.AddMember(t))).Methods("PATCH")
 	router.HandleFunc("/team/delself/{APIKey}", jwtauth.Authorized(handlers.DelSelf(t))).Methods("PATCH")
+	router.HandleFunc("/team/delmember/{APIKey}", jwtauth.Authorized(handlers.DelMember(t))).Methods("PATCH")
 	router.HandleFunc("/team/addcmd/{APIKey}", jwtauth.Authorized(handlers.AddTeamCmd(t))).Methods("PATCH")
 	router.HandleFunc("/team/delcmd/{APIKey}", jwtauth.Authorized(handlers.DelTeamCmd(t))).Methods("PATCH")
 
