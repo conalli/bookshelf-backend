@@ -16,11 +16,18 @@ type AddMemberRequest struct {
 	Role       string `json:"role"`
 }
 
-// DelSelfRequest represents the expected JSON request for the /team/delmember endpoint.
+// DelSelfRequest represents the expected JSON request for the /team/delself endpoint.
 type DelSelfRequest struct {
 	ID     string `json:"id"`
 	TeamID string `json:"teamId"`
-	Role   string `json:"role"`
+}
+
+// DelMemberRequest represents the expected JSON request for the /team/delmember endpoint.
+type DelMemberRequest struct {
+	ID         string `json:"id"`
+	TeamID     string `json:"teamId"`
+	MemberName string `jsong:"memberName"`
+	Role       string `json:"role"`
 }
 
 // AddTeamCmdRequest represents the expected JSON request for the /team/addcmd endpoint.
