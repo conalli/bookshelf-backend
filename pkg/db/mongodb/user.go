@@ -95,7 +95,8 @@ func (m *Mongo) LogIn(ctx context.Context, requestData user.LogInRequest) (user.
 	}
 	defer m.client.Disconnect(reqCtx)
 	collection := m.db.Collection(CollectionUsers)
-	currUser, err := GetUserByKey(reqCtx, collection, "name", requestData.Name)
+	res := GetByKey(reqCtx, collection, "name", requestData.Name)
+	currUser, err := DecodeUser(res)
 	if err != nil || !password.CheckHashedPassword(currUser.Password, requestData.Password) {
 		log.Printf("login getuserbykey %+v", err)
 		return user.User{}, errors.NewApiError(http.StatusUnauthorized, errors.ErrWrongCredentials.Error(), "error: name or password incorrect")
@@ -121,7 +122,8 @@ func (m *Mongo) GetTeams(ctx context.Context, APIKey string) ([]user.Team, error
 	defer m.client.Disconnect(reqCtx)
 	res, err := m.SessionWithTransaction(reqCtx, func(sessCtx mongo.SessionContext) (interface{}, error) {
 		userCollection := m.db.Collection(CollectionUsers)
-		currUser, err := GetUserByKey(sessCtx, userCollection, "APIKey", APIKey)
+		res := GetByKey(sessCtx, userCollection, "APIKey", APIKey)
+		currUser, err := DecodeUser(res)
 		if err != nil {
 			log.Printf("error getting user by APIKey: %s -> %+v\n", APIKey, err)
 			return nil, err
@@ -187,7 +189,8 @@ func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]strin
 	defer m.client.Disconnect(reqCtx)
 	collection := m.db.Collection(CollectionUsers)
 
-	user, err := GetUserByKey(reqCtx, collection, "APIKey", APIKey)
+	res := GetByKey(reqCtx, collection, "APIKey", APIKey)
+	user, err := DecodeUser(res)
 	if err != nil {
 		return nil, errors.ParseGetUserError(APIKey, err)
 	}
@@ -281,9 +284,14 @@ func (m *Mongo) Delete(reqCtx context.Context, requestData user.DelUserRequest, 
 	}
 	defer m.client.Disconnect(reqCtx)
 	collection := m.db.Collection(CollectionUsers)
-	userData, err := GetByID(ctx, collection, requestData.ID)
+	res, err := GetByID(ctx, collection, requestData.ID)
 	if err != nil {
 		log.Printf("error deleting user: couldn't find user -> %v", err)
+		return 0, errors.NewBadRequestError("could not find user to delete")
+	}
+	userData, err := DecodeUser(res)
+	if err != nil {
+		log.Printf("error decoding user -> %v", err)
 		return 0, errors.NewBadRequestError("could not find user to delete")
 	}
 	ok := password.CheckHashedPassword(userData.Password, requestData.Password)

@@ -97,34 +97,20 @@ func DataAlreadyExists(ctx context.Context, collection *mongo.Collection, key, v
 }
 
 // GetByID finds and returns user data based on a the users _id.
-func GetByID(ctx context.Context, collection *mongo.Collection, userID string) (User, error) {
-	id, err := primitive.ObjectIDFromHex(userID)
+func GetByID(ctx context.Context, collection *mongo.Collection, id string) (*mongo.SingleResult, error) {
+	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return User{}, err
+		log.Println("couldnt get objectID from hex")
+		return nil, err
 	}
-	var result User
-	err = collection.FindOne(ctx, bson.M{"_id": id}).Decode(&result)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return result, mongo.ErrNoDocuments
-		}
-		return result, err
-	}
-	return result, nil
+	res := collection.FindOne(ctx, bson.M{"_id": oid})
+	return res, nil
 }
 
-// GetUserByKey finds and returns user data based on a key-value pair.
-func GetUserByKey(ctx context.Context, collection *mongo.Collection, reqKey, reqValue string) (User, error) {
-	var result User
-	err := collection.FindOne(ctx, bson.D{primitive.E{Key: reqKey, Value: reqValue}}).Decode(&result)
-	if err != nil {
-		log.Printf("get user: %+v", err)
-		if err == mongo.ErrNoDocuments {
-			return result, mongo.ErrNoDocuments
-		}
-		return result, err
-	}
-	return result, nil
+// GetByKey finds and returns user data based on a key-value pair.
+func GetByKey(ctx context.Context, collection *mongo.Collection, reqKey, reqValue string) *mongo.SingleResult {
+	res := collection.FindOne(ctx, bson.D{primitive.E{Key: reqKey, Value: reqValue}})
+	return res
 }
 
 // UpdateEmbedOptions gives options for the UpdateEmbedByField function.

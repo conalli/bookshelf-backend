@@ -19,7 +19,8 @@ func (m *Mongo) Search(ctx context.Context, APIKey, cmd string) (string, error) 
 	}
 	defer m.client.Disconnect(reqCtx)
 	collection := m.db.Collection(CollectionUsers)
-	currUser, err := GetUserByKey(ctx, collection, "APIKey", APIKey)
+	res := GetByKey(ctx, collection, "APIKey", APIKey)
+	currUser, err := DecodeUser(res)
 	defaultSearch := fmt.Sprintf("http://www.google.com/search?q=%s", cmd)
 	if err != nil {
 		return defaultSearch, err
