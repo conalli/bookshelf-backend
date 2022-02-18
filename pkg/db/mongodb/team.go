@@ -42,7 +42,7 @@ func (m *Mongo) New(ctx context.Context, requestData team.NewTeamRequest) (strin
 		log.Println("team already exists")
 		return "", errors.NewBadRequestError(fmt.Sprintf("error creating new user; user with name %v already exists", requestData.Name))
 	}
-	hashedPassword, err := password.HashPassword(requestData.Password)
+	hashedPassword, err := password.HashPassword(requestData.TeamPassword)
 	if err != nil {
 		log.Printf("couldnt hash password: %+v\n", err)
 		return "", errors.NewInternalServerError()
@@ -96,6 +96,112 @@ func (m *Mongo) New(ctx context.Context, requestData team.NewTeamRequest) (strin
 	return v, nil
 }
 
+// DeleteTeam removes a team from the db and updates each users account to reflect it.
+// TODO: improve validation
+func (m *Mongo) DeleteTeam(ctx context.Context, requestData team.DelTeamRequest) (int, errors.ApiErr) {
+	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
+	defer cancelFunc()
+	m.Initialize()
+	err := m.client.Connect(reqCtx)
+	if err != nil {
+		log.Printf("couldn't connect to db on new team, %+v\n", err)
+		return 0, errors.NewInternalServerError()
+	}
+	defer m.client.Disconnect(reqCtx)
+	res, err := m.SessionWithTransaction(reqCtx, func(sessCtx mongo.SessionContext) (interface{}, error) {
+		teamCollection := m.db.Collection(CollectionTeams)
+		res, err := GetByID(sessCtx, teamCollection, requestData.TeamID)
+		if err != nil {
+			log.Printf("Couldnt find team with id: %s to delete.\n", requestData.TeamID)
+			return nil, errors.NewInternalServerError()
+		}
+		teamData, err := DecodeTeam(res)
+		if err != nil {
+			log.Println("Couldn't decode team from result.")
+			return nil, errors.NewInternalServerError()
+		}
+		if !password.CheckHashedPassword(teamData.Password, requestData.TeamPassword) {
+			log.Println("error: wrong password when attempting to delete team")
+			return nil, errors.NewWrongCredentialsError("incorrect team password")
+		}
+		result, err := deleteTeamFromDB(sessCtx, teamCollection, requestData.TeamID)
+		if err != nil {
+			log.Printf("error deleting team %s from db\n", requestData.TeamID)
+			return nil, err
+		}
+		userCollection := m.db.Collection(CollectionUsers)
+		memberIDs := getMemberIDsFromTeam(teamData.Members)
+		update, err := deleteTeamFromUsers(sessCtx, userCollection, teamData.ID, memberIDs)
+		if err != nil {
+			log.Printf("couldn't update team members to remove team %s\n", requestData.TeamID)
+			return nil, err
+		}
+		if update.MatchedCount == 0 {
+			log.Printf("Update couldn't match any members for team: %s\n", requestData.TeamID)
+			return nil, errors.NewInternalServerError()
+		}
+		if update.ModifiedCount == 0 {
+			log.Printf("Couldn't update any members of team: %s\n", requestData.TeamID)
+			return nil, errors.NewInternalServerError()
+		}
+		return int(result.DeletedCount), nil
+	})
+	if err != nil {
+		log.Printf("error trying to delete team -> %v", err)
+		return 0, errors.NewInternalServerError()
+	}
+	v, ok := res.(int)
+	if !ok {
+		log.Printf("result of transaction type %T, wanted int\n", res)
+		return 0, errors.NewInternalServerError()
+	}
+	return v, nil
+}
+
+func deleteTeamFromDB(ctx context.Context, collection *mongo.Collection, teamID string) (*mongo.DeleteResult, error) {
+	opts := options.Delete().SetCollation(&options.Collation{
+		Locale:    "en_US",
+		Strength:  1,
+		CaseLevel: false,
+	})
+	id, err := primitive.ObjectIDFromHex(teamID)
+	if err != nil {
+		return nil, err
+	}
+	filter := bson.D{primitive.E{Key: "_id", Value: id}}
+	result, err := collection.DeleteOne(ctx, filter, opts)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func getMemberIDsFromTeam(userIDs map[string]string) []string {
+	ids := make([]string, len(userIDs))
+	i := 0
+	for k := range userIDs {
+		ids[i] = k
+		i++
+	}
+	return ids
+}
+
+func deleteTeamFromUsers(ctx context.Context, collection *mongo.Collection, teamID string, userIDs []string) (*mongo.UpdateResult, error) {
+	var oids []primitive.ObjectID
+	for _, userID := range userIDs {
+		oid, err := primitive.ObjectIDFromHex(userID)
+		if err != nil {
+			log.Println("couldnt get objectID from hex")
+			return nil, err
+		}
+		oids = append(oids, oid)
+	}
+	filter := bson.D{primitive.E{Key: "_id", Value: bson.D{primitive.E{Key: "$in", Value: oids}}}}
+	update := bson.D{primitive.E{Key: "$unset", Value: bson.D{primitive.E{Key: fmt.Sprintf("teams.%s", teamID), Value: ""}}}}
+	res, err := collection.UpdateMany(ctx, filter, update)
+	return res, err
+}
+
 // AddMember checks whether a username alreadys exists in the db. If not, a new user
 // is created based upon the request data.
 func (m *Mongo) AddMember(ctx context.Context, requestData team.AddMemberRequest) (bool, errors.ApiErr) {
@@ -107,7 +213,7 @@ func (m *Mongo) AddMember(ctx context.Context, requestData team.AddMemberRequest
 		log.Printf("couldn't connect to db on new team, %+v", err)
 	}
 	defer m.client.Disconnect(reqCtx)
-	res, err := m.SessionWithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
+	res, err := m.SessionWithTransaction(reqCtx, func(sessCtx mongo.SessionContext) (interface{}, error) {
 		userCollection := m.db.Collection(CollectionUsers)
 		update := UpdateEmbedOptions{
 			FilterKey:   "name",
@@ -179,7 +285,7 @@ func (m *Mongo) DelSelf(ctx context.Context, requestData team.DelSelfRequest) (b
 		log.Printf("couldn't connect to db on new team, %+v", err)
 	}
 	defer m.client.Disconnect(reqCtx)
-	res, err := m.SessionWithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
+	res, err := m.SessionWithTransaction(reqCtx, func(sessCtx mongo.SessionContext) (interface{}, error) {
 		userCollection := m.db.Collection(CollectionUsers)
 		update := UpdateEmbedOptions{
 			FilterKey:   "_id",
@@ -230,7 +336,7 @@ func (m *Mongo) DelMember(ctx context.Context, requestData team.DelMemberRequest
 		log.Printf("couldn't connect to db on new team, %+v", err)
 	}
 	defer m.client.Disconnect(reqCtx)
-	res, err := m.SessionWithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
+	res, err := m.SessionWithTransaction(reqCtx, func(sessCtx mongo.SessionContext) (interface{}, error) {
 		userCollection := m.db.Collection(CollectionUsers)
 		update := UpdateEmbedOptions{
 			FilterKey:   "name",
