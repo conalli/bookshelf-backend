@@ -1,11 +1,18 @@
 package team
 
-// NewTeamRequest represents the expected JSON request for the /team/new endpoint.
+// NewTeamRequest represents the expected JSON request for the /team POST endpoint.
 type NewTeamRequest struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Password  string `json:"password"`
-	ShortName string `json:"shortName"`
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	TeamPassword string `json:"password"`
+	ShortName    string `json:"shortName"`
+}
+
+// DelTeamRequest represents the expected JSON request for the /team DELETE endpoint.
+type DelTeamRequest struct {
+	ID           string `json:"id"`
+	TeamID       string `json:"teamId"`
+	TeamPassword string `json:"password"`
 }
 
 // AddMemberRequest represents the expected JSON request for the /team/addmember endpoint.

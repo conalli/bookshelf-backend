@@ -9,6 +9,7 @@ import (
 // Repository provides access to team storage.
 type Repository interface {
 	New(ctx context.Context, requestData NewTeamRequest) (string, errors.ApiErr)
+	DeleteTeam(ctx context.Context, requestData DelTeamRequest) (int, errors.ApiErr)
 	AddMember(ctx context.Context, requestData AddMemberRequest) (bool, errors.ApiErr)
 	DelSelf(ctx context.Context, requestData DelSelfRequest) (bool, errors.ApiErr)
 	DelMember(ctx context.Context, requestData DelMemberRequest) (bool, errors.ApiErr)
@@ -19,6 +20,7 @@ type Repository interface {
 // Service provides Team operations.
 type Service interface {
 	New(ctx context.Context, requestData NewTeamRequest) (string, errors.ApiErr)
+	DeleteTeam(ctx context.Context, requestData DelTeamRequest) (int, errors.ApiErr)
 	AddMember(ctx context.Context, requestData AddMemberRequest) (bool, errors.ApiErr)
 	DelSelf(ctx context.Context, requestData DelSelfRequest) (bool, errors.ApiErr)
 	DelMember(ctx context.Context, requestData DelMemberRequest) (bool, errors.ApiErr)
@@ -39,6 +41,11 @@ func NewService(r Repository) Service {
 func (s *service) New(ctx context.Context, requestData NewTeamRequest) (string, errors.ApiErr) {
 	teamID, err := s.r.New(ctx, requestData)
 	return teamID, err
+}
+
+func (s *service) DeleteTeam(ctx context.Context, requestData DelTeamRequest) (int, errors.ApiErr) {
+	numDeleted, err := s.r.DeleteTeam(ctx, requestData)
+	return numDeleted, err
 }
 
 // AddMember calls the repository method for adding a member to a new team.
