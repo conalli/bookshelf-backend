@@ -71,7 +71,7 @@ func (m *Mongo) New(ctx context.Context, requestData team.NewTeamRequest) (strin
 			FilterValue: requestData.ID,
 			Embedded:    "teams",
 			Key:         teamOID.Hex(),
-			Value:       "admin",
+			Value:       team.RoleAdmin,
 		}
 		res, err := UpdateEmbedByField(sessCtx, userCollection, opts)
 		if err != nil {
