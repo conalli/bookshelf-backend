@@ -1,0 +1,4 @@
+#! /bin/sh
+
+docker-compose -p bookshelf_dev down -v
+exit 0

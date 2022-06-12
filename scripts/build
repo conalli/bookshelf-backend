@@ -1,0 +1,4 @@
+#! /bin/sh
+
+docker-compose -f ../build/docker-compose.dev.yml -p bookshelf_dev build
+exit 0
