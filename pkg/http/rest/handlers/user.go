@@ -6,18 +6,18 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/conalli/bookshelf-backend/pkg/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
-	"github.com/conalli/bookshelf-backend/pkg/user"
 	"github.com/gorilla/mux"
 )
 
 // SignUp is the handler for the signup endpoint. Checks db for username and if
 // unique adds new user with given credentials.
-func SignUp(u user.Service) func(w http.ResponseWriter, r *http.Request) {
+func SignUp(u accounts.UserService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("SignUp endpoint hit")
-		var newUserReq user.SignUpRequest
+		var newUserReq accounts.SignUpRequest
 		json.NewDecoder(r.Body).Decode(&newUserReq)
 		newUser, err := u.NewUser(r.Context(), newUserReq)
 		if err != nil {
@@ -59,12 +59,12 @@ type delUserResponse struct {
 
 // DelUser is the handler for the delacc endpoint. Checks credentials and if
 // authorized deletes user.
-func DelUser(u user.Service) func(w http.ResponseWriter, r *http.Request) {
+func DelUser(u accounts.UserService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("delacc endpoint hit")
 		vars := mux.Vars(r)
 		APIKey := vars["APIKey"]
-		var delAccReq user.DelUserRequest
+		var delAccReq accounts.DelUserRequest
 		json.NewDecoder(r.Body).Decode(&delAccReq)
 		numDeleted, err := u.Delete(r.Context(), delAccReq, APIKey)
 		if err != nil {

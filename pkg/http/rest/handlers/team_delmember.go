@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/conalli/bookshelf-backend/pkg/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/errors"
-	"github.com/conalli/bookshelf-backend/pkg/team"
 )
 
 type delMemberResponse struct {
@@ -15,10 +15,10 @@ type delMemberResponse struct {
 }
 
 // DelMember is the handler for the delmember endpoint. Removes member from team.
-func DelMember(t team.Service) func(w http.ResponseWriter, r *http.Request) {
+func DelMember(t accounts.TeamService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("DelMember endpoint hit")
-		var delMemberReq team.DelMemberRequest
+		var delMemberReq accounts.DelMemberRequest
 		json.NewDecoder(r.Body).Decode(&delMemberReq)
 		ok, err := t.DelMember(r.Context(), delMemberReq)
 		if err != nil {

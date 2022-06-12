@@ -5,16 +5,16 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/conalli/bookshelf-backend/pkg/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/errors"
-	"github.com/conalli/bookshelf-backend/pkg/team"
 )
 
 // NewTeam is the handler for the newteam endpoint. Checks db for team name and if
 // unique adds new team with given data.
-func NewTeam(t team.Service) func(w http.ResponseWriter, r *http.Request) {
+func NewTeam(t accounts.TeamService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("NewTeam endpoint hit")
-		var newTeamReq team.NewTeamRequest
+		var newTeamReq accounts.NewTeamRequest
 		json.NewDecoder(r.Body).Decode(&newTeamReq)
 		teamID, err := t.New(r.Context(), newTeamReq)
 		if err != nil {
@@ -38,10 +38,10 @@ func NewTeam(t team.Service) func(w http.ResponseWriter, r *http.Request) {
 
 // DelTeam is the handler for the delteam endpoint. Checks for user role and if
 // admin deletes team from database.
-func DelTeam(t team.Service) func(w http.ResponseWriter, r *http.Request) {
+func DelTeam(t accounts.TeamService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("DelTeam endpoint hit")
-		var delTeamReq team.DelTeamRequest
+		var delTeamReq accounts.DelTeamRequest
 		json.NewDecoder(r.Body).Decode(&delTeamReq)
 		numDeleted, err := t.DeleteTeam(r.Context(), delTeamReq)
 		if err != nil {

@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/conalli/bookshelf-backend/pkg/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/errors"
-	"github.com/conalli/bookshelf-backend/pkg/team"
 )
 
 type delSelfResponse struct {
@@ -15,10 +15,10 @@ type delSelfResponse struct {
 }
 
 // DelSelf is the handler for the delSelf endpoint. Removes member from team.
-func DelSelf(t team.Service) func(w http.ResponseWriter, r *http.Request) {
+func DelSelf(t accounts.TeamService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("DelSelf endpoint hit")
-		var delSelfReq team.DelSelfRequest
+		var delSelfReq accounts.DelSelfRequest
 		json.NewDecoder(r.Body).Decode(&delSelfReq)
 		ok, err := t.DelSelf(r.Context(), delSelfReq)
 		if err != nil {

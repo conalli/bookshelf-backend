@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/conalli/bookshelf-backend/pkg/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/db"
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/password"
-	"github.com/conalli/bookshelf-backend/pkg/team"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -27,7 +27,7 @@ type Team struct {
 
 // New checks whether a team name alreadys exists in the db. If not, a new team
 // is created based upon the request data.
-func (m *Mongo) New(ctx context.Context, requestData team.NewTeamRequest) (string, errors.ApiErr) {
+func (m *Mongo) New(ctx context.Context, requestData accounts.NewTeamRequest) (string, errors.ApiErr) {
 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 	defer cancelFunc()
 	m.Initialize()
@@ -51,7 +51,7 @@ func (m *Mongo) New(ctx context.Context, requestData team.NewTeamRequest) (strin
 		Name:      requestData.Name,
 		Password:  hashedPassword,
 		ShortName: requestData.ShortName,
-		Members:   map[string]string{requestData.ID: team.RoleAdmin},
+		Members:   map[string]string{requestData.ID: accounts.RoleAdmin},
 		Bookmarks: map[string]string{},
 	}
 	res, err := m.SessionWithTransaction(reqCtx, func(sessCtx mongo.SessionContext) (interface{}, error) {
@@ -71,7 +71,7 @@ func (m *Mongo) New(ctx context.Context, requestData team.NewTeamRequest) (strin
 			FilterValue: requestData.ID,
 			Embedded:    "teams",
 			Key:         teamOID.Hex(),
-			Value:       team.RoleAdmin,
+			Value:       accounts.RoleAdmin,
 		}
 		res, err := UpdateEmbedByField(sessCtx, userCollection, opts)
 		if err != nil {
@@ -98,7 +98,7 @@ func (m *Mongo) New(ctx context.Context, requestData team.NewTeamRequest) (strin
 
 // DeleteTeam removes a team from the db and updates each users account to reflect it.
 // TODO: improve validation
-func (m *Mongo) DeleteTeam(ctx context.Context, requestData team.DelTeamRequest) (int, errors.ApiErr) {
+func (m *Mongo) DeleteTeam(ctx context.Context, requestData accounts.DelTeamRequest) (int, errors.ApiErr) {
 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 	defer cancelFunc()
 	m.Initialize()
@@ -204,7 +204,7 @@ func deleteTeamFromUsers(ctx context.Context, collection *mongo.Collection, team
 
 // AddMember checks whether a username alreadys exists in the db. If not, a new user
 // is created based upon the request data.
-func (m *Mongo) AddMember(ctx context.Context, requestData team.AddMemberRequest) (bool, errors.ApiErr) {
+func (m *Mongo) AddMember(ctx context.Context, requestData accounts.AddMemberRequest) (bool, errors.ApiErr) {
 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 	defer cancelFunc()
 	m.Initialize()
@@ -276,7 +276,7 @@ func addMemberToTeam(ctx context.Context, collection *mongo.Collection, teamID, 
 }
 
 // DelSelf takes a request and attemps to remove a member from the given team.
-func (m *Mongo) DelSelf(ctx context.Context, requestData team.DelSelfRequest) (bool, errors.ApiErr) {
+func (m *Mongo) DelSelf(ctx context.Context, requestData accounts.DelSelfRequest) (bool, errors.ApiErr) {
 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 	defer cancelFunc()
 	m.Initialize()
@@ -327,7 +327,7 @@ func (m *Mongo) DelSelf(ctx context.Context, requestData team.DelSelfRequest) (b
 }
 
 // DelMember takes a request and attemps to remove a member from the given team.
-func (m *Mongo) DelMember(ctx context.Context, requestData team.DelMemberRequest) (bool, errors.ApiErr) {
+func (m *Mongo) DelMember(ctx context.Context, requestData accounts.DelMemberRequest) (bool, errors.ApiErr) {
 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 	defer cancelFunc()
 	m.Initialize()
@@ -399,7 +399,7 @@ func removeMemberFromTeam(ctx context.Context, collection *mongo.Collection, tea
 
 // AddCmdToTeam takes request data and attempts to add a new cmd to the teams bookmarks.
 // TODO: improve validation.
-func (m *Mongo) AddCmdToTeam(ctx context.Context, requestData team.AddTeamCmdRequest) (int, errors.ApiErr) {
+func (m *Mongo) AddCmdToTeam(ctx context.Context, requestData accounts.AddTeamCmdRequest) (int, errors.ApiErr) {
 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 	defer cancelFunc()
 	m.Initialize()
@@ -439,7 +439,7 @@ func addCmdToTeam(ctx context.Context, collection *mongo.Collection, userID, key
 // DelCmdFromTeam attempts to either rempve a cmd from the user, returning the number
 // of updated cmds.
 // TODO: improve validation
-func (m *Mongo) DelCmdFromTeam(ctx context.Context, requestData team.DelTeamCmdRequest, APIKey string) (int, errors.ApiErr) {
+func (m *Mongo) DelCmdFromTeam(ctx context.Context, requestData accounts.DelTeamCmdRequest, APIKey string) (int, errors.ApiErr) {
 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 	defer cancelFunc()
 	m.Initialize()

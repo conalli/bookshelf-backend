@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/conalli/bookshelf-backend/pkg/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/errors"
-	"github.com/conalli/bookshelf-backend/pkg/team"
 )
 
 type addMemberResponse struct {
@@ -16,10 +16,10 @@ type addMemberResponse struct {
 
 // AddMember is the handler for the addmember endpoint. Checks db for team name and if
 // unique adds new team with given data.
-func AddMember(t team.Service) func(w http.ResponseWriter, r *http.Request) {
+func AddMember(t accounts.TeamService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("AddMember endpoint hit")
-		var newMemberReq team.AddMemberRequest
+		var newMemberReq accounts.AddMemberRequest
 		json.NewDecoder(r.Body).Decode(&newMemberReq)
 		ok, err := t.AddMember(r.Context(), newMemberReq)
 		if err != nil {

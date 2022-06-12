@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/conalli/bookshelf-backend/pkg/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
-	"github.com/conalli/bookshelf-backend/pkg/user"
 )
 
 type logInResponse struct {
@@ -18,10 +18,10 @@ type logInResponse struct {
 
 // LogIn is the handler for the login endpoint. Checks credentials and if
 // correct returns JWT cookie for use with getcmds and setcmd.
-func LogIn(u user.Service) func(w http.ResponseWriter, r *http.Request) {
+func LogIn(u accounts.UserService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("LogIn endpoint hit")
-		var logInReq user.LogInRequest
+		var logInReq accounts.LogInRequest
 		json.NewDecoder(r.Body).Decode(&logInReq)
 
 		currUser, err := u.LogIn(r.Context(), logInReq)

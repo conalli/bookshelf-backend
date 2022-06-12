@@ -4,22 +4,21 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/conalli/bookshelf-backend/pkg/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/db/mongodb"
 	"github.com/conalli/bookshelf-backend/pkg/http/middleware"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest/handlers"
 	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/conalli/bookshelf-backend/pkg/search"
-	"github.com/conalli/bookshelf-backend/pkg/team"
-	"github.com/conalli/bookshelf-backend/pkg/user"
 	"github.com/gorilla/mux"
 )
 
 // Router returns a router with all handlers assigned to it
 func Router() *mux.Router {
 	mongo := mongodb.New()
-	u := user.NewService(mongo)
+	u := accounts.NewUserService(mongo)
+	t := accounts.NewTeamService(mongo)
 	s := search.NewService(mongo)
-	t := team.NewService(mongo)
 
 	router := mux.NewRouter()
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

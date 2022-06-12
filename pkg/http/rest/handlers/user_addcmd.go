@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/conalli/bookshelf-backend/pkg/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/errors"
-	"github.com/conalli/bookshelf-backend/pkg/user"
 	"github.com/gorilla/mux"
 )
 
@@ -34,12 +34,12 @@ type addCmdResponse struct {
 
 // AddCmd is the handler for the setcmd endpoint. Checks credentials + JWT and if
 // authorized sets new cmd.
-func AddCmd(u user.Service) func(w http.ResponseWriter, r *http.Request) {
+func AddCmd(u accounts.UserService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("SetCmd endpoint hit")
 		vars := mux.Vars(r)
 		APIKey := vars["APIKey"]
-		var setCmdReq user.AddCmdRequest
+		var setCmdReq accounts.AddCmdRequest
 		json.NewDecoder(r.Body).Decode(&setCmdReq)
 
 		numUpdated, err := u.AddCmd(r.Context(), setCmdReq, APIKey)

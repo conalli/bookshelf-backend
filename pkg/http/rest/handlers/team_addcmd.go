@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/conalli/bookshelf-backend/pkg/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/errors"
-	"github.com/conalli/bookshelf-backend/pkg/team"
 )
 
 type addTeamCmdResponse struct {
@@ -17,10 +17,10 @@ type addTeamCmdResponse struct {
 
 // AddTeamCmd is the handler for the team/addcmd endpoint. Checks credentials + JWT and if
 // authorized sets new cmd.
-func AddTeamCmd(t team.Service) func(w http.ResponseWriter, r *http.Request) {
+func AddTeamCmd(t accounts.TeamService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("SetCmd endpoint hit")
-		var setCmdReq team.AddTeamCmdRequest
+		var setCmdReq accounts.AddTeamCmdRequest
 		json.NewDecoder(r.Body).Decode(&setCmdReq)
 
 		numUpdated, err := t.AddCmdToTeam(r.Context(), setCmdReq)

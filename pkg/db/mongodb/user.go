@@ -6,10 +6,10 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/conalli/bookshelf-backend/pkg/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/db"
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/password"
-	"github.com/conalli/bookshelf-backend/pkg/user"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -28,7 +28,7 @@ type User struct {
 }
 
 // NewUser is a func.
-func (m *Mongo) NewUser(ctx context.Context, requestData user.SignUpRequest) (user.User, errors.ApiErr) {
+func (m *Mongo) NewUser(ctx context.Context, requestData accounts.SignUpRequest) (accounts.User, errors.ApiErr) {
 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 	defer cancelFunc()
 	m.Initialize()
@@ -41,17 +41,17 @@ func (m *Mongo) NewUser(ctx context.Context, requestData user.SignUpRequest) (us
 	userExists := DataAlreadyExists(reqCtx, collection, "name", requestData.Name)
 	if userExists {
 		log.Println("user already exists")
-		return user.User{}, errors.NewBadRequestError(fmt.Sprintf("error creating new user; user with name %v already exists", requestData.Name))
+		return accounts.User{}, errors.NewBadRequestError(fmt.Sprintf("error creating new user; user with name %v already exists", requestData.Name))
 	}
 	APIKey, err := GenerateAPIKey()
 	if err != nil {
 		log.Println("error generating uuid")
-		return user.User{}, errors.NewInternalServerError()
+		return accounts.User{}, errors.NewInternalServerError()
 	}
 	hashedPassword, err := password.HashPassword(requestData.Password)
 	if err != nil {
 		log.Println("error hashing password")
-		return user.User{}, errors.NewInternalServerError()
+		return accounts.User{}, errors.NewInternalServerError()
 	}
 	signUpData := User{
 		Name:      requestData.Name,
@@ -63,14 +63,14 @@ func (m *Mongo) NewUser(ctx context.Context, requestData user.SignUpRequest) (us
 	res, err := collection.InsertOne(reqCtx, signUpData)
 	if err != nil {
 		log.Printf("error creating new user with data: \n username: %v\n password: %v", requestData.Name, requestData.Password)
-		return user.User{}, errors.NewInternalServerError()
+		return accounts.User{}, errors.NewInternalServerError()
 	}
 	oid, ok := res.InsertedID.(primitive.ObjectID)
 	if !ok {
 		log.Println("error getting objectID from newly inserted user")
-		return user.User{}, errors.NewInternalServerError()
+		return accounts.User{}, errors.NewInternalServerError()
 	}
-	newUserData := user.User{
+	newUserData := accounts.User{
 		ID:     oid.Hex(),
 		Name:   requestData.Name,
 		APIKey: APIKey,
@@ -85,7 +85,7 @@ func GenerateAPIKey() (string, error) {
 }
 
 // LogIn checks the users credentials returns the user if password is correct.
-func (m *Mongo) LogIn(ctx context.Context, requestData user.LogInRequest) (user.User, errors.ApiErr) {
+func (m *Mongo) LogIn(ctx context.Context, requestData accounts.LogInRequest) (accounts.User, errors.ApiErr) {
 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 	defer cancelFunc()
 	m.Initialize()
@@ -99,9 +99,9 @@ func (m *Mongo) LogIn(ctx context.Context, requestData user.LogInRequest) (user.
 	currUser, err := DecodeUser(res)
 	if err != nil || !password.CheckHashedPassword(currUser.Password, requestData.Password) {
 		log.Printf("login getuserbykey %+v", err)
-		return user.User{}, errors.NewApiError(http.StatusUnauthorized, errors.ErrWrongCredentials.Error(), "error: name or password incorrect")
+		return accounts.User{}, errors.NewApiError(http.StatusUnauthorized, errors.ErrWrongCredentials.Error(), "error: name or password incorrect")
 	}
-	return user.User{
+	return accounts.User{
 		ID:        currUser.ID,
 		Name:      currUser.Name,
 		APIKey:    currUser.APIKey,
@@ -111,7 +111,7 @@ func (m *Mongo) LogIn(ctx context.Context, requestData user.LogInRequest) (user.
 }
 
 // GetTeams uses user id to get all users teams from the db.
-func (m *Mongo) GetTeams(ctx context.Context, APIKey string) ([]user.Team, errors.ApiErr) {
+func (m *Mongo) GetTeams(ctx context.Context, APIKey string) ([]accounts.Team, errors.ApiErr) {
 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 	defer cancelFunc()
 	m.Initialize()
@@ -142,9 +142,9 @@ func (m *Mongo) GetTeams(ctx context.Context, APIKey string) ([]user.Team, error
 			log.Printf("error converting teams to ids -> %+v\n", err)
 			return nil, err
 		}
-		var teams []user.Team
+		var teams []accounts.Team
 		for teamCursor.Next(sessCtx) {
-			var currTeam user.Team
+			var currTeam accounts.Team
 			if err := teamCursor.Decode(&currTeam); err != nil {
 				log.Printf("error could not get team from found teams -> %+v\n", err)
 				return nil, err
@@ -157,7 +157,7 @@ func (m *Mongo) GetTeams(ctx context.Context, APIKey string) ([]user.Team, error
 		log.Printf("error could not get data from transaction -> %+v\n", err)
 		return nil, errors.NewInternalServerError()
 	}
-	teams, ok := res.([]user.Team)
+	teams, ok := res.([]accounts.Team)
 	if !ok {
 		log.Println("error could not assert type []Team")
 		return nil, errors.NewInternalServerError()
@@ -199,7 +199,7 @@ func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]strin
 
 // AddCmd attempts to either add or update a cmd for the user, returning the number
 // of updated cmds.
-func (m *Mongo) AddCmd(reqCtx context.Context, requestData user.AddCmdRequest, APIKey string) (int, errors.ApiErr) {
+func (m *Mongo) AddCmd(reqCtx context.Context, requestData accounts.AddCmdRequest, APIKey string) (int, errors.ApiErr) {
 	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
 	defer cancelFunc()
 	m.Initialize()
@@ -224,7 +224,7 @@ func (m *Mongo) AddCmd(reqCtx context.Context, requestData user.AddCmdRequest, A
 }
 
 // AddCmdToUser takes a given username along with the cmd and URL to set and adds the data to their bookmarks.
-func AddCmdToUser(ctx context.Context, collection *mongo.Collection, requestData user.AddCmdRequest) (*mongo.UpdateResult, error) {
+func AddCmdToUser(ctx context.Context, collection *mongo.Collection, requestData accounts.AddCmdRequest) (*mongo.UpdateResult, error) {
 	opts := options.Update().SetUpsert(true)
 	filter, err := primitive.ObjectIDFromHex(requestData.ID)
 	if err != nil {
@@ -240,7 +240,7 @@ func AddCmdToUser(ctx context.Context, collection *mongo.Collection, requestData
 
 // DelCmd attempts to either rempve a cmd from the user, returning the number
 // of updated cmds.
-func (m *Mongo) DelCmd(ctx context.Context, requestData user.DelCmdRequest, APIKey string) (int, errors.ApiErr) {
+func (m *Mongo) DelCmd(ctx context.Context, requestData accounts.DelCmdRequest, APIKey string) (int, errors.ApiErr) {
 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 	defer cancelFunc()
 	m.Initialize()
@@ -274,7 +274,7 @@ func RemoveCmdFromUser(ctx context.Context, collection *mongo.Collection, userID
 
 // Delete attempts to delete a user from the db, returning the number of deleted users.
 // TODO: remove user from all users teams.
-func (m *Mongo) Delete(reqCtx context.Context, requestData user.DelUserRequest, APIKey string) (int, errors.ApiErr) {
+func (m *Mongo) Delete(reqCtx context.Context, requestData accounts.DelUserRequest, APIKey string) (int, errors.ApiErr) {
 	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
 	defer cancelFunc()
 	m.Initialize()

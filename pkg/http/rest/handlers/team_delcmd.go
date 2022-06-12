@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/conalli/bookshelf-backend/pkg/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/errors"
-	"github.com/conalli/bookshelf-backend/pkg/team"
 	"github.com/gorilla/mux"
 )
 
@@ -17,12 +17,12 @@ type delTeamCmdResponse struct {
 
 // DelTeamCmd is the handler for the team/delcmd endpoint. Checks credentials + JWT and if
 // authorized deletes given cmd.
-func DelTeamCmd(t team.Service) func(w http.ResponseWriter, r *http.Request) {
+func DelTeamCmd(t accounts.TeamService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("DelCmd endpoint hit")
 		vars := mux.Vars(r)
 		APIKey := vars["APIKey"]
-		var delCmdReq team.DelTeamCmdRequest
+		var delCmdReq accounts.DelTeamCmdRequest
 		json.NewDecoder(r.Body).Decode(&delCmdReq)
 
 		result, err := t.DelCmdFromTeam(r.Context(), delCmdReq, APIKey)

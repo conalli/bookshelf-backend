@@ -5,14 +5,14 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/conalli/bookshelf-backend/pkg/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/errors"
-	"github.com/conalli/bookshelf-backend/pkg/user"
 	"github.com/gorilla/mux"
 )
 
 // GetAllTeams is the handler for the getteams endpoint. Checks credentials + JWT and if
 // authorized returns all teams.
-func GetAllTeams(u user.Service) func(w http.ResponseWriter, r *http.Request) {
+func GetAllTeams(u accounts.UserService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("getteams endpoint hit")
 		vars := mux.Vars(r)
