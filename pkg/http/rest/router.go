@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/db/mongodb"
@@ -26,7 +27,7 @@ func Router() *mux.Router {
 	}).Methods("GET")
 
 	user := router.PathPrefix("/user").Subrouter()
-	user.HandleFunc("/", handlers.SignUp(u)).Methods("POST")
+	user.HandleFunc("", handlers.SignUp(u)).Methods("POST")
 	user.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.DelUser(u))).Methods("DELETE")
 	user.HandleFunc("/login", handlers.LogIn(u)).Methods("POST")
 	user.HandleFunc("/teams/{APIKey}", jwtauth.Authorized(handlers.GetAllTeams(u))).Methods("GET")
@@ -45,6 +46,13 @@ func Router() *mux.Router {
 
 	search := router.PathPrefix("/search").Subrouter()
 	search.HandleFunc("/{APIKey}/{cmd}", handlers.Search(s)).Methods("GET")
+
+	router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+		tpl, err1 := route.GetPathTemplate()
+		met, err2 := route.GetMethods()
+		log.Println("Path:", tpl, "Err:", err1, "Methods:", met, "Err:", err2)
+		return nil
+	})
 
 	return router
 }
