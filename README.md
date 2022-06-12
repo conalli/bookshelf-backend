@@ -4,7 +4,7 @@
 
 ## About Bookshelf 📚
 
-Bookshelf is a smart-booking application for efficiently saving and using bookmarks while working in the browser. To get started head on over to [Bookshelf web client](https://web-bookshelf.netlify.app) and Sign up for an account.
+Bookshelf is a smart-booking application for efficiently saving and using bookmarks while working in the browser. To get started head on over to [Bookshelf web client](https://bookshelf-web.vercel.app) and Sign up for an account.
 
 ## How to add a custom search engine 📑
 
