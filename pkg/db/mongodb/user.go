@@ -10,22 +10,11 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/db"
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/password"
-	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
-// User represents the db fields associated with each user.
-type User struct {
-	ID        string            `json:"id" bson:"_id,omitempty"`
-	Name      string            `json:"name" bson:"name"`
-	Password  string            `json:"password,omitempty" bson:"password"`
-	APIKey    string            `json:"APIKey" bson:"APIKey"`
-	Bookmarks map[string]string `json:"bookmarks,omitempty" bson:"bookmarks"`
-	Teams     map[string]string `json:"teams,omitempty" bson:"teams"`
-}
 
 // NewUser is a func.
 func (m *Mongo) NewUser(ctx context.Context, requestData accounts.SignUpRequest) (accounts.User, errors.ApiErr) {
@@ -43,7 +32,7 @@ func (m *Mongo) NewUser(ctx context.Context, requestData accounts.SignUpRequest)
 		log.Println("user already exists")
 		return accounts.User{}, errors.NewBadRequestError(fmt.Sprintf("error creating new user; user with name %v already exists", requestData.Name))
 	}
-	APIKey, err := GenerateAPIKey()
+	APIKey, err := accounts.GenerateAPIKey()
 	if err != nil {
 		log.Println("error generating uuid")
 		return accounts.User{}, errors.NewInternalServerError()
@@ -53,7 +42,7 @@ func (m *Mongo) NewUser(ctx context.Context, requestData accounts.SignUpRequest)
 		log.Println("error hashing password")
 		return accounts.User{}, errors.NewInternalServerError()
 	}
-	signUpData := User{
+	signUpData := accounts.User{
 		Name:      requestData.Name,
 		Password:  hashedPassword,
 		APIKey:    APIKey,
@@ -76,12 +65,6 @@ func (m *Mongo) NewUser(ctx context.Context, requestData accounts.SignUpRequest)
 		APIKey: APIKey,
 	}
 	return newUserData, nil
-}
-
-// GenerateAPIKey generates a random URL-safe string of random length for use as an API key.
-func GenerateAPIKey() (string, error) {
-	key, err := uuid.NewRandom()
-	return key.String(), err
 }
 
 // LogIn checks the users credentials returns the user if password is correct.

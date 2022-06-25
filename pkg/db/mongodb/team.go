@@ -15,16 +15,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// Team represents the db fields associated with each team.
-type Team struct {
-	ID        string            `json:"id" bson:"_id,omitempty"`
-	Name      string            `json:"name" bson:"name"`
-	Password  string            `json:"password" bson:"password"`
-	ShortName string            `json:"shortName" bson:"shortName"`
-	Members   map[string]string `json:"members" bson:"members"`
-	Bookmarks map[string]string `json:"bookmarks" bson:"bookmarks"`
-}
-
 // New checks whether a team name alreadys exists in the db. If not, a new team
 // is created based upon the request data.
 func (m *Mongo) New(ctx context.Context, requestData accounts.NewTeamRequest) (string, errors.ApiErr) {
@@ -47,7 +37,7 @@ func (m *Mongo) New(ctx context.Context, requestData accounts.NewTeamRequest) (s
 		log.Printf("couldnt hash password: %+v\n", err)
 		return "", errors.NewInternalServerError()
 	}
-	newTeamData := Team{
+	newTeamData := accounts.Team{
 		Name:      requestData.Name,
 		Password:  hashedPassword,
 		ShortName: requestData.ShortName,

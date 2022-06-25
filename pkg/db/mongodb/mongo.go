@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/conalli/bookshelf-backend/pkg/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -33,24 +34,23 @@ func resolveEnv(envType string) string {
 		if l := os.Getenv("LOCAL"); l == "production" || l == "atlas" {
 			return os.Getenv("MONGO_URI")
 		}
-		return os.Getenv("LOCAL_MONGO_URI")
+		return os.Getenv("DEV_MONGO_URI")
 	case "db":
-		if os.Getenv("LOCAL") == "production" {
+		if d := os.Getenv("LOCAL"); d == "production" {
 			return os.Getenv("DB_NAME")
 		}
-		if os.Getenv("LOCAL") == "atlas" {
-			return os.Getenv("TEST_DB_NAME")
-		}
-		return os.Getenv("LOCAL_DB_NAME")
+		return os.Getenv("DEV_DB_NAME")
 	default:
 		return ""
 	}
 }
 
+// New creates a new MongoDB client and database.
 func New() *Mongo {
 	return &Mongo{}
 }
 
+// Initialize initializes the MongoDB client and database.
 func (m *Mongo) Initialize() {
 	mongoURI := resolveEnv("uri")
 	db := resolveEnv("db")
@@ -136,21 +136,21 @@ func UpdateEmbedByField(ctx context.Context, collection *mongo.Collection, data 
 }
 
 // DecodeUser decodes the update result to the User type.
-func DecodeUser(res *mongo.SingleResult) (User, error) {
-	var user User
+func DecodeUser(res *mongo.SingleResult) (accounts.User, error) {
+	var user accounts.User
 	err := res.Decode(&user)
 	if err != nil {
-		return User{}, err
+		return accounts.User{}, err
 	}
 	return user, nil
 }
 
 // DecodeTeam decodes the update result to the Team type.
-func DecodeTeam(res *mongo.SingleResult) (Team, error) {
-	var team Team
+func DecodeTeam(res *mongo.SingleResult) (accounts.Team, error) {
+	var team accounts.Team
 	err := res.Decode(&team)
 	if err != nil {
-		return Team{}, err
+		return accounts.Team{}, err
 	}
 	return team, nil
 }
