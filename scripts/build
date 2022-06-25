@@ -1,7 +1,6 @@
 #! /bin/sh
 
-if [ $1 = "dev" ]
-then
+if [ $1 = "dev" ]; then
   docker-compose -f ../build/docker-compose.dev.yml -p bookshelf_dev build
   exit 0
 else
