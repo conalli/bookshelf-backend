@@ -221,9 +221,9 @@ func AddCmdToUser(ctx context.Context, collection *mongo.Collection, requestData
 	return result, nil
 }
 
-// DelCmd attempts to either rempve a cmd from the user, returning the number
+// DeleteCmd attempts to either rempve a cmd from the user, returning the number
 // of updated cmds.
-func (m *Mongo) DelCmd(ctx context.Context, requestData accounts.DelCmdRequest, APIKey string) (int, errors.ApiErr) {
+func (m *Mongo) DeleteCmd(ctx context.Context, requestData accounts.DelCmdRequest, APIKey string) (int, errors.ApiErr) {
 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 	defer cancelFunc()
 	m.Initialize()
@@ -233,15 +233,15 @@ func (m *Mongo) DelCmd(ctx context.Context, requestData accounts.DelCmdRequest, 
 	}
 	defer m.client.Disconnect(reqCtx)
 	collection := m.db.Collection(CollectionUsers)
-	result, err := RemoveCmdFromUser(reqCtx, collection, requestData.ID, requestData.Cmd)
+	result, err := RemoveUserCmd(reqCtx, collection, requestData.ID, requestData.Cmd)
 	if err != nil {
 		return 0, errors.NewInternalServerError()
 	}
 	return int(result.ModifiedCount), nil
 }
 
-// RemoveCmdFromUser takes a given username along with the cmd and removes the cmd from their bookmarks.
-func RemoveCmdFromUser(ctx context.Context, collection *mongo.Collection, userID, cmd string) (*mongo.UpdateResult, error) {
+// RemoveUserCmd takes a given username along with the cmd and removes the cmd from their bookmarks.
+func RemoveUserCmd(ctx context.Context, collection *mongo.Collection, userID, cmd string) (*mongo.UpdateResult, error) {
 	opts := options.Update().SetUpsert(true)
 	filter, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
