@@ -10,14 +10,14 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type delCmdResponse struct {
+type deleteCmdResponse struct {
 	NumDeleted int    `json:"numDeleted"`
 	Cmd        string `json:"cmd"`
 }
 
-// DelCmd is the handler for the delcmd endpoint. Checks credentials + JWT and if
+// DeleteCmd is the handler for the delcmd endpoint. Checks credentials + JWT and if
 // authorized deletes given cmd.
-func DelCmd(u accounts.UserService) func(w http.ResponseWriter, r *http.Request) {
+func DeleteCmd(u accounts.UserService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("DelCmd endpoint hit")
 		vars := mux.Vars(r)
@@ -25,7 +25,7 @@ func DelCmd(u accounts.UserService) func(w http.ResponseWriter, r *http.Request)
 		var delCmdReq accounts.DelCmdRequest
 		json.NewDecoder(r.Body).Decode(&delCmdReq)
 
-		result, err := u.DelCmd(r.Context(), delCmdReq, APIKey)
+		result, err := u.DeleteCmd(r.Context(), delCmdReq, APIKey)
 		if err != nil {
 			log.Printf("error returned while trying to remove a cmd: %v", err)
 			errors.APIErrorResponse(w, err)
@@ -40,7 +40,7 @@ func DelCmd(u accounts.UserService) func(w http.ResponseWriter, r *http.Request)
 		log.Printf("successfully updates cmds: %s, removed %d", delCmdReq.Cmd, result)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		res := delCmdResponse{
+		res := deleteCmdResponse{
 			NumDeleted: result,
 			Cmd:        delCmdReq.Cmd,
 		}

@@ -10,10 +10,10 @@ import (
 type UserRepository interface {
 	NewUser(ctx context.Context, requestData SignUpRequest) (User, errors.ApiErr)
 	LogIn(ctx context.Context, requestData LogInRequest) (User, errors.ApiErr)
-	GetTeams(ctx context.Context, APIKey string) ([]Team, errors.ApiErr)
+	// GetTeams(ctx context.Context, APIKey string) ([]Team, errors.ApiErr)
 	GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.ApiErr)
 	AddCmd(reqCtx context.Context, requestData AddCmdRequest, APIKey string) (int, errors.ApiErr)
-	DelCmd(ctx context.Context, requestData DelCmdRequest, APIKey string) (int, errors.ApiErr)
+	DeleteCmd(ctx context.Context, requestData DelCmdRequest, APIKey string) (int, errors.ApiErr)
 	Delete(reqCtx context.Context, requestData DelUserRequest, APIKey string) (int, errors.ApiErr)
 }
 
@@ -21,10 +21,10 @@ type UserRepository interface {
 type UserService interface {
 	NewUser(ctx context.Context, requestData SignUpRequest) (User, errors.ApiErr)
 	LogIn(ctx context.Context, requestData LogInRequest) (User, errors.ApiErr)
-	GetTeams(ctx context.Context, APIKey string) ([]Team, errors.ApiErr)
+	// GetTeams(ctx context.Context, APIKey string) ([]Team, errors.ApiErr)
 	GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.ApiErr)
 	AddCmd(reqCtx context.Context, requestData AddCmdRequest, APIKey string) (int, errors.ApiErr)
-	DelCmd(ctx context.Context, requestData DelCmdRequest, APIKey string) (int, errors.ApiErr)
+	DeleteCmd(ctx context.Context, requestData DelCmdRequest, APIKey string) (int, errors.ApiErr)
 	Delete(ctx context.Context, requestData DelUserRequest, APIKey string) (int, errors.ApiErr)
 }
 
@@ -50,11 +50,11 @@ func (s *userService) LogIn(ctx context.Context, requestData LogInRequest) (User
 	return currUser, err
 }
 
-// GetTeams calls the GetTeams method and returns all teams for a user.
-func (s *userService) GetTeams(ctx context.Context, APIKey string) ([]Team, errors.ApiErr) {
-	teams, err := s.r.GetTeams(ctx, APIKey)
-	return teams, err
-}
+// // GetTeams calls the GetTeams method and returns all teams for a user.
+// func (s *userService) GetTeams(ctx context.Context, APIKey string) ([]Team, errors.ApiErr) {
+// 	teams, err := s.r.GetTeams(ctx, APIKey)
+// 	return teams, err
+// }
 
 // GetAllCmds calls the GetAllCmds method and returns all the users commands.
 func (s *userService) GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.ApiErr) {
@@ -69,8 +69,8 @@ func (s *userService) AddCmd(ctx context.Context, requestData AddCmdRequest, API
 }
 
 // DelCmd calls the DelCmd method and returns the number of updated commands.
-func (s *userService) DelCmd(ctx context.Context, requestData DelCmdRequest, APIKey string) (int, errors.ApiErr) {
-	numUpdated, err := s.r.DelCmd(ctx, requestData, APIKey)
+func (s *userService) DeleteCmd(ctx context.Context, requestData DelCmdRequest, APIKey string) (int, errors.ApiErr) {
+	numUpdated, err := s.r.DeleteCmd(ctx, requestData, APIKey)
 	return numUpdated, err
 }
 
