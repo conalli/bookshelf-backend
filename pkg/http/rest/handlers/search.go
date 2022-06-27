@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/conalli/bookshelf-backend/pkg/search"
+	"github.com/conalli/bookshelf-backend/pkg/services/search"
 	"github.com/gorilla/mux"
 )
 

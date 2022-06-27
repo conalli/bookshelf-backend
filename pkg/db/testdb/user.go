@@ -3,8 +3,8 @@ package testdb
 import (
 	"context"
 
-	"github.com/conalli/bookshelf-backend/pkg/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 )
 
 func (t *testdb) NewUser(ctx context.Context, requestData accounts.SignUpRequest) (accounts.User, errors.ApiErr) {

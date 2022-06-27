@@ -1,6 +1,6 @@
 package testdb
 
-import "github.com/conalli/bookshelf-backend/pkg/accounts"
+import "github.com/conalli/bookshelf-backend/pkg/services/accounts"
 
 type testdb struct {
 	Users map[string]accounts.User

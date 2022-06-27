@@ -46,14 +46,15 @@ func (s *userService) NewUser(ctx context.Context, requestData SignUpRequest) (U
 	reqCtx, cancelFunc := services.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	// TODO: add validation here
-
 	user, err := s.r.NewUser(reqCtx, requestData)
 	return user, err
 }
 
 // Login takes in request data, checks the db and returns the username and apikey is successful.
 func (s *userService) LogIn(ctx context.Context, requestData LogInRequest) (User, errors.ApiErr) {
-	usr, err := s.r.GetUserByName(ctx, requestData)
+	reqCtx, cancelFunc := services.CtxWithDefaultTimeout(ctx)
+	defer cancelFunc()
+	usr, err := s.r.GetUserByName(reqCtx, requestData)
 	if err != nil || !password.CheckHashedPassword(usr.Password, requestData.Password) {
 		log.Printf("login getuserbykey %+v", err)
 		return User{}, errors.NewApiError(http.StatusUnauthorized, errors.ErrWrongCredentials.Error(), "error: name or password incorrect")
@@ -63,31 +64,41 @@ func (s *userService) LogIn(ctx context.Context, requestData LogInRequest) (User
 
 // // GetTeams calls the GetTeams method and returns all teams for a user.
 // func (s *userService) GetTeams(ctx context.Context, APIKey string) ([]Team, errors.ApiErr) {
-// 	teams, err := s.r.GetTeams(ctx, APIKey)
+// reqCtx, cancelFunc := services.CtxWithDefaultTimeout(ctx)
+// defer cancelFunc()
+// 	teams, err := s.r.GetTeams(reqCtx, APIKey)
 // 	return teams, err
 // }
 
 // GetAllCmds calls the GetAllCmds method and returns all the users commands.
 func (s *userService) GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.ApiErr) {
-	cmds, err := s.r.GetAllCmds(ctx, APIKey)
+	reqCtx, cancelFunc := services.CtxWithDefaultTimeout(ctx)
+	defer cancelFunc()
+	cmds, err := s.r.GetAllCmds(reqCtx, APIKey)
 	return cmds, err
 }
 
 // AddCmd calls the AddCmd method and returns the number of updated commands.
 func (s *userService) AddCmd(ctx context.Context, requestData AddCmdRequest, APIKey string) (int, errors.ApiErr) {
-	numUpdated, err := s.r.AddCmd(ctx, requestData, APIKey)
+	reqCtx, cancelFunc := services.CtxWithDefaultTimeout(ctx)
+	defer cancelFunc()
+	numUpdated, err := s.r.AddCmd(reqCtx, requestData, APIKey)
 	return numUpdated, err
 }
 
 // DelCmd calls the DelCmd method and returns the number of updated commands.
 func (s *userService) DeleteCmd(ctx context.Context, requestData DelCmdRequest, APIKey string) (int, errors.ApiErr) {
-	numUpdated, err := s.r.DeleteCmd(ctx, requestData, APIKey)
+	reqCtx, cancelFunc := services.CtxWithDefaultTimeout(ctx)
+	defer cancelFunc()
+	numUpdated, err := s.r.DeleteCmd(reqCtx, requestData, APIKey)
 	return numUpdated, err
 }
 
 // Delete calls the Delete method and returns the number of deleted users.
 func (s *userService) Delete(ctx context.Context, requestData DelUserRequest, APIKey string) (int, errors.ApiErr) {
 	// TODO: add validation here
-	user, err := s.r.Delete(ctx, requestData, APIKey)
+	reqCtx, cancelFunc := services.CtxWithDefaultTimeout(ctx)
+	defer cancelFunc()
+	user, err := s.r.Delete(reqCtx, requestData, APIKey)
 	return user, err
 }

@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/conalli/bookshelf-backend/pkg/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/gorilla/mux"
 )
 

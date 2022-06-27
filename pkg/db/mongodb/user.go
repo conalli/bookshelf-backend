@@ -7,7 +7,6 @@ import (
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/password"
-	"github.com/conalli/bookshelf-backend/pkg/services"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -66,30 +65,26 @@ func (m *Mongo) NewUser(ctx context.Context, requestData accounts.SignUpRequest)
 
 // GetUserByName checks the users credentials returns the user if password is correct.
 func (m *Mongo) GetUserByName(ctx context.Context, requestData accounts.LogInRequest) (accounts.User, error) {
-	reqCtx, cancelFunc := services.CtxWithDefaultTimeout(ctx)
-	defer cancelFunc()
 	m.Initialize()
-	err := m.client.Connect(reqCtx)
+	err := m.client.Connect(ctx)
 	if err != nil {
 		log.Println("couldn't connect to db on login")
 	}
-	defer m.client.Disconnect(reqCtx)
+	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
-	res := GetByKey(reqCtx, collection, "name", requestData.Name)
+	res := GetByKey(ctx, collection, "name", requestData.Name)
 	return DecodeUser(res)
 }
 
 // GetTeams uses user id to get all users teams from the db.
 func (m *Mongo) GetTeams(ctx context.Context, APIKey string) ([]accounts.Team, errors.ApiErr) {
-	reqCtx, cancelFunc := services.CtxWithDefaultTimeout(ctx)
-	defer cancelFunc()
 	m.Initialize()
-	err := m.client.Connect(reqCtx)
+	err := m.client.Connect(ctx)
 	if err != nil {
 		log.Println("couldn't connect to db on login")
 	}
-	defer m.client.Disconnect(reqCtx)
-	res, err := m.SessionWithTransaction(reqCtx, func(sessCtx mongo.SessionContext) (interface{}, error) {
+	defer m.client.Disconnect(ctx)
+	res, err := m.SessionWithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
 		userCollection := m.db.Collection(CollectionUsers)
 		res := GetByKey(sessCtx, userCollection, "APIKey", APIKey)
 		currUser, err := DecodeUser(res)
@@ -148,17 +143,15 @@ func convertIDs(teams map[string]string) ([]primitive.ObjectID, error) {
 
 // GetAllCmds uses req info to get all users current cmds from the db.
 func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.ApiErr) {
-	reqCtx, cancelFunc := services.CtxWithDefaultTimeout(ctx)
-	defer cancelFunc()
 	m.Initialize()
-	err := m.client.Connect(reqCtx)
+	err := m.client.Connect(ctx)
 	if err != nil {
 		log.Println("couldn't connect to db on login")
 	}
-	defer m.client.Disconnect(reqCtx)
+	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
 
-	res := GetByKey(reqCtx, collection, "APIKey", APIKey)
+	res := GetByKey(ctx, collection, "APIKey", APIKey)
 	user, err := DecodeUser(res)
 	if err != nil {
 		return nil, errors.ParseGetUserError(APIKey, err)
@@ -168,18 +161,16 @@ func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]strin
 
 // AddCmd attempts to either add or update a cmd for the user, returning the number
 // of updated cmds.
-func (m *Mongo) AddCmd(reqCtx context.Context, requestData accounts.AddCmdRequest, APIKey string) (int, errors.ApiErr) {
-	ctx, cancelFunc := services.CtxWithDefaultTimeout(reqCtx)
-	defer cancelFunc()
+func (m *Mongo) AddCmd(ctx context.Context, requestData accounts.AddCmdRequest, APIKey string) (int, errors.ApiErr) {
 	m.Initialize()
 	err := m.client.Connect(ctx)
 	if err != nil {
 		log.Println("couldn't connect to db on login")
 	}
-	defer m.client.Disconnect(reqCtx)
+	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
 
-	result, err := AddCmdToUser(ctx, collection, requestData)
+	result, err := addCmdToUser(ctx, collection, requestData)
 	if err != nil {
 		return 0, errors.NewInternalServerError()
 	}
@@ -192,8 +183,8 @@ func (m *Mongo) AddCmd(reqCtx context.Context, requestData accounts.AddCmdReques
 	return numUpdated, nil
 }
 
-// AddCmdToUser takes a given username along with the cmd and URL to set and adds the data to their bookmarks.
-func AddCmdToUser(ctx context.Context, collection *mongo.Collection, requestData accounts.AddCmdRequest) (*mongo.UpdateResult, error) {
+// addCmdToUser takes a given username along with the cmd and URL to set and adds the data to their bookmarks.
+func addCmdToUser(ctx context.Context, collection *mongo.Collection, requestData accounts.AddCmdRequest) (*mongo.UpdateResult, error) {
 	opts := options.Update().SetUpsert(true)
 	filter, err := primitive.ObjectIDFromHex(requestData.ID)
 	if err != nil {
@@ -210,24 +201,22 @@ func AddCmdToUser(ctx context.Context, collection *mongo.Collection, requestData
 // DeleteCmd attempts to either rempve a cmd from the user, returning the number
 // of updated cmds.
 func (m *Mongo) DeleteCmd(ctx context.Context, requestData accounts.DelCmdRequest, APIKey string) (int, errors.ApiErr) {
-	reqCtx, cancelFunc := services.CtxWithDefaultTimeout(ctx)
-	defer cancelFunc()
 	m.Initialize()
-	err := m.client.Connect(reqCtx)
+	err := m.client.Connect(ctx)
 	if err != nil {
 		log.Println("couldn't connect to db on login")
 	}
-	defer m.client.Disconnect(reqCtx)
+	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
-	result, err := RemoveUserCmd(reqCtx, collection, requestData.ID, requestData.Cmd)
+	result, err := removeUserCmd(ctx, collection, requestData.ID, requestData.Cmd)
 	if err != nil {
 		return 0, errors.NewInternalServerError()
 	}
 	return int(result.ModifiedCount), nil
 }
 
-// RemoveUserCmd takes a given username along with the cmd and removes the cmd from their bookmarks.
-func RemoveUserCmd(ctx context.Context, collection *mongo.Collection, userID, cmd string) (*mongo.UpdateResult, error) {
+// removeUserCmd takes a given username along with the cmd and removes the cmd from their bookmarks.
+func removeUserCmd(ctx context.Context, collection *mongo.Collection, userID, cmd string) (*mongo.UpdateResult, error) {
 	opts := options.Update().SetUpsert(true)
 	filter, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
@@ -243,15 +232,13 @@ func RemoveUserCmd(ctx context.Context, collection *mongo.Collection, userID, cm
 
 // Delete attempts to delete a user from the db, returning the number of deleted users.
 // TODO: remove user from all users teams.
-func (m *Mongo) Delete(reqCtx context.Context, requestData accounts.DelUserRequest, APIKey string) (int, errors.ApiErr) {
-	ctx, cancelFunc := services.CtxWithDefaultTimeout(reqCtx)
-	defer cancelFunc()
+func (m *Mongo) Delete(ctx context.Context, requestData accounts.DelUserRequest, APIKey string) (int, errors.ApiErr) {
 	m.Initialize()
 	err := m.client.Connect(ctx)
 	if err != nil {
 		log.Println("couldn't connect to db on login")
 	}
-	defer m.client.Disconnect(reqCtx)
+	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
 	res, err := GetByID(ctx, collection, requestData.ID)
 	if err != nil {
@@ -268,7 +255,7 @@ func (m *Mongo) Delete(reqCtx context.Context, requestData accounts.DelUserReque
 		log.Printf("error deleting user: password incorrect -> %v", err)
 		return 0, errors.NewWrongCredentialsError("password incorrect")
 	}
-	result, err := DeleteUserFromDB(ctx, collection, requestData.ID)
+	result, err := deleteUserFromDB(ctx, collection, requestData.ID)
 	if err != nil {
 		log.Printf("error deleting user: error -> %v", err)
 		return 0, errors.NewInternalServerError()
@@ -280,8 +267,8 @@ func (m *Mongo) Delete(reqCtx context.Context, requestData accounts.DelUserReque
 	return int(result.DeletedCount), nil
 }
 
-// DeleteUserFromDB takes a given userID and removes the user from the database.
-func DeleteUserFromDB(ctx context.Context, collection *mongo.Collection, userID string) (*mongo.DeleteResult, error) {
+// deleteUserFromDB takes a given userID and removes the user from the database.
+func deleteUserFromDB(ctx context.Context, collection *mongo.Collection, userID string) (*mongo.DeleteResult, error) {
 	opts := options.Delete().SetCollation(&options.Collation{
 		Locale:    "en_US",
 		Strength:  1,
