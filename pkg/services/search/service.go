@@ -2,13 +2,15 @@ package search
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/conalli/bookshelf-backend/pkg/db"
+	"github.com/conalli/bookshelf-backend/pkg/services"
+	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 )
 
 // Repository provides access to storage.
 type Repository interface {
-	Search(ctx context.Context, APIKey, cmd string) (string, error)
+	GetUserByAPIKey(ctx context.Context, APIKey string) (accounts.User, error)
 }
 
 // Service provides the search operation.
@@ -27,9 +29,17 @@ func NewService(r Repository) Service {
 
 // Search returns the url of a given cmd.
 func (s *service) Search(ctx context.Context, APIKey, cmd string) (string, error) {
-	ctx, cancelFunc := db.ReqContextWithTimeout(ctx)
+	ctx, cancelFunc := services.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	// TODO: add validation here for team/ user cmd
-	url, err := s.r.Search(ctx, APIKey, cmd)
+	usr, err := s.r.GetUserByAPIKey(ctx, APIKey)
+	defaultSearch := fmt.Sprintf("http://www.google.com/search?q=%s", cmd)
+	if err != nil {
+		return defaultSearch, err
+	}
+	url, ok := usr.Bookmarks[cmd]
+	if !ok {
+		return defaultSearch, err
+	}
 	return formatURL(url), err
 }

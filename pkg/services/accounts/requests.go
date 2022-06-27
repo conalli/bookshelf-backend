@@ -14,22 +14,22 @@ type LogInRequest struct {
 
 // AddCmdRequest represents the expected JSON request for the user/addcmd endpoint.
 type AddCmdRequest struct {
-	ID  string `json:"id" bson:"_id"`
-	Cmd string `json:"cmd" bson:"cmd"`
-	URL string `json:"url" bson:"url"`
+	ID  string `json:"id"`
+	Cmd string `json:"cmd"`
+	URL string `json:"url"`
 }
 
 // DelCmdRequest represents the expected JSON request for the user/delcmd endpoint.
 type DelCmdRequest struct {
-	ID  string `json:"id" bson:"_id"`
-	Cmd string `json:"cmd" bson:"cmd"`
+	ID  string `json:"id"`
+	Cmd string `json:"cmd"`
 }
 
 // DelUserRequest represents the expected JSON request for the user/del endpoint.
 type DelUserRequest struct {
-	ID       string `json:"id" bson:"_id"`
-	Name     string `json:"name" bson:"name"`
-	Password string `json:"password" bson:"password"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
 }
 
 // NewTeamRequest represents the expected JSON request for the /team POST endpoint.

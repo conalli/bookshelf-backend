@@ -2,14 +2,18 @@ package accounts
 
 import (
 	"context"
+	"log"
+	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/password"
+	"github.com/conalli/bookshelf-backend/pkg/services"
 )
 
 // UserRepository provides access to the user storage.
 type UserRepository interface {
 	NewUser(ctx context.Context, requestData SignUpRequest) (User, errors.ApiErr)
-	LogIn(ctx context.Context, requestData LogInRequest) (User, errors.ApiErr)
+	GetUserByName(ctx context.Context, requestData LogInRequest) (User, errors.ApiErr)
 	// GetTeams(ctx context.Context, APIKey string) ([]Team, errors.ApiErr)
 	GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.ApiErr)
 	AddCmd(reqCtx context.Context, requestData AddCmdRequest, APIKey string) (int, errors.ApiErr)
@@ -39,15 +43,22 @@ func NewUserService(r UserRepository) UserService {
 
 // Search returns the url of a given cmd.
 func (s *userService) NewUser(ctx context.Context, requestData SignUpRequest) (User, errors.ApiErr) {
+	reqCtx, cancelFunc := services.CtxWithDefaultTimeout(ctx)
+	defer cancelFunc()
 	// TODO: add validation here
-	user, err := s.r.NewUser(ctx, requestData)
+
+	user, err := s.r.NewUser(reqCtx, requestData)
 	return user, err
 }
 
 // Login takes in request data, checks the db and returns the username and apikey is successful.
 func (s *userService) LogIn(ctx context.Context, requestData LogInRequest) (User, errors.ApiErr) {
-	currUser, err := s.r.LogIn(ctx, requestData)
-	return currUser, err
+	usr, err := s.r.GetUserByName(ctx, requestData)
+	if err != nil || !password.CheckHashedPassword(usr.Password, requestData.Password) {
+		log.Printf("login getuserbykey %+v", err)
+		return User{}, errors.NewApiError(http.StatusUnauthorized, errors.ErrWrongCredentials.Error(), "error: name or password incorrect")
+	}
+	return usr, nil
 }
 
 // // GetTeams calls the GetTeams method and returns all teams for a user.

@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 
-	"github.com/conalli/bookshelf-backend/pkg/accounts"
-	"github.com/conalli/bookshelf-backend/pkg/db"
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/password"
+	"github.com/conalli/bookshelf-backend/pkg/services"
+	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -18,16 +17,14 @@ import (
 
 // NewUser is a func.
 func (m *Mongo) NewUser(ctx context.Context, requestData accounts.SignUpRequest) (accounts.User, errors.ApiErr) {
-	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
-	defer cancelFunc()
 	m.Initialize()
-	err := m.client.Connect(reqCtx)
+	err := m.client.Connect(ctx)
 	if err != nil {
 		log.Printf("couldn't connect to db on new user, %+v", err)
 	}
-	defer m.client.Disconnect(reqCtx)
+	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
-	userExists := DataAlreadyExists(reqCtx, collection, "name", requestData.Name)
+	userExists := DataAlreadyExists(ctx, collection, "name", requestData.Name)
 	if userExists {
 		log.Println("user already exists")
 		return accounts.User{}, errors.NewBadRequestError(fmt.Sprintf("error creating new user; user with name %v already exists", requestData.Name))
@@ -49,7 +46,7 @@ func (m *Mongo) NewUser(ctx context.Context, requestData accounts.SignUpRequest)
 		Bookmarks: map[string]string{},
 		Teams:     map[string]string{},
 	}
-	res, err := collection.InsertOne(reqCtx, signUpData)
+	res, err := collection.InsertOne(ctx, signUpData)
 	if err != nil {
 		log.Printf("error creating new user with data: \n username: %v\n password: %v", requestData.Name, requestData.Password)
 		return accounts.User{}, errors.NewInternalServerError()
@@ -67,9 +64,9 @@ func (m *Mongo) NewUser(ctx context.Context, requestData accounts.SignUpRequest)
 	return newUserData, nil
 }
 
-// LogIn checks the users credentials returns the user if password is correct.
-func (m *Mongo) LogIn(ctx context.Context, requestData accounts.LogInRequest) (accounts.User, errors.ApiErr) {
-	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
+// GetUserByName checks the users credentials returns the user if password is correct.
+func (m *Mongo) GetUserByName(ctx context.Context, requestData accounts.LogInRequest) (accounts.User, error) {
+	reqCtx, cancelFunc := services.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	m.Initialize()
 	err := m.client.Connect(reqCtx)
@@ -79,23 +76,12 @@ func (m *Mongo) LogIn(ctx context.Context, requestData accounts.LogInRequest) (a
 	defer m.client.Disconnect(reqCtx)
 	collection := m.db.Collection(CollectionUsers)
 	res := GetByKey(reqCtx, collection, "name", requestData.Name)
-	currUser, err := DecodeUser(res)
-	if err != nil || !password.CheckHashedPassword(currUser.Password, requestData.Password) {
-		log.Printf("login getuserbykey %+v", err)
-		return accounts.User{}, errors.NewApiError(http.StatusUnauthorized, errors.ErrWrongCredentials.Error(), "error: name or password incorrect")
-	}
-	return accounts.User{
-		ID:        currUser.ID,
-		Name:      currUser.Name,
-		APIKey:    currUser.APIKey,
-		Bookmarks: currUser.Bookmarks,
-		Teams:     currUser.Teams,
-	}, nil
+	return DecodeUser(res)
 }
 
 // GetTeams uses user id to get all users teams from the db.
 func (m *Mongo) GetTeams(ctx context.Context, APIKey string) ([]accounts.Team, errors.ApiErr) {
-	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
+	reqCtx, cancelFunc := services.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	m.Initialize()
 	err := m.client.Connect(reqCtx)
@@ -162,7 +148,7 @@ func convertIDs(teams map[string]string) ([]primitive.ObjectID, error) {
 
 // GetAllCmds uses req info to get all users current cmds from the db.
 func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.ApiErr) {
-	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
+	reqCtx, cancelFunc := services.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	m.Initialize()
 	err := m.client.Connect(reqCtx)
@@ -183,7 +169,7 @@ func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]strin
 // AddCmd attempts to either add or update a cmd for the user, returning the number
 // of updated cmds.
 func (m *Mongo) AddCmd(reqCtx context.Context, requestData accounts.AddCmdRequest, APIKey string) (int, errors.ApiErr) {
-	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
+	ctx, cancelFunc := services.CtxWithDefaultTimeout(reqCtx)
 	defer cancelFunc()
 	m.Initialize()
 	err := m.client.Connect(ctx)
@@ -224,7 +210,7 @@ func AddCmdToUser(ctx context.Context, collection *mongo.Collection, requestData
 // DeleteCmd attempts to either rempve a cmd from the user, returning the number
 // of updated cmds.
 func (m *Mongo) DeleteCmd(ctx context.Context, requestData accounts.DelCmdRequest, APIKey string) (int, errors.ApiErr) {
-	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
+	reqCtx, cancelFunc := services.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	m.Initialize()
 	err := m.client.Connect(reqCtx)
@@ -258,7 +244,7 @@ func RemoveUserCmd(ctx context.Context, collection *mongo.Collection, userID, cm
 // Delete attempts to delete a user from the db, returning the number of deleted users.
 // TODO: remove user from all users teams.
 func (m *Mongo) Delete(reqCtx context.Context, requestData accounts.DelUserRequest, APIKey string) (int, errors.ApiErr) {
-	ctx, cancelFunc := db.ReqContextWithTimeout(reqCtx)
+	ctx, cancelFunc := services.CtxWithDefaultTimeout(reqCtx)
 	defer cancelFunc()
 	m.Initialize()
 	err := m.client.Connect(ctx)
@@ -311,4 +297,17 @@ func DeleteUserFromDB(ctx context.Context, collection *mongo.Collection, userID 
 		return nil, err
 	}
 	return result, nil
+}
+
+// GetUserByAPIKey retrieves a user from the db based on their APIKey.
+func (m *Mongo) GetUserByAPIKey(ctx context.Context, APIKey string) (accounts.User, error) {
+	m.Initialize()
+	err := m.client.Connect(ctx)
+	if err != nil {
+		log.Println("couldjnt connect to db on search")
+	}
+	defer m.client.Disconnect(ctx)
+	collection := m.db.Collection(CollectionUsers)
+	res := GetByKey(ctx, collection, "APIKey", APIKey)
+	return DecodeUser(res)
 }

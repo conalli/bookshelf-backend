@@ -4,12 +4,12 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/conalli/bookshelf-backend/pkg/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/db/mongodb"
 	"github.com/conalli/bookshelf-backend/pkg/http/middleware"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest/handlers"
 	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
-	"github.com/conalli/bookshelf-backend/pkg/search"
+	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
+	"github.com/conalli/bookshelf-backend/pkg/services/search"
 	"github.com/gorilla/mux"
 )
 
@@ -32,7 +32,7 @@ func Router() *mux.Router {
 	// user.HandleFunc("/teams/{APIKey}", jwtauth.Authorized(handlers.GetAllTeams(u))).Methods("GET")
 	user.HandleFunc("/cmds/{APIKey}", jwtauth.Authorized(handlers.GetCmds(u))).Methods("GET")
 	user.HandleFunc("/addcmd/{APIKey}", jwtauth.Authorized(handlers.AddCmd(u))).Methods("PATCH")
-	user.HandleFunc("/delcmd/{APIKey}", jwtauth.Authorized(handlers.DelCmd(u))).Methods("PATCH")
+	user.HandleFunc("/delcmd/{APIKey}", jwtauth.Authorized(handlers.DeleteCmd(u))).Methods("PATCH")
 
 	// team := router.PathPrefix("/team").Subrouter()
 	// team.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.NewTeam(t))).Methods("POST")
