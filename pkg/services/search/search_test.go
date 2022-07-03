@@ -3,6 +3,7 @@ package search
 import "testing"
 
 func TestFormatURL(t *testing.T) {
+	t.Parallel()
 	want := "http://www.google.com"
 	got := formatURL("www.google.com")
 	if want != got {

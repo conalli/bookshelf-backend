@@ -11,6 +11,7 @@ import (
 var signingKey = []byte(os.Getenv("SIGNING_SECRET"))
 
 func TestNewToken(t *testing.T) {
+	t.Parallel()
 	tn := []string{
 		"Name 1",
 		"This is a test name",

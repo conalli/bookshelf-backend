@@ -9,6 +9,7 @@ import (
 )
 
 func TestCtxWithDefaultTimeout(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	reqCtx, _ := services.CtxWithDefaultTimeout(ctx)
 	want := time.Now().Add(time.Second * 5).Round(time.Second)
