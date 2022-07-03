@@ -2,17 +2,25 @@ package testdb
 
 import "github.com/conalli/bookshelf-backend/pkg/services/accounts"
 
-type testdb struct {
+type Testdb struct {
 	Users map[string]accounts.User
 	Teams map[string]accounts.Team
 }
 
-// New returns a new testdb.
-func New() *testdb {
-	return &testdb{}
+// New returns a new Testdb.
+func New() *Testdb {
+	return &Testdb{}
 }
 
-func (t *testdb) dataAlreadyExists(name string, coll string) bool {
+func (t *Testdb) AddDefaultUsers() *Testdb {
+	usrs := map[string]accounts.User{
+		"1": {ID: "1", Name: "user1", Password: "password", APIKey: "111111", Bookmarks: map[string]string{"bbc": "https://www.bbc.co.uk"}},
+	}
+	t.Users = usrs
+	return t
+}
+
+func (t *Testdb) dataAlreadyExists(name string, coll string) bool {
 	if coll == "users" {
 		for _, v := range t.Users {
 			if v.Name == name {
@@ -30,7 +38,7 @@ func (t *testdb) dataAlreadyExists(name string, coll string) bool {
 	return false
 }
 
-func (t *testdb) findUserByAPIKey(APIKey string) *accounts.User {
+func (t *Testdb) findUserByAPIKey(APIKey string) *accounts.User {
 	for _, v := range t.Users {
 		if v.APIKey == APIKey {
 			return &v

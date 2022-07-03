@@ -13,7 +13,7 @@ import (
 // UserRepository provides access to the user storage.
 type UserRepository interface {
 	NewUser(ctx context.Context, requestData SignUpRequest) (User, errors.ApiErr)
-	GetUserByName(ctx context.Context, requestData LogInRequest) (User, errors.ApiErr)
+	GetUserByName(ctx context.Context, requestData LogInRequest) (User, error)
 	// GetTeams(ctx context.Context, APIKey string) ([]Team, errors.ApiErr)
 	GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.ApiErr)
 	AddCmd(reqCtx context.Context, requestData AddCmdRequest, APIKey string) (int, errors.ApiErr)

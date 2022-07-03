@@ -7,13 +7,13 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 )
 
-func (t *testdb) NewUser(ctx context.Context, requestData accounts.SignUpRequest) (accounts.User, errors.ApiErr) {
+func (t *Testdb) NewUser(ctx context.Context, requestData accounts.SignUpRequest) (accounts.User, errors.ApiErr) {
 	found := t.dataAlreadyExists(requestData.Name, "users")
 	if found {
 		return accounts.User{}, errors.NewBadRequestError("error creating new user; user with name " + requestData.Name + " already exists")
 	}
 	usr := accounts.User{
-		ID:        "999",
+		ID:        requestData.Name + "999",
 		Name:      requestData.Name,
 		Password:  requestData.Password,
 		APIKey:    "1234567890",
@@ -24,7 +24,7 @@ func (t *testdb) NewUser(ctx context.Context, requestData accounts.SignUpRequest
 	return usr, nil
 }
 
-func (t *testdb) LogIn(ctx context.Context, requestData accounts.LogInRequest) (accounts.User, errors.ApiErr) {
+func (t *Testdb) GetUserByName(ctx context.Context, requestData accounts.LogInRequest) (accounts.User, error) {
 	for _, v := range t.Users {
 		if v.Name == requestData.Name {
 			if v.Password == requestData.Password {
@@ -36,19 +36,28 @@ func (t *testdb) LogIn(ctx context.Context, requestData accounts.LogInRequest) (
 	return accounts.User{}, errors.NewApiError(403, errors.ErrWrongCredentials.Error(), "error: name or password incorrect")
 }
 
-func (t *testdb) GetTeams(ctx context.Context, APIKey string) ([]accounts.Team, errors.ApiErr) {
-	teams := []accounts.Team{}
-	for _, v := range t.Teams {
-		for m := range v.Members {
-			if m == APIKey {
-				teams = append(teams, v)
-			}
+func (t *Testdb) GetUserByAPIKey(ctx context.Context, APIKey string) (accounts.User, error) {
+	for _, v := range t.Users {
+		if v.APIKey == APIKey {
+			return v, nil
 		}
 	}
-	return teams, nil
+	return accounts.User{}, errors.NewApiError(404, errors.ErrNotFound.Error(), "error: could not find user with APIKey - "+APIKey)
 }
 
-func (t *testdb) GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.ApiErr) {
+// func (t *Testdb) GetTeams(ctx context.Context, APIKey string) ([]accounts.Team, errors.ApiErr) {
+// 	teams := []accounts.Team{}
+// 	for _, v := range t.Teams {
+// 		for m := range v.Members {
+// 			if m == APIKey {
+// 				teams = append(teams, v)
+// 			}
+// 		}
+// 	}
+// 	return teams, nil
+// }
+
+func (t *Testdb) GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.ApiErr) {
 	usr := t.findUserByAPIKey(APIKey)
 	if usr == nil {
 		return nil, errors.NewBadRequestError("error: could not find user with value " + APIKey)
@@ -56,7 +65,7 @@ func (t *testdb) GetAllCmds(ctx context.Context, APIKey string) (map[string]stri
 	return usr.Bookmarks, nil
 }
 
-func (t *testdb) AddCmd(reqCtx context.Context, requestData accounts.AddCmdRequest, APIKey string) (int, errors.ApiErr) {
+func (t *Testdb) AddCmd(reqCtx context.Context, requestData accounts.AddCmdRequest, APIKey string) (int, errors.ApiErr) {
 	usr := t.findUserByAPIKey(APIKey)
 	if usr == nil {
 		return 0, errors.NewBadRequestError("error: could not find user with value " + APIKey)
@@ -65,7 +74,7 @@ func (t *testdb) AddCmd(reqCtx context.Context, requestData accounts.AddCmdReque
 	return 1, nil
 }
 
-func (t *testdb) DeleteCmd(ctx context.Context, requestData accounts.DelCmdRequest, APIKey string) (int, errors.ApiErr) {
+func (t *Testdb) DeleteCmd(ctx context.Context, requestData accounts.DelCmdRequest, APIKey string) (int, errors.ApiErr) {
 	usr := t.findUserByAPIKey(APIKey)
 	if usr == nil {
 		return 0, errors.NewBadRequestError("error: could not find user with value " + APIKey)
@@ -74,7 +83,7 @@ func (t *testdb) DeleteCmd(ctx context.Context, requestData accounts.DelCmdReque
 	return 1, nil
 }
 
-func (t *testdb) Delete(reqCtx context.Context, requestData accounts.DelUserRequest, APIKey string) (int, errors.ApiErr) {
+func (t *Testdb) Delete(reqCtx context.Context, requestData accounts.DelUserRequest, APIKey string) (int, errors.ApiErr) {
 	usr := t.findUserByAPIKey(APIKey)
 	if usr == nil {
 		return 0, errors.NewBadRequestError("error: could not find user with value " + APIKey)

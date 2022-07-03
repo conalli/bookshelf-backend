@@ -6,7 +6,7 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 )
 
-func (t *testdb) Search(ctx context.Context, APIKey, cmd string) (string, error) {
+func (t *Testdb) Search(ctx context.Context, APIKey, cmd string) (string, error) {
 	usr := t.findUserByAPIKey(APIKey)
 	if usr == nil {
 		return "", errors.NewBadRequestError("error: could not find user with value " + APIKey)
