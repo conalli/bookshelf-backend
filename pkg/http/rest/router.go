@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/conalli/bookshelf-backend/pkg/db"
 	"github.com/conalli/bookshelf-backend/pkg/db/mongodb"
 	"github.com/conalli/bookshelf-backend/pkg/http/middleware"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest/handlers"
@@ -14,11 +15,10 @@ import (
 )
 
 // Router returns a router with all handlers assigned to it
-func Router() *mux.Router {
-	mongo := mongodb.New()
-	u := accounts.NewUserService(mongo)
-	// t := accounts.NewTeamService(mongo)
-	s := search.NewService(mongo)
+func Router(store db.Storage) *mux.Router {
+	u := accounts.NewUserService(store)
+	// t := accounts.NewTeamService(repo)
+	s := search.NewService(store)
 
 	router := mux.NewRouter()
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -58,6 +58,6 @@ func Router() *mux.Router {
 
 // RouterWithCORS provides basic CORS middleware for a router.
 func RouterWithCORS() http.Handler {
-	router := Router()
+	router := Router(mongodb.New())
 	return middleware.CORSMiddleware(router)
 }
