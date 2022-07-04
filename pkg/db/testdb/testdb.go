@@ -1,7 +1,11 @@
 package testdb
 
-import "github.com/conalli/bookshelf-backend/pkg/services/accounts"
+import (
+	"github.com/conalli/bookshelf-backend/pkg/password"
+	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
+)
 
+// Testdb represents a testdb.
 type Testdb struct {
 	Users map[string]accounts.User
 	Teams map[string]accounts.Team
@@ -12,9 +16,11 @@ func New() *Testdb {
 	return &Testdb{}
 }
 
+// AddDefaultUsers adds users to an empty testdb.
 func (t *Testdb) AddDefaultUsers() *Testdb {
+	pw, _ := password.HashPassword("password")
 	usrs := map[string]accounts.User{
-		"1": {ID: "1", Name: "user1", Password: "password", APIKey: "111111", Bookmarks: map[string]string{"bbc": "https://www.bbc.co.uk"}},
+		"1": {ID: "1", Name: "user1", Password: pw, APIKey: "111111", Bookmarks: map[string]string{"bbc": "https://www.bbc.co.uk"}},
 	}
 	t.Users = usrs
 	return t

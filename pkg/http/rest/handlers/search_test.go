@@ -22,16 +22,17 @@ func TestSearch(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Could not create Search request - %v", err)
 			}
+			defer res.Body.Close()
 			url := res.Request.URL.String()
 			if url != v {
 				t.Errorf("wanted %s: got %s", v, url)
 			}
-			res, err = http.Get(fmt.Sprintf("%s/search/%s/%s", srv.URL, usr.APIKey, k+"1"))
+			res, err = http.Get(fmt.Sprintf("%s/search/%s/%s", srv.URL, usr.APIKey, k+"test"))
 			if err != nil {
 				t.Fatalf("Could not create Search request - %v", err)
 			}
 			url = res.Request.URL.String()
-			google := "http://www.google.com/search?q=" + k + "1"
+			google := "http://www.google.com/search?q=" + k + "test"
 			if url != google {
 				t.Errorf("wanted %s: got %s", v, url)
 			}

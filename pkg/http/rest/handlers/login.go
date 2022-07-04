@@ -11,7 +11,8 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 )
 
-type logInResponse struct {
+// LogInResponse represents the data returned upon successfully logging in.
+type LogInResponse struct {
 	ID     string `json:"id"`
 	APIKey string `json:"APIKey"`
 }
@@ -49,7 +50,7 @@ func LogIn(u accounts.UserService) func(w http.ResponseWriter, r *http.Request) 
 		http.SetCookie(w, &cookie)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		res := logInResponse{
+		res := LogInResponse{
 			ID:     currUser.ID,
 			APIKey: currUser.APIKey,
 		}

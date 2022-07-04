@@ -6,6 +6,7 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 )
 
+// Search function for the testdb.
 func (t *Testdb) Search(ctx context.Context, APIKey, cmd string) (string, error) {
 	usr := t.findUserByAPIKey(APIKey)
 	if usr == nil {
