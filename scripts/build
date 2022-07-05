@@ -1,0 +1,15 @@
+#! /bin/sh
+
+if [ $1 = "dev" ]; then
+  docker-compose -f ../build/docker-compose.dev.yml -p bookshelf_dev build
+  if [ $2 = "up" ]; then
+    ./up dev
+  fi
+  exit 0
+else
+  docker-compose -f ../build/docker-compose.local.yml -p bookshelf_local build
+  if [ $2 = "up" ]; then
+    ./up
+  fi
+  exit 0
+fi

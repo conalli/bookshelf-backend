@@ -1,10 +1,11 @@
 module github.com/conalli/bookshelf-backend
 
-go 1.17
+go 1.18
 
 require (
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/golang-jwt/jwt/v4 v4.2.0
+	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/joho/godotenv v1.4.0
