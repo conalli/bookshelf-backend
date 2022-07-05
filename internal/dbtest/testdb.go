@@ -1,11 +1,11 @@
-package testdb
+package dbtest
 
 import (
 	"github.com/conalli/bookshelf-backend/pkg/password"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 )
 
-// Testdb represents a testdb.
+// Testdb represents a dbtest.
 type Testdb struct {
 	Users map[string]accounts.User
 	Teams map[string]accounts.Team
@@ -16,7 +16,7 @@ func New() *Testdb {
 	return &Testdb{}
 }
 
-// AddDefaultUsers adds users to an empty testdb.
+// AddDefaultUsers adds users to an empty dbtest.
 func (t *Testdb) AddDefaultUsers() *Testdb {
 	pw, _ := password.HashPassword("password")
 	usrs := map[string]accounts.User{
