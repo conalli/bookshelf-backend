@@ -16,7 +16,7 @@ var signingKey = []byte(os.Getenv("SIGNING_SECRET"))
 // CustomClaims represents the claims made in the JWT.
 type CustomClaims struct {
 	Name string
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 // NewToken creates a new token based on the CustomClaims and returns the token
@@ -24,10 +24,10 @@ type CustomClaims struct {
 func NewToken(name string) (string, errors.ApiErr) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, CustomClaims{
 		Name: name,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(15 * time.Minute).Unix(),
-			NotBefore: time.Now().Unix(),
-			IssuedAt:  time.Now().Unix(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    "http://bookshelf-backend.jp",
 			Subject:   name,
 		},
@@ -81,6 +81,7 @@ func Authorized(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+// FilterCookies looks through all cookies and returns one with given name.
 func FilterCookies(name string, cookies []*http.Cookie) *http.Cookie {
 	for _, c := range cookies {
 		if c.Name == name {

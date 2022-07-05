@@ -48,6 +48,5 @@ func AddCmd(u accounts.UserService) func(w http.ResponseWriter, r *http.Request)
 			URL:     setCmdReq.URL,
 		}
 		json.NewEncoder(w).Encode(res)
-		return
 	}
 }

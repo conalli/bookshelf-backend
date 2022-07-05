@@ -39,6 +39,5 @@ func DelUser(u accounts.UserService) func(w http.ResponseWriter, r *http.Request
 			NumDeleted: numDeleted,
 		}
 		json.NewEncoder(w).Encode(res)
-		return
 	}
 }
