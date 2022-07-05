@@ -13,7 +13,7 @@ import (
 func TestSearch(t *testing.T) {
 	t.Parallel()
 	db := dbtest.New().AddDefaultUsers()
-	r := rest.Router(db)
+	r := rest.Router(db, false)
 	srv := httptest.NewServer(r)
 	defer srv.Close()
 	for _, usr := range db.Users {

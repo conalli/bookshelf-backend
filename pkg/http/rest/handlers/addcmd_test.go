@@ -15,7 +15,7 @@ import (
 func TestAddCmd(t *testing.T) {
 	t.Parallel()
 	db := dbtest.New().AddDefaultUsers()
-	r := rest.Router(db)
+	r := rest.Router(db, false)
 	srv := httptest.NewServer(r)
 	defer srv.Close()
 	APIKey := db.Users["1"].APIKey

@@ -15,7 +15,7 @@ import (
 )
 
 // Router returns a router with all handlers assigned to it
-func Router(store db.Storage) *mux.Router {
+func Router(store db.Storage, walk bool) *mux.Router {
 	u := accounts.NewUserService(store)
 	// t := accounts.NewTeamService(repo)
 	s := search.NewService(store)
@@ -46,18 +46,24 @@ func Router(store db.Storage) *mux.Router {
 	search := router.PathPrefix("/search").Subrouter()
 	search.HandleFunc("/{APIKey}/{cmd}", handlers.Search(s)).Methods("GET")
 
-	router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
-		tpl, err1 := route.GetPathTemplate()
-		met, err2 := route.GetMethods()
-		log.Println("Path:", tpl, "Err:", err1, "Methods:", met, "Err:", err2)
-		return nil
-	})
+	if walk {
+		err := router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+			tpl, err1 := route.GetPathTemplate()
+			met, err2 := route.GetMethods()
+			log.Println("Path:", tpl, "Err:", err1, "Methods:", met, "Err:", err2)
+			return nil
+		})
+		if err != nil {
+			log.Fatalln("Couldn't walk router.")
+		}
+	}
 
 	return router
 }
 
 // RouterWithCORS provides basic CORS middleware for a router.
-func RouterWithCORS() http.Handler {
-	router := Router(mongodb.New())
+func RouterWithCORS(walk bool) http.Handler {
+	router := Router(mongodb.New(), walk)
+
 	return middleware.CORSMiddleware(router)
 }

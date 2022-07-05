@@ -23,7 +23,7 @@ func loadEnv(env string) {
 func main() {
 	loadEnv("development")
 
-	router := rest.RouterWithCORS()
+	router := rest.RouterWithCORS(true)
 
 	port := os.Getenv("PORT")
 	log.Println("Server up and running on port: " + port)

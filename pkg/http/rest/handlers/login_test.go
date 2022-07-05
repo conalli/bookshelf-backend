@@ -17,7 +17,7 @@ import (
 func TestLogin(t *testing.T) {
 	t.Parallel()
 	db := dbtest.New().AddDefaultUsers()
-	r := rest.Router(db)
+	r := rest.Router(db, false)
 	srv := httptest.NewServer(r)
 	defer srv.Close()
 	body, err := handlerstest.MakeRequestBody(accounts.LogInRequest{
