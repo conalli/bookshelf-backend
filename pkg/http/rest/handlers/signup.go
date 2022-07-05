@@ -47,6 +47,5 @@ func SignUp(u accounts.UserService) func(w http.ResponseWriter, r *http.Request)
 		w.WriteHeader(http.StatusOK)
 		res := newUser
 		json.NewEncoder(w).Encode(res)
-		return
 	}
 }

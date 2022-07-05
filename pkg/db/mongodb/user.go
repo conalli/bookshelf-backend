@@ -101,11 +101,11 @@ func (m *Mongo) GetTeams(ctx context.Context, APIKey string) ([]accounts.Team, e
 		filter := bson.M{"_id": bson.M{"$in": teamIDs}}
 		opts := options.Find()
 		teamCursor, err := teamCollection.Find(sessCtx, filter, opts)
-		defer teamCursor.Close(sessCtx)
 		if err != nil {
 			log.Printf("error converting teams to ids -> %+v\n", err)
 			return nil, err
 		}
+		defer teamCursor.Close(sessCtx)
 		var teams []accounts.Team
 		for teamCursor.Next(sessCtx) {
 			var currTeam accounts.Team

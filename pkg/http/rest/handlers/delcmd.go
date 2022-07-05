@@ -46,6 +46,5 @@ func DeleteCmd(u accounts.UserService) func(w http.ResponseWriter, r *http.Reque
 			Cmd:        delCmdReq.Cmd,
 		}
 		json.NewEncoder(w).Encode(res)
-		return
 	}
 }
