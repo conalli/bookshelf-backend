@@ -7,7 +7,7 @@ package dbtest
 // 	"github.com/conalli/bookshelf-backend/pkg/errors"
 // )
 
-// func (t *dbtest) NewTeam(ctx context.Context, requestData accounts.NewTeamRequest) (string, errors.ApiErr) {
+// func (t *dbtest) NewTeam(ctx context.Context, requestData accounts.NewTeamRequest) (string, errors.APIErr) {
 // 	found := t.dataAlreadyExists(requestData.Name, "teams")
 // 	if found {
 // 		return "", errors.NewBadRequestError("error creating new user; user with name " + requestData.Name + " already exists")
@@ -24,7 +24,7 @@ package dbtest
 // 	return team.ID, nil
 // }
 
-// func (t *dbtest) DeleteTeam(ctx context.Context, requestData accounts.DelTeamRequest) (int, errors.ApiErr) {
+// func (t *dbtest) DeleteTeam(ctx context.Context, requestData accounts.DelTeamRequest) (int, errors.APIErr) {
 // 	val, found := t.Teams[requestData.TeamID]
 // 	if !found {
 // 		return 0, errors.NewBadRequestError("error couldn't find team with ID: " + requestData.TeamID)
@@ -36,7 +36,7 @@ package dbtest
 // 	return 1, nil
 // }
 
-// func (t *dbtest) AddMember(ctx context.Context, requestData accounts.AddMemberRequest) (bool, errors.ApiErr) {
+// func (t *dbtest) AddMember(ctx context.Context, requestData accounts.AddMemberRequest) (bool, errors.APIErr) {
 // 	var usr accounts.User
 // 	for _, v := range t.Users {
 // 		if v.Name == requestData.MemberName {
@@ -55,18 +55,18 @@ package dbtest
 // 	return true, nil
 // }
 
-// func (t *dbtest) DeleteSelf(ctx context.Context, requestData accounts.DelSelfRequest) (bool, errors.ApiErr) {
+// func (t *dbtest) DeleteSelf(ctx context.Context, requestData accounts.DelSelfRequest) (bool, errors.APIErr) {
 // 	return true, nil
 // }
 
-// func (t *dbtest) DeleteMember(ctx context.Context, requestData accounts.DelMemberRequest) (bool, errors.ApiErr) {
+// func (t *dbtest) DeleteMember(ctx context.Context, requestData accounts.DelMemberRequest) (bool, errors.APIErr) {
 // 	return true, nil
 // }
 
-// func (t *dbtest) AddTeamCmd(ctx context.Context, requestData accounts.AddTeamCmdRequest) (int, errors.ApiErr) {
+// func (t *dbtest) AddTeamCmd(ctx context.Context, requestData accounts.AddTeamCmdRequest) (int, errors.APIErr) {
 // 	return 1, nil
 // }
 
-// func (t *dbtest) DeleteTeamCmd(ctx context.Context, requestData accounts.DelTeamCmdRequest, APIKey string) (int, errors.ApiErr) {
+// func (t *dbtest) DeleteTeamCmd(ctx context.Context, requestData accounts.DelTeamCmdRequest, APIKey string) (int, errors.APIErr) {
 // 	return 1, nil
 // }

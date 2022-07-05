@@ -15,7 +15,7 @@ import (
 )
 
 // NewUser is a func.
-func (m *Mongo) NewUser(ctx context.Context, requestData accounts.SignUpRequest) (accounts.User, errors.ApiErr) {
+func (m *Mongo) NewUser(ctx context.Context, requestData accounts.SignUpRequest) (accounts.User, errors.APIErr) {
 	m.Initialize()
 	err := m.client.Connect(ctx)
 	if err != nil {
@@ -77,7 +77,7 @@ func (m *Mongo) GetUserByName(ctx context.Context, requestData accounts.LogInReq
 }
 
 // GetTeams uses user id to get all users teams from the db.
-func (m *Mongo) GetTeams(ctx context.Context, APIKey string) ([]accounts.Team, errors.ApiErr) {
+func (m *Mongo) GetTeams(ctx context.Context, APIKey string) ([]accounts.Team, errors.APIErr) {
 	m.Initialize()
 	err := m.client.Connect(ctx)
 	if err != nil {
@@ -142,7 +142,7 @@ func convertIDs(teams map[string]string) ([]primitive.ObjectID, error) {
 }
 
 // GetAllCmds uses req info to get all users current cmds from the db.
-func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.ApiErr) {
+func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.APIErr) {
 	m.Initialize()
 	err := m.client.Connect(ctx)
 	if err != nil {
@@ -161,7 +161,7 @@ func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]strin
 
 // AddCmd attempts to either add or update a cmd for the user, returning the number
 // of updated cmds.
-func (m *Mongo) AddCmd(ctx context.Context, requestData accounts.AddCmdRequest, APIKey string) (int, errors.ApiErr) {
+func (m *Mongo) AddCmd(ctx context.Context, requestData accounts.AddCmdRequest, APIKey string) (int, errors.APIErr) {
 	m.Initialize()
 	err := m.client.Connect(ctx)
 	if err != nil {
@@ -200,7 +200,7 @@ func addCmdToUser(ctx context.Context, collection *mongo.Collection, requestData
 
 // DeleteCmd attempts to either rempve a cmd from the user, returning the number
 // of updated cmds.
-func (m *Mongo) DeleteCmd(ctx context.Context, requestData accounts.DelCmdRequest, APIKey string) (int, errors.ApiErr) {
+func (m *Mongo) DeleteCmd(ctx context.Context, requestData accounts.DelCmdRequest, APIKey string) (int, errors.APIErr) {
 	m.Initialize()
 	err := m.client.Connect(ctx)
 	if err != nil {
@@ -232,7 +232,7 @@ func removeUserCmd(ctx context.Context, collection *mongo.Collection, userID, cm
 
 // Delete attempts to delete a user from the db, returning the number of deleted users.
 // TODO: remove user from all users teams.
-func (m *Mongo) Delete(ctx context.Context, requestData accounts.DelUserRequest, APIKey string) (int, errors.ApiErr) {
+func (m *Mongo) Delete(ctx context.Context, requestData accounts.DelUserRequest, APIKey string) (int, errors.APIErr) {
 	m.Initialize()
 	err := m.client.Connect(ctx)
 	if err != nil {

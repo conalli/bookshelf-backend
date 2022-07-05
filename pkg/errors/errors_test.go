@@ -9,7 +9,7 @@ import (
 
 func TestNewApiError(t *testing.T) {
 	t.Parallel()
-	err := errors.NewApiError(500, "internal server error", "Something went wrong...")
+	err := errors.NewAPIError(500, "internal server error", "Something went wrong...")
 	status := 500
 	errStatus := err.Status()
 	if status != errStatus {

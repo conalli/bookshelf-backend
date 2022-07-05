@@ -10,98 +10,121 @@ import (
 )
 
 var (
-	ErrBadRequest          = errors.New("bad request")
-	ErrWrongCredentials    = errors.New("wrong credentials")
-	ErrNotFound            = errors.New("not found")
-	ErrUnauthorized        = errors.New("unauthorized")
-	ErrForbidden           = errors.New("forbidden")
-	ErrPermissionDenied    = errors.New("permission denied")
-	ErrBadQueryParams      = errors.New("invalid query params")
+	// ErrBadRequest represents an HTTP bad request error.
+	ErrBadRequest = errors.New("bad request")
+	// ErrWrongCredentials represents an HTTP wrong credentials error.
+	ErrWrongCredentials = errors.New("wrong credentials")
+	// ErrNotFound represents an HTTP not found error.
+	ErrNotFound = errors.New("not found")
+	// ErrUnauthorized represents an HTTP unauthorized error.
+	ErrUnauthorized = errors.New("unauthorized")
+	// ErrForbidden represents an HTTP forbidden error.
+	ErrForbidden = errors.New("forbidden")
+	// ErrPermissionDenied represents an HTTP permission denied error.
+	ErrPermissionDenied = errors.New("permission denied")
+	// ErrBadQueryParams represents an HTTP bad query params error.
+	ErrBadQueryParams = errors.New("invalid query params")
+	// ErrInternalServerError represents an HTTP internal server error.
 	ErrInternalServerError = errors.New("internal server error")
+	// ErrRequestTimeoutError represents an HTTP request timeout error.
 	ErrRequestTimeoutError = errors.New("request timeout")
-	ErrInvalidJWTToken     = errors.New("invalid JWT token")
-	ErrInvalidJWTClaims    = errors.New("invalid JWT claims")
+	// ErrInvalidJWTToken represents an HTTP invalid jwt token error.
+	ErrInvalidJWTToken = errors.New("invalid JWT token")
+	// ErrInvalidJWTClaims represents an HTTP invalid jwt claims error.
+	ErrInvalidJWTClaims = errors.New("invalid JWT claims")
 )
 
-type ApiError struct {
+// APIError represents an Api/server error.
+type APIError struct {
 	ErrStatus  int
 	ErrValue   string
 	ErrDetails string
 }
 
-type ApiErr interface {
+// APIErr represents the methods needed to return an APIErr.
+type APIErr interface {
 	Status() int
 	Error() string
 }
 
+// ResError represents an error response.
 type ResError struct {
 	Status int    `json:"status,omitempty"`
 	Error  string `json:"error,omitempty"`
 }
 
-func (e ApiError) Status() int {
+// Status returns the status code of an APIError.
+func (e APIError) Status() int {
 	return e.ErrStatus
 }
 
-func (e ApiError) Error() string {
+func (e APIError) Error() string {
 	return fmt.Sprintf("%s -- %s", e.ErrDetails, e.ErrValue)
 }
 
-func NewApiError(status int, value string, details string) ApiError {
-	return ApiError{
+// NewAPIError returns a new APIError with given arguments.
+func NewAPIError(status int, value string, details string) APIError {
+	return APIError{
 		ErrStatus:  status,
 		ErrValue:   value,
 		ErrDetails: details,
 	}
 }
 
-func NewBadRequestError(details string) ApiError {
-	return ApiError{
+// NewBadRequestError returns a bad request APIError with given arguments.
+func NewBadRequestError(details string) APIError {
+	return APIError{
 		ErrStatus:  http.StatusBadRequest,
 		ErrValue:   ErrBadRequest.Error(),
 		ErrDetails: details,
 	}
 }
 
-func NewWrongCredentialsError(details string) ApiError {
-	return ApiError{
+// NewWrongCredentialsError returns a wrong credentials APIError with given arguments.
+func NewWrongCredentialsError(details string) APIError {
+	return APIError{
 		ErrStatus:  http.StatusUnauthorized,
 		ErrValue:   ErrWrongCredentials.Error(),
 		ErrDetails: details,
 	}
 }
 
-func NewInternalServerError() ApiError {
-	return ApiError{
+// NewInternalServerError returns an internal server error APIError.
+func NewInternalServerError() APIError {
+	return APIError{
 		ErrStatus: http.StatusInternalServerError,
 		ErrValue:  ErrInternalServerError.Error(),
 	}
 }
 
-func NewJWTTokenError(details string) ApiError {
-	return ApiError{
+// NewJWTTokenError returns a wrong credentials APIError with given arguments.
+func NewJWTTokenError(details string) APIError {
+	return APIError{
 		ErrStatus:  http.StatusInternalServerError,
 		ErrValue:   ErrInvalidJWTToken.Error(),
 		ErrDetails: details,
 	}
 }
 
-func NewJWTClaimsError(details string) ApiError {
-	return ApiError{
+// NewJWTClaimsError returns a wrong credentials APIError with given arguments.
+func NewJWTClaimsError(details string) APIError {
+	return APIError{
 		ErrStatus:  http.StatusInternalServerError,
 		ErrValue:   ErrInvalidJWTClaims.Error(),
 		ErrDetails: details,
 	}
 }
 
-func ParseGetUserError(value string, err error) ApiError {
+// ParseGetUserError checks if there are no mongo documents and returns an APIError with given arguments.
+func ParseGetUserError(value string, err error) APIError {
 	if err == mongo.ErrNoDocuments {
 		return NewBadRequestError("error: could not find user with value " + value)
 	}
 	return NewInternalServerError()
 }
 
-func APIErrorResponse(w http.ResponseWriter, err ApiErr) {
+// APIErrorResponse encodes the response with an APIErr.
+func APIErrorResponse(w http.ResponseWriter, err APIErr) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(err.Status())
 	res := ResError{
