@@ -53,7 +53,7 @@ func Authorized(next http.HandlerFunc) http.HandlerFunc {
 			errors.APIErrorResponse(w, errors.NewBadRequestError("error: no cookies in request"))
 			return
 		}
-		bookshelfCookie := filterCookies("bookshelfjwt", cookies)
+		bookshelfCookie := FilterCookies("bookshelfjwt", cookies)
 		if bookshelfCookie == nil {
 			log.Println("error: did not find bookshelf cookie")
 			errors.APIErrorResponse(w, errors.NewBadRequestError("error: did not find bookshelf cookie"))
@@ -81,7 +81,7 @@ func Authorized(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func filterCookies(name string, cookies []*http.Cookie) *http.Cookie {
+func FilterCookies(name string, cookies []*http.Cookie) *http.Cookie {
 	for _, c := range cookies {
 		if c.Name == name {
 			return c
