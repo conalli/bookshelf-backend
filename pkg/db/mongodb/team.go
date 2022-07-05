@@ -17,7 +17,7 @@ package mongodb
 
 // // NewTeam checks whether a team name alreadys exists in the db. If not, a new team
 // // is created based upon the request data.
-// func (m *Mongo) NewTeam(ctx context.Context, requestData accounts.NewTeamRequest) (string, errors.ApiErr) {
+// func (m *Mongo) NewTeam(ctx context.Context, requestData accounts.NewTeamRequest) (string, errors.APIErr) {
 // 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 // 	defer cancelFunc()
 // 	m.Initialize()
@@ -88,7 +88,7 @@ package mongodb
 
 // // DeleteTeam removes a team from the db and updates each users account to reflect it.
 // // TODO: improve validation
-// func (m *Mongo) DeleteTeam(ctx context.Context, requestData accounts.DelTeamRequest) (int, errors.ApiErr) {
+// func (m *Mongo) DeleteTeam(ctx context.Context, requestData accounts.DelTeamRequest) (int, errors.APIErr) {
 // 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 // 	defer cancelFunc()
 // 	m.Initialize()
@@ -194,7 +194,7 @@ package mongodb
 
 // // AddMember checks whether a username alreadys exists in the db. If not, a new user
 // // is created based upon the request data.
-// func (m *Mongo) AddMember(ctx context.Context, requestData accounts.AddMemberRequest) (bool, errors.ApiErr) {
+// func (m *Mongo) AddMember(ctx context.Context, requestData accounts.AddMemberRequest) (bool, errors.APIErr) {
 // 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 // 	defer cancelFunc()
 // 	m.Initialize()
@@ -266,7 +266,7 @@ package mongodb
 // }
 
 // // DeleteSelf takes a request and attemps to remove a member from the given team.
-// func (m *Mongo) DeleteSelf(ctx context.Context, requestData accounts.DelSelfRequest) (bool, errors.ApiErr) {
+// func (m *Mongo) DeleteSelf(ctx context.Context, requestData accounts.DelSelfRequest) (bool, errors.APIErr) {
 // 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 // 	defer cancelFunc()
 // 	m.Initialize()
@@ -317,7 +317,7 @@ package mongodb
 // }
 
 // // DeleteMember takes a request and attemps to remove a member from the given team.
-// func (m *Mongo) DeleteMember(ctx context.Context, requestData accounts.DelMemberRequest) (bool, errors.ApiErr) {
+// func (m *Mongo) DeleteMember(ctx context.Context, requestData accounts.DelMemberRequest) (bool, errors.APIErr) {
 // 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 // 	defer cancelFunc()
 // 	m.Initialize()
@@ -389,7 +389,7 @@ package mongodb
 
 // // AddTeamCmd takes request data and attempts to add a new cmd to the teams bookmarks.
 // // TODO: improve validation.
-// func (m *Mongo) AddTeamCmd(ctx context.Context, requestData accounts.AddTeamCmdRequest) (int, errors.ApiErr) {
+// func (m *Mongo) AddTeamCmd(ctx context.Context, requestData accounts.AddTeamCmdRequest) (int, errors.APIErr) {
 // 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 // 	defer cancelFunc()
 // 	m.Initialize()
@@ -429,7 +429,7 @@ package mongodb
 // // DelTeamCmd attempts to either rempve a cmd from the user, returning the number
 // // of updated cmds.
 // // TODO: improve validation
-// func (m *Mongo) DelTeamCmd(ctx context.Context, requestData accounts.DelTeamCmdRequest, APIKey string) (int, errors.ApiErr) {
+// func (m *Mongo) DelTeamCmd(ctx context.Context, requestData accounts.DelTeamCmdRequest, APIKey string) (int, errors.APIErr) {
 // 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 // 	defer cancelFunc()
 // 	m.Initialize()

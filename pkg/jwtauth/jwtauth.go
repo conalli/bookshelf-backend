@@ -21,7 +21,7 @@ type CustomClaims struct {
 
 // NewToken creates a new token based on the CustomClaims and returns the token
 // as a string signed with the secret.
-func NewToken(name string) (string, errors.ApiErr) {
+func NewToken(name string) (string, errors.APIErr) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, CustomClaims{
 		Name: name,
 		RegisteredClaims: jwt.RegisteredClaims{

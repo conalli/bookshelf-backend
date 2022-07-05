@@ -12,24 +12,24 @@ import (
 
 // UserRepository provides access to the user storage.
 type UserRepository interface {
-	NewUser(ctx context.Context, requestData SignUpRequest) (User, errors.ApiErr)
+	NewUser(ctx context.Context, requestData SignUpRequest) (User, errors.APIErr)
 	GetUserByName(ctx context.Context, requestData LogInRequest) (User, error)
-	// GetTeams(ctx context.Context, APIKey string) ([]Team, errors.ApiErr)
-	GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.ApiErr)
-	AddCmd(reqCtx context.Context, requestData AddCmdRequest, APIKey string) (int, errors.ApiErr)
-	DeleteCmd(ctx context.Context, requestData DelCmdRequest, APIKey string) (int, errors.ApiErr)
-	Delete(reqCtx context.Context, requestData DelUserRequest, APIKey string) (int, errors.ApiErr)
+	// GetTeams(ctx context.Context, APIKey string) ([]Team, errors.APIErr)
+	GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.APIErr)
+	AddCmd(reqCtx context.Context, requestData AddCmdRequest, APIKey string) (int, errors.APIErr)
+	DeleteCmd(ctx context.Context, requestData DelCmdRequest, APIKey string) (int, errors.APIErr)
+	Delete(reqCtx context.Context, requestData DelUserRequest, APIKey string) (int, errors.APIErr)
 }
 
 // UserService provides the user operations.
 type UserService interface {
-	NewUser(ctx context.Context, requestData SignUpRequest) (User, errors.ApiErr)
-	LogIn(ctx context.Context, requestData LogInRequest) (User, errors.ApiErr)
-	// GetTeams(ctx context.Context, APIKey string) ([]Team, errors.ApiErr)
-	GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.ApiErr)
-	AddCmd(reqCtx context.Context, requestData AddCmdRequest, APIKey string) (int, errors.ApiErr)
-	DeleteCmd(ctx context.Context, requestData DelCmdRequest, APIKey string) (int, errors.ApiErr)
-	Delete(ctx context.Context, requestData DelUserRequest, APIKey string) (int, errors.ApiErr)
+	NewUser(ctx context.Context, requestData SignUpRequest) (User, errors.APIErr)
+	LogIn(ctx context.Context, requestData LogInRequest) (User, errors.APIErr)
+	// GetTeams(ctx context.Context, APIKey string) ([]Team, errors.APIErr)
+	GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.APIErr)
+	AddCmd(reqCtx context.Context, requestData AddCmdRequest, APIKey string) (int, errors.APIErr)
+	DeleteCmd(ctx context.Context, requestData DelCmdRequest, APIKey string) (int, errors.APIErr)
+	Delete(ctx context.Context, requestData DelUserRequest, APIKey string) (int, errors.APIErr)
 }
 
 type userService struct {
@@ -42,7 +42,7 @@ func NewUserService(r UserRepository) UserService {
 }
 
 // Search returns the url of a given cmd.
-func (s *userService) NewUser(ctx context.Context, requestData SignUpRequest) (User, errors.ApiErr) {
+func (s *userService) NewUser(ctx context.Context, requestData SignUpRequest) (User, errors.APIErr) {
 	reqCtx, cancelFunc := reqcontext.WithDefaultTimeout(ctx)
 	defer cancelFunc()
 	// TODO: add validation here
@@ -51,19 +51,19 @@ func (s *userService) NewUser(ctx context.Context, requestData SignUpRequest) (U
 }
 
 // Login takes in request data, checks the db and returns the username and apikey is successful.
-func (s *userService) LogIn(ctx context.Context, requestData LogInRequest) (User, errors.ApiErr) {
+func (s *userService) LogIn(ctx context.Context, requestData LogInRequest) (User, errors.APIErr) {
 	reqCtx, cancelFunc := reqcontext.WithDefaultTimeout(ctx)
 	defer cancelFunc()
 	usr, err := s.r.GetUserByName(reqCtx, requestData)
 	if err != nil || !password.CheckHashedPassword(usr.Password, requestData.Password) {
 		log.Printf("login getuserbykey %+v", err)
-		return User{}, errors.NewApiError(http.StatusUnauthorized, errors.ErrWrongCredentials.Error(), "error: name or password incorrect")
+		return User{}, errors.NewAPIError(http.StatusUnauthorized, errors.ErrWrongCredentials.Error(), "error: name or password incorrect")
 	}
 	return usr, nil
 }
 
 // // GetTeams calls the GetTeams method and returns all teams for a user.
-// func (s *userService) GetTeams(ctx context.Context, APIKey string) ([]Team, errors.ApiErr) {
+// func (s *userService) GetTeams(ctx context.Context, APIKey string) ([]Team, errors.APIErr) {
 // reqCtx, cancelFunc := reqcontext.WithDefaultTimeout(ctx)
 // defer cancelFunc()
 // 	teams, err := s.r.GetTeams(reqCtx, APIKey)
@@ -71,7 +71,7 @@ func (s *userService) LogIn(ctx context.Context, requestData LogInRequest) (User
 // }
 
 // GetAllCmds calls the GetAllCmds method and returns all the users commands.
-func (s *userService) GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.ApiErr) {
+func (s *userService) GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.APIErr) {
 	reqCtx, cancelFunc := reqcontext.WithDefaultTimeout(ctx)
 	defer cancelFunc()
 	cmds, err := s.r.GetAllCmds(reqCtx, APIKey)
@@ -79,7 +79,7 @@ func (s *userService) GetAllCmds(ctx context.Context, APIKey string) (map[string
 }
 
 // AddCmd calls the AddCmd method and returns the number of updated commands.
-func (s *userService) AddCmd(ctx context.Context, requestData AddCmdRequest, APIKey string) (int, errors.ApiErr) {
+func (s *userService) AddCmd(ctx context.Context, requestData AddCmdRequest, APIKey string) (int, errors.APIErr) {
 	reqCtx, cancelFunc := reqcontext.WithDefaultTimeout(ctx)
 	defer cancelFunc()
 	numUpdated, err := s.r.AddCmd(reqCtx, requestData, APIKey)
@@ -87,7 +87,7 @@ func (s *userService) AddCmd(ctx context.Context, requestData AddCmdRequest, API
 }
 
 // DelCmd calls the DelCmd method and returns the number of updated commands.
-func (s *userService) DeleteCmd(ctx context.Context, requestData DelCmdRequest, APIKey string) (int, errors.ApiErr) {
+func (s *userService) DeleteCmd(ctx context.Context, requestData DelCmdRequest, APIKey string) (int, errors.APIErr) {
 	reqCtx, cancelFunc := reqcontext.WithDefaultTimeout(ctx)
 	defer cancelFunc()
 	numUpdated, err := s.r.DeleteCmd(reqCtx, requestData, APIKey)
@@ -95,7 +95,7 @@ func (s *userService) DeleteCmd(ctx context.Context, requestData DelCmdRequest, 
 }
 
 // Delete calls the Delete method and returns the number of deleted users.
-func (s *userService) Delete(ctx context.Context, requestData DelUserRequest, APIKey string) (int, errors.ApiErr) {
+func (s *userService) Delete(ctx context.Context, requestData DelUserRequest, APIKey string) (int, errors.APIErr) {
 	// TODO: add validation here
 	reqCtx, cancelFunc := reqcontext.WithDefaultTimeout(ctx)
 	defer cancelFunc()
