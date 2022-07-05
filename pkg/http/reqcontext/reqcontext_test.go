@@ -1,17 +1,17 @@
-package services_test
+package reqcontext_test
 
 import (
 	"context"
 	"testing"
 	"time"
 
-	"github.com/conalli/bookshelf-backend/pkg/services"
+	"github.com/conalli/bookshelf-backend/pkg/http/reqcontext"
 )
 
 func TestCtxWithDefaultTimeout(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	reqCtx, _ := services.CtxWithDefaultTimeout(ctx)
+	reqCtx, _ := reqcontext.WithDefaultTimeout(ctx)
 	want := time.Now().Add(time.Second * 5).Round(time.Second)
 	deadline, ok := reqCtx.Deadline()
 	got := deadline.Round(time.Second)
