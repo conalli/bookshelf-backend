@@ -7,7 +7,12 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
+	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 )
+
+type apiRequest interface {
+	accounts.SignUpRequest | accounts.LogInRequest | accounts.DelUserRequest | accounts.AddCmdRequest | accounts.DelCmdRequest
+}
 
 // RequestWithCookie provides a helper for testing handlers that require jwt cookies.
 func RequestWithCookie(method, url string, body io.Reader, APIKey string) (*http.Response, error) {
@@ -25,7 +30,7 @@ func RequestWithCookie(method, url string, body io.Reader, APIKey string) (*http
 }
 
 // MakeRequestBody takes in a struct and attempts to marshal it and turn it into a new buffer.
-func MakeRequestBody[T any](data T) (*bytes.Buffer, error) {
+func MakeRequestBody[T apiRequest](data T) (*bytes.Buffer, error) {
 	body, err := json.Marshal(data)
 	if err != nil {
 		return nil, err
