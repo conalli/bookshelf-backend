@@ -1,33 +1,33 @@
 package handlers_test
 
 import (
-	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/conalli/bookshelf-backend/pkg/db/testdb"
+	"github.com/conalli/bookshelf-backend/internal/dbtest"
+	"github.com/conalli/bookshelf-backend/internal/handlerstest"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest/handlers"
+	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 )
 
 func TestLogin(t *testing.T) {
 	t.Parallel()
-	db := testdb.New().AddDefaultUsers()
+	db := dbtest.New().AddDefaultUsers()
 	r := rest.Router(db)
 	srv := httptest.NewServer(r)
 	defer srv.Close()
-	body, err := json.Marshal(accounts.LogInRequest{
+	body, err := handlerstest.MakeRequestBody(accounts.LogInRequest{
 		Name:     "user1",
 		Password: "password",
 	})
 	if err != nil {
 		t.Fatalf("Couldn't marshal json body to log in.")
 	}
-	reqBody := bytes.NewBuffer(body)
-	res, err := http.Post(srv.URL+"/user/login", "application/json", reqBody)
+	res, err := http.Post(srv.URL+"/user/login", "application/json", body)
 	if err != nil {
 		t.Fatalf("Couldn't make post request.")
 	}
@@ -44,5 +44,7 @@ func TestLogin(t *testing.T) {
 	if response.ID != db.Users["1"].ID || response.APIKey != db.Users["1"].APIKey {
 		t.Fatalf("Unexpected log in data")
 	}
-	// check cookies
+	if jwtauth.FilterCookies(db.Users["1"].APIKey, res.Cookies()) != nil {
+		t.Errorf("Expected jwt cookie to be returned upon log in.")
+	}
 }

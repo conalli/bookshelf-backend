@@ -10,23 +10,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// import (
-// 	"encoding/json"
-// 	"log"
-// 	"net/http"
-
-// 	"github.com/conalli/bookshelf-backend/pkg/errors"
-// 	"github.com/conalli/bookshelf-backend/pkg/user"
-// 	"github.com/gorilla/mux"
-// )
-
-// type addCmdRequest struct {
-// 	ID  string `json:"id" bson:"_id"`
-// 	Cmd string `json:"cmd" bson:"cmd"`
-// 	URL string `json:"url" bson:"url"`
-// }
-
-type addCmdResponse struct {
+// AddCmdResponse represents the data returned upon successfully adding a cmd.
+type AddCmdResponse struct {
 	CmdsSet int    `json:"cmdsSet"`
 	Cmd     string `json:"cmd"`
 	URL     string `json:"url"`
@@ -57,7 +42,7 @@ func AddCmd(u accounts.UserService) func(w http.ResponseWriter, r *http.Request)
 		log.Printf("successfully set cmd: %s, url: %s", setCmdReq.Cmd, setCmdReq.URL)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		res := addCmdResponse{
+		res := AddCmdResponse{
 			CmdsSet: numUpdated,
 			Cmd:     setCmdReq.Cmd,
 			URL:     setCmdReq.URL,

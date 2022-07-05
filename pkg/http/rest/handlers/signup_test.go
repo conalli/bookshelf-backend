@@ -1,33 +1,32 @@
 package handlers_test
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/conalli/bookshelf-backend/pkg/db/testdb"
+	"github.com/conalli/bookshelf-backend/internal/dbtest"
+	"github.com/conalli/bookshelf-backend/internal/handlerstest"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
+	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 )
 
 func TestSignUp(t *testing.T) {
 	t.Parallel()
-	db := testdb.New().AddDefaultUsers()
+	db := dbtest.New().AddDefaultUsers()
 	r := rest.Router(db)
 	srv := httptest.NewServer(r)
 	defer srv.Close()
-	body, err := json.Marshal(accounts.SignUpRequest{
+	body, err := handlerstest.MakeRequestBody(accounts.SignUpRequest{
 		Name:     "signuptest",
 		Password: "password",
 	})
 	if err != nil {
 		t.Fatalf("Couldn't marshal json body to sign up.")
 	}
-	bodyBuffer := bytes.NewBuffer(body)
-	res, err := http.Post(srv.URL+"/user", "application/json", bodyBuffer)
+	res, err := http.Post(srv.URL+"/user", "application/json", body)
 	if err != nil {
 		t.Fatalf("Couldn't make post request.")
 	}
@@ -45,7 +44,8 @@ func TestSignUp(t *testing.T) {
 	if usr.ID != usr.Name+"999" || usr.Name != "signuptest" || usr.APIKey != "1234567890" || usr.Password != "password" {
 		t.Fatalf("Unexpected sign up data")
 	}
-	// Check cookies
-	fmt.Println(res.Cookies())
+	if jwtauth.FilterCookies(db.Users["1"].APIKey, res.Cookies()) != nil {
+		t.Errorf("Expected jwt cookie to be returned upon log in.")
+	}
 	// Check user already exists case
 }

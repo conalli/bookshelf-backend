@@ -10,7 +10,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type deleteCmdResponse struct {
+// DeleteCmdResponse represents the data returned upon successfully deleting a cmd.
+type DeleteCmdResponse struct {
 	NumDeleted int    `json:"numDeleted"`
 	Cmd        string `json:"cmd"`
 }
@@ -40,7 +41,7 @@ func DeleteCmd(u accounts.UserService) func(w http.ResponseWriter, r *http.Reque
 		log.Printf("successfully updates cmds: %s, removed %d", delCmdReq.Cmd, result)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		res := deleteCmdResponse{
+		res := DeleteCmdResponse{
 			NumDeleted: result,
 			Cmd:        delCmdReq.Cmd,
 		}

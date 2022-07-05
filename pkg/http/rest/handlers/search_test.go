@@ -6,13 +6,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/conalli/bookshelf-backend/pkg/db/testdb"
+	"github.com/conalli/bookshelf-backend/internal/dbtest"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 )
 
 func TestSearch(t *testing.T) {
 	t.Parallel()
-	db := testdb.New().AddDefaultUsers()
+	db := dbtest.New().AddDefaultUsers()
 	r := rest.Router(db)
 	srv := httptest.NewServer(r)
 	defer srv.Close()
