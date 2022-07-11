@@ -9,12 +9,13 @@ import (
 	"github.com/conalli/bookshelf-backend/internal/dbtest"
 	"github.com/conalli/bookshelf-backend/internal/handlerstest"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
+	"github.com/go-playground/validator/v10"
 )
 
 func TestGetCmds(t *testing.T) {
 	t.Parallel()
 	db := dbtest.New().AddDefaultUsers()
-	r := rest.Router(db, false)
+	r := rest.Router(validator.New(), db, false)
 	srv := httptest.NewServer(r)
 	defer srv.Close()
 	APIKey := db.Users["1"].APIKey

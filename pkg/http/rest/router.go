@@ -11,12 +11,13 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/services/search"
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 )
 
 // Router returns a router with all handlers assigned to it
-func Router(store db.Storage, walk bool) *mux.Router {
-	u := accounts.NewUserService(store)
+func Router(v *validator.Validate, store db.Storage, walk bool) *mux.Router {
+	u := accounts.NewUserService(v, store)
 	// t := accounts.NewTeamService(repo)
 	s := search.NewService(store)
 
@@ -63,7 +64,7 @@ func Router(store db.Storage, walk bool) *mux.Router {
 
 // RouterWithCORS provides basic CORS middleware for a router.
 func RouterWithCORS(walk bool) http.Handler {
-	router := Router(mongodb.New(), walk)
+	router := Router(validator.New(), mongodb.New(), walk)
 
 	return middleware.CORSMiddleware(router)
 }

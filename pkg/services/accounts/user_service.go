@@ -8,6 +8,7 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/reqcontext"
 	"github.com/conalli/bookshelf-backend/pkg/password"
+	"github.com/go-playground/validator/v10"
 )
 
 // UserRepository provides access to the user storage.
@@ -33,12 +34,13 @@ type UserService interface {
 }
 
 type userService struct {
+	v *validator.Validate
 	r UserRepository
 }
 
 // NewUserService creates a search service with the necessary dependencies.
-func NewUserService(r UserRepository) UserService {
-	return &userService{r}
+func NewUserService(v *validator.Validate, r UserRepository) UserService {
+	return &userService{v, r}
 }
 
 // Search returns the url of a given cmd.

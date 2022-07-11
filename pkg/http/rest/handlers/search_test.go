@@ -8,12 +8,13 @@ import (
 
 	"github.com/conalli/bookshelf-backend/internal/dbtest"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
+	"github.com/go-playground/validator/v10"
 )
 
 func TestSearch(t *testing.T) {
 	t.Parallel()
 	db := dbtest.New().AddDefaultUsers()
-	r := rest.Router(db, false)
+	r := rest.Router(validator.New(), db, false)
 	srv := httptest.NewServer(r)
 	defer srv.Close()
 	for _, usr := range db.Users {

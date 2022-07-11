@@ -12,12 +12,13 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/rest/handlers"
 	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
+	"github.com/go-playground/validator/v10"
 )
 
 func TestLogin(t *testing.T) {
 	t.Parallel()
 	db := dbtest.New().AddDefaultUsers()
-	r := rest.Router(db, false)
+	r := rest.Router(validator.New(), db, false)
 	srv := httptest.NewServer(r)
 	defer srv.Close()
 	body, err := handlerstest.MakeRequestBody(accounts.LogInRequest{
