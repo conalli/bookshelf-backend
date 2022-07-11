@@ -47,7 +47,10 @@ func NewUserService(v *validator.Validate, r UserRepository) UserService {
 func (s *userService) NewUser(ctx context.Context, requestData SignUpRequest) (User, errors.APIErr) {
 	reqCtx, cancelFunc := reqcontext.WithDefaultTimeout(ctx)
 	defer cancelFunc()
-	// TODO: add validation here
+	validateErr := s.v.Struct(requestData)
+	if validateErr != nil {
+		return User{}, errors.NewBadRequestError("request format incorrect.")
+	}
 	user, err := s.r.NewUser(reqCtx, requestData)
 	return user, err
 }
@@ -56,6 +59,10 @@ func (s *userService) NewUser(ctx context.Context, requestData SignUpRequest) (U
 func (s *userService) LogIn(ctx context.Context, requestData LogInRequest) (User, errors.APIErr) {
 	reqCtx, cancelFunc := reqcontext.WithDefaultTimeout(ctx)
 	defer cancelFunc()
+	validateErr := s.v.Struct(requestData)
+	if validateErr != nil {
+		return User{}, errors.NewBadRequestError("request format incorrect.")
+	}
 	usr, err := s.r.GetUserByName(reqCtx, requestData)
 	if err != nil || !password.CheckHashedPassword(usr.Password, requestData.Password) {
 		log.Printf("login getuserbykey %+v", err)
@@ -76,6 +83,10 @@ func (s *userService) LogIn(ctx context.Context, requestData LogInRequest) (User
 func (s *userService) GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.APIErr) {
 	reqCtx, cancelFunc := reqcontext.WithDefaultTimeout(ctx)
 	defer cancelFunc()
+	validateErr := s.v.Var(APIKey, "uuid")
+	if validateErr != nil {
+		return nil, errors.NewBadRequestError("request format incorrect.")
+	}
 	cmds, err := s.r.GetAllCmds(reqCtx, APIKey)
 	return cmds, err
 }
@@ -84,6 +95,11 @@ func (s *userService) GetAllCmds(ctx context.Context, APIKey string) (map[string
 func (s *userService) AddCmd(ctx context.Context, requestData AddCmdRequest, APIKey string) (int, errors.APIErr) {
 	reqCtx, cancelFunc := reqcontext.WithDefaultTimeout(ctx)
 	defer cancelFunc()
+	validateReqErr := s.v.Struct(requestData)
+	validateAPIKeyErr := s.v.Var(APIKey, "uuid")
+	if validateReqErr != nil || validateAPIKeyErr != nil {
+		return 0, errors.NewBadRequestError("request format incorrect.")
+	}
 	numUpdated, err := s.r.AddCmd(reqCtx, requestData, APIKey)
 	return numUpdated, err
 }
@@ -92,6 +108,11 @@ func (s *userService) AddCmd(ctx context.Context, requestData AddCmdRequest, API
 func (s *userService) DeleteCmd(ctx context.Context, requestData DelCmdRequest, APIKey string) (int, errors.APIErr) {
 	reqCtx, cancelFunc := reqcontext.WithDefaultTimeout(ctx)
 	defer cancelFunc()
+	validateReqErr := s.v.Struct(requestData)
+	validateAPIKeyErr := s.v.Var(APIKey, "uuid")
+	if validateReqErr != nil || validateAPIKeyErr != nil {
+		return 0, errors.NewBadRequestError("request format incorrect.")
+	}
 	numUpdated, err := s.r.DeleteCmd(reqCtx, requestData, APIKey)
 	return numUpdated, err
 }
@@ -101,6 +122,11 @@ func (s *userService) Delete(ctx context.Context, requestData DelUserRequest, AP
 	// TODO: add validation here
 	reqCtx, cancelFunc := reqcontext.WithDefaultTimeout(ctx)
 	defer cancelFunc()
+	validateReqErr := s.v.Struct(requestData)
+	validateAPIKeyErr := s.v.Var(APIKey, "uuid")
+	if validateReqErr != nil || validateAPIKeyErr != nil {
+		return 0, errors.NewBadRequestError("request format incorrect.")
+	}
 	user, err := s.r.Delete(reqCtx, requestData, APIKey)
 	return user, err
 }

@@ -34,7 +34,7 @@ func resolveEnv(envType string) string {
 		if l := os.Getenv("LOCAL"); l == "production" || l == "atlas" {
 			return os.Getenv("MONGO_URI")
 		}
-		return os.Getenv("DEV_MONGO_URI")
+		return os.Getenv("LOCAL_MONGO_URI")
 	case "db":
 		if d := os.Getenv("LOCAL"); d == "production" {
 			return os.Getenv("DB_NAME")

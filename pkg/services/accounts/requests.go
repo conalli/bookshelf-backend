@@ -2,41 +2,41 @@ package accounts
 
 // SignUpRequest represents the expected JSON request for the user/signup endpoint.
 type SignUpRequest struct {
-	Name     string `json:"name"`
-	Password string `json:"password"`
+	Name     string `json:"name" validate:"min=3,max=30"`
+	Password string `json:"password" validate:"min=6,max=30"`
 }
 
 // LogInRequest represents the expected JSON request for the user/login endpoint.
 type LogInRequest struct {
-	Name     string `json:"name"`
-	Password string `json:"password"`
+	Name     string `json:"name" validate:"min=3,max=30"`
+	Password string `json:"password" validate:"min=6,max=30"`
 }
 
 // AddCmdRequest represents the expected JSON request for the user/addcmd endpoint.
 type AddCmdRequest struct {
-	ID  string `json:"id"`
-	Cmd string `json:"cmd"`
-	URL string `json:"url"`
+	ID  string `json:"id" validate:"len=24,hexadecimal"`
+	Cmd string `json:"cmd" validate:"min=1,max=30"`
+	URL string `json:"url" validate:"min=5,max=100"`
 }
 
 // DelCmdRequest represents the expected JSON request for the user/delcmd endpoint.
 type DelCmdRequest struct {
-	ID  string `json:"id"`
-	Cmd string `json:"cmd"`
+	ID  string `json:"id" validate:"len=24,hexadecimal"`
+	Cmd string `json:"cmd" validate:"min=1,max=30"`
 }
 
 // DelUserRequest represents the expected JSON request for the user/del endpoint.
 type DelUserRequest struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Password string `json:"password"`
+	ID       string `json:"id" validate:"len=24,hexadecimal"`
+	Name     string `json:"name" validate:"min=3,max=30"`
+	Password string `json:"password" validate:"min=6,max=30"`
 }
 
 // NewTeamRequest represents the expected JSON request for the /team POST endpoint.
 type NewTeamRequest struct {
-	ID           string `json:"id"`
-	Name         string `json:"name"`
-	TeamPassword string `json:"password"`
+	ID           string `json:"id" validate:"len=24,hexadecimal"`
+	Name         string `json:"name" validate:"min=3,max=30"`
+	TeamPassword string `json:"password" validate:"min=6,max=30"`
 	ShortName    string `json:"shortName"`
 }
 
