@@ -16,8 +16,8 @@ import (
 func TestAddCmd(t *testing.T) {
 	t.Parallel()
 	db := dbtest.New().AddDefaultUsers()
-	r := rest.Router(validator.New(), db, false)
-	srv := httptest.NewServer(r)
+	r := rest.NewRouter(validator.New(), db)
+	srv := httptest.NewServer(r.Router)
 	defer srv.Close()
 	APIKey := db.Users["1"].APIKey
 	body, err := handlerstest.MakeRequestBody(accounts.AddCmdRequest{
@@ -28,7 +28,7 @@ func TestAddCmd(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Couldn't create add cmd request body.")
 	}
-	res, err := handlerstest.RequestWithCookie("PATCH", srv.URL+"/user/addcmd/"+APIKey, body, APIKey)
+	res, err := handlerstest.RequestWithCookie("PATCH", srv.URL+"/api/user/addcmd/"+APIKey, body, APIKey)
 	if err != nil {
 		t.Fatalf("Couldn't create request to add cmd with cookie.")
 	}

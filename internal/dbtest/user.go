@@ -13,11 +13,15 @@ func (t *Testdb) NewUser(ctx context.Context, requestData accounts.SignUpRequest
 	if found {
 		return accounts.User{}, errors.NewBadRequestError("error creating new user; user with name " + requestData.Name + " already exists")
 	}
+	key, err := accounts.GenerateAPIKey()
+	if err != nil {
+		return accounts.User{}, errors.NewInternalServerError()
+	}
 	usr := accounts.User{
 		ID:        requestData.Name + "999",
 		Name:      requestData.Name,
 		Password:  requestData.Password,
-		APIKey:    "1234567890",
+		APIKey:    key,
 		Bookmarks: map[string]string{},
 		Teams:     map[string]string{},
 	}

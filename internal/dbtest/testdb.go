@@ -20,7 +20,7 @@ func New() *Testdb {
 func (t *Testdb) AddDefaultUsers() *Testdb {
 	pw, _ := password.HashPassword("password")
 	usrs := map[string]accounts.User{
-		"1": {ID: "1", Name: "user1", Password: pw, APIKey: "111111", Bookmarks: map[string]string{"bbc": "https://www.bbc.co.uk"}},
+		"1": {ID: "c55fdaace3388c2189875fc5", Name: "user1", Password: pw, APIKey: "bd1eb780-0124-11ed-b939-0242ac120002", Bookmarks: map[string]string{"bbc": "https://www.bbc.co.uk"}},
 	}
 	t.Users = usrs
 	return t

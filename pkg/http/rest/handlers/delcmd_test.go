@@ -16,8 +16,8 @@ import (
 func TestDeleteCmd(t *testing.T) {
 	t.Parallel()
 	db := dbtest.New().AddDefaultUsers()
-	r := rest.Router(validator.New(), db, false)
-	srv := httptest.NewServer(r)
+	r := rest.NewRouter(validator.New(), db)
+	srv := httptest.NewServer(r.Router)
 	defer srv.Close()
 	APIKey := db.Users["1"].APIKey
 	body, err := handlerstest.MakeRequestBody(accounts.DelCmdRequest{
@@ -25,21 +25,21 @@ func TestDeleteCmd(t *testing.T) {
 		Cmd: "bbc",
 	})
 	if err != nil {
-		t.Fatalf("Couldn't create add cmd request body.")
+		t.Fatalf("Couldn't create del cmd request body.")
 	}
-	res, err := handlerstest.RequestWithCookie("PATCH", srv.URL+"/user/delcmd/"+APIKey, body, APIKey)
+	res, err := handlerstest.RequestWithCookie("PATCH", srv.URL+"/api/user/delcmd/"+APIKey, body, APIKey)
 	if err != nil {
-		t.Fatalf("Couldn't create request to add cmd with cookie.")
+		t.Fatalf("Couldn't create request to del cmd with cookie.")
 	}
 	want := 200
 	if res.StatusCode != want {
-		t.Errorf("Expected add cmd request to give status code %d: got %d", want, res.StatusCode)
+		t.Errorf("Expected del cmd request to give status code %d: got %d", want, res.StatusCode)
 	}
 	defer res.Body.Close()
 	var response handlers.DeleteCmdResponse
 	err = json.NewDecoder(res.Body).Decode(&response)
 	if err != nil {
-		t.Fatalf("Couldn't decode json body upon adding cmds.")
+		t.Fatalf("Couldn't decode json body upon deleting cmds.")
 	}
 	if response.NumDeleted != 1 || response.Cmd != "bbc" {
 		t.Errorf("Expected commands for user %s to be %v: got %v", db.Users["1"].Name, db.Users["1"].Bookmarks, response)

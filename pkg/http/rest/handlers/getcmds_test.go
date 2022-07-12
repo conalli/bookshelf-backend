@@ -15,11 +15,11 @@ import (
 func TestGetCmds(t *testing.T) {
 	t.Parallel()
 	db := dbtest.New().AddDefaultUsers()
-	r := rest.Router(validator.New(), db, false)
-	srv := httptest.NewServer(r)
+	r := rest.NewRouter(validator.New(), db)
+	srv := httptest.NewServer(r.Router)
 	defer srv.Close()
 	APIKey := db.Users["1"].APIKey
-	res, err := handlerstest.RequestWithCookie("GET", srv.URL+"/user/cmds/"+APIKey, nil, APIKey)
+	res, err := handlerstest.RequestWithCookie("GET", srv.URL+"/api/user/cmds/"+APIKey, nil, APIKey)
 	if err != nil {
 		t.Fatalf("Couldn't create request to get cmds with cookie.")
 	}

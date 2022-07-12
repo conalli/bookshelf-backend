@@ -17,8 +17,8 @@ import (
 func TestSignUp(t *testing.T) {
 	t.Parallel()
 	db := dbtest.New().AddDefaultUsers()
-	r := rest.Router(validator.New(), db, false)
-	srv := httptest.NewServer(r)
+	r := rest.NewRouter(validator.New(), db)
+	srv := httptest.NewServer(r.Router)
 	defer srv.Close()
 	body, err := handlerstest.MakeRequestBody(accounts.SignUpRequest{
 		Name:     "signuptest",
@@ -27,7 +27,7 @@ func TestSignUp(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Couldn't marshal json body to sign up.")
 	}
-	res, err := http.Post(srv.URL+"/user", "application/json", body)
+	res, err := http.Post(srv.URL+"/api/user", "application/json", body)
 	if err != nil {
 		t.Fatalf("Couldn't make post request.")
 	}
@@ -42,7 +42,7 @@ func TestSignUp(t *testing.T) {
 		t.Fatalf("Couldn't decode json body upon sign up.")
 	}
 	// Change password hashing logic
-	if usr.ID != usr.Name+"999" || usr.Name != "signuptest" || usr.APIKey != "1234567890" || usr.Password != "password" {
+	if usr.ID != usr.Name+"999" || usr.Name != "signuptest" || usr.Password != "password" {
 		t.Fatalf("Unexpected sign up data")
 	}
 	if jwtauth.FilterCookies(db.Users["1"].APIKey, res.Cookies()) != nil {

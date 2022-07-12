@@ -18,8 +18,8 @@ import (
 func TestLogin(t *testing.T) {
 	t.Parallel()
 	db := dbtest.New().AddDefaultUsers()
-	r := rest.Router(validator.New(), db, false)
-	srv := httptest.NewServer(r)
+	r := rest.NewRouter(validator.New(), db)
+	srv := httptest.NewServer(r.Router)
 	defer srv.Close()
 	body, err := handlerstest.MakeRequestBody(accounts.LogInRequest{
 		Name:     "user1",
@@ -28,7 +28,7 @@ func TestLogin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Couldn't marshal json body to log in.")
 	}
-	res, err := http.Post(srv.URL+"/user/login", "application/json", body)
+	res, err := http.Post(srv.URL+"/api/user/login", "application/json", body)
 	if err != nil {
 		t.Fatalf("Couldn't make post request.")
 	}

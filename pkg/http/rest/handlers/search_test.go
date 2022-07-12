@@ -14,12 +14,12 @@ import (
 func TestSearch(t *testing.T) {
 	t.Parallel()
 	db := dbtest.New().AddDefaultUsers()
-	r := rest.Router(validator.New(), db, false)
-	srv := httptest.NewServer(r)
+	r := rest.NewRouter(validator.New(), db)
+	srv := httptest.NewServer(r.Router)
 	defer srv.Close()
 	for _, usr := range db.Users {
 		for k, v := range usr.Bookmarks {
-			res, err := http.Get(fmt.Sprintf("%s/search/%s/%s", srv.URL, usr.APIKey, k))
+			res, err := http.Get(fmt.Sprintf("%s/api/search/%s/%s", srv.URL, usr.APIKey, k))
 			if err != nil {
 				t.Fatalf("Could not create Search request - %v", err)
 			}
@@ -28,7 +28,7 @@ func TestSearch(t *testing.T) {
 			if url != v {
 				t.Errorf("wanted %s: got %s", v, url)
 			}
-			res, err = http.Get(fmt.Sprintf("%s/search/%s/%s", srv.URL, usr.APIKey, k+"test"))
+			res, err = http.Get(fmt.Sprintf("%s/api/search/%s/%s", srv.URL, usr.APIKey, k+"test"))
 			if err != nil {
 				t.Fatalf("Could not create Search request - %v", err)
 			}
