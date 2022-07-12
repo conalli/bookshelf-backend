@@ -73,6 +73,5 @@ func NewTeam(t accounts.TeamService) func(w http.ResponseWriter, r *http.Request
 			ID: teamID,
 		}
 		json.NewEncoder(w).Encode(res)
-		return
 	}
 }

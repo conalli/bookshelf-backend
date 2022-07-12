@@ -86,6 +86,5 @@ func AddTeamCmd(t accounts.TeamService) func(w http.ResponseWriter, r *http.Requ
 			URL:     setCmdReq.URL,
 		}
 		json.NewEncoder(w).Encode(res)
-		return
 	}
 }

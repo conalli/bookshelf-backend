@@ -42,7 +42,6 @@ func DelMember(t accounts.TeamService) func(w http.ResponseWriter, r *http.Reque
 		w.WriteHeader(http.StatusOK)
 		res.NumMembersDeleted = 1
 		json.NewEncoder(w).Encode(res)
-		return
 	}
 }
 
@@ -74,6 +73,5 @@ func DelSelf(t accounts.TeamService) func(w http.ResponseWriter, r *http.Request
 		w.WriteHeader(http.StatusOK)
 		res.NumMembersDeleted = 1
 		json.NewEncoder(w).Encode(res)
-		return
 	}
 }

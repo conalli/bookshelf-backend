@@ -84,6 +84,5 @@ func DelTeamCmd(t accounts.TeamService) func(w http.ResponseWriter, r *http.Requ
 			Cmd:        delCmdReq.Cmd,
 		}
 		json.NewEncoder(w).Encode(res)
-		return
 	}
 }

@@ -43,6 +43,5 @@ func AddMember(t accounts.TeamService) func(w http.ResponseWriter, r *http.Reque
 		w.WriteHeader(http.StatusOK)
 		res.NumMembersAdded = 1
 		json.NewEncoder(w).Encode(res)
-		return
 	}
 }
