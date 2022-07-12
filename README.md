@@ -21,7 +21,7 @@ This example uses Google Chrome, however setup is similar across most browsers.
 
 ## Get started developing 🖥️
 
-This is the repository for the backend. If you would like to work on the frontend, check out the [frontend repository](https://github.com/conalli/bookshelf-client-web) 📘.
+This is the repository for the backend. If you would like to work on the frontend, check out the [frontend repository](https://github.com/conalli/bookshelf-web) 📘.
 
 The backend is written entirely in Go, using Redis and MongoDB (with MongoDB Atlas).
 To get started
@@ -30,12 +30,12 @@ To get started
 - To build the project and run the server, in the terminal run:
 
 ```
-./scripts/build.sh <dev|test|local>
-./scripts/up.sh <dev|test|local>
+./scripts/build <dev|local> (optional: <up> to run ./up script after building)
+./scripts/up <dev|local>
 ```
 
 - When you are done, run:
 
 ```
-./scripts/down.sh <dev|test|local>
+./scripts/down <dev|local>
 ```
