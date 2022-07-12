@@ -15,7 +15,7 @@ func TestSearch(t *testing.T) {
 	t.Parallel()
 	db := dbtest.New().AddDefaultUsers()
 	r := rest.NewRouter(validator.New(), db)
-	srv := httptest.NewServer(r.Router)
+	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 	for _, usr := range db.Users {
 		for k, v := range usr.Bookmarks {

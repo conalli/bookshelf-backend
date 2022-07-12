@@ -17,7 +17,7 @@ func TestDeleteCmd(t *testing.T) {
 	t.Parallel()
 	db := dbtest.New().AddDefaultUsers()
 	r := rest.NewRouter(validator.New(), db)
-	srv := httptest.NewServer(r.Router)
+	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 	APIKey := db.Users["1"].APIKey
 	body, err := handlerstest.MakeRequestBody(accounts.DelCmdRequest{

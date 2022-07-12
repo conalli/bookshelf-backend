@@ -50,29 +50,29 @@ func SignUp(u accounts.UserService) func(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-// // NewTeam is the handler for the newteam endpoint. Checks db for team name and if
-// // unique adds new team with given data.
-// func NewTeam(t accounts.TeamService) func(w http.ResponseWriter, r *http.Request) {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		log.Println("NewTeam endpoint hit")
-// 		var newTeamReq accounts.NewTeamRequest
-// 		json.NewDecoder(r.Body).Decode(&newTeamReq)
-// 		teamID, err := t.New(r.Context(), newTeamReq)
-// 		if err != nil {
-// 			log.Printf("error returned while trying to create a new team: %v", err)
-// 			errors.APIErrorResponse(w, err)
-// 			return
-// 		}
-// 		log.Printf("successfully created a new team: %s", teamID)
+// NewTeam is the handler for the newteam endpoint. Checks db for team name and if
+// unique adds new team with given data.
+func NewTeam(t accounts.TeamService) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("NewTeam endpoint hit")
+		var newTeamReq accounts.NewTeamRequest
+		json.NewDecoder(r.Body).Decode(&newTeamReq)
+		teamID, err := t.New(r.Context(), newTeamReq)
+		if err != nil {
+			log.Printf("error returned while trying to create a new team: %v", err)
+			errors.APIErrorResponse(w, err)
+			return
+		}
+		log.Printf("successfully created a new team: %s", teamID)
 
-// 		w.Header().Set("Content-Type", "application/json")
-// 		w.WriteHeader(http.StatusOK)
-// 		res := struct {
-// 			ID string `json:"id"`
-// 		}{
-// 			ID: teamID,
-// 		}
-// 		json.NewEncoder(w).Encode(res)
-// 		return
-// 	}
-// }
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		res := struct {
+			ID string `json:"id"`
+		}{
+			ID: teamID,
+		}
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+}
