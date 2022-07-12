@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/db"
-	"github.com/conalli/bookshelf-backend/pkg/db/mongodb"
 	"github.com/conalli/bookshelf-backend/pkg/http/middleware"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest/handlers"
 	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
@@ -15,18 +14,25 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Router returns a router with all handlers assigned to it
-func Router(v *validator.Validate, store db.Storage, walk bool) *mux.Router {
+// Router wraps the *mux.Router type.
+type Router struct {
+	Router *mux.Router
+}
+
+// NewRouter returns a router with all handlers assigned to it
+func NewRouter(v *validator.Validate, store db.Storage) *Router {
 	u := accounts.NewUserService(v, store)
 	// t := accounts.NewTeamService(repo)
 	s := search.NewService(store)
 
-	router := mux.NewRouter()
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	r := mux.NewRouter()
+	api := r.PathPrefix("/api").Subrouter()
+
+	api.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello"))
 	}).Methods("GET")
 
-	user := router.PathPrefix("/user").Subrouter()
+	user := api.PathPrefix("/user").Subrouter()
 	user.HandleFunc("", handlers.SignUp(u)).Methods("POST")
 	user.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.DelUser(u))).Methods("DELETE")
 	user.HandleFunc("/login", handlers.LogIn(u)).Methods("POST")
@@ -44,27 +50,24 @@ func Router(v *validator.Validate, store db.Storage, walk bool) *mux.Router {
 	// team.HandleFunc("/addcmd/{APIKey}", jwtauth.Authorized(handlers.AddTeamCmd(t))).Methods("PATCH")
 	// team.HandleFunc("/delcmd/{APIKey}", jwtauth.Authorized(handlers.DelTeamCmd(t))).Methods("PATCH")
 
-	search := router.PathPrefix("/search").Subrouter()
+	search := api.PathPrefix("/search").Subrouter()
 	search.HandleFunc("/{APIKey}/{cmd}", handlers.Search(s)).Methods("GET")
 
-	if walk {
-		err := router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
-			tpl, err1 := route.GetPathTemplate()
-			met, err2 := route.GetMethods()
-			log.Println("Path:", tpl, "Err:", err1, "Methods:", met, "Err:", err2)
-			return nil
-		})
-		if err != nil {
-			log.Fatalln("Couldn't walk router.")
-		}
-	}
-
-	return router
+	return &Router{r}
 }
 
-// RouterWithCORS provides basic CORS middleware for a router.
-func RouterWithCORS(walk bool) http.Handler {
-	router := Router(validator.New(), mongodb.New(), walk)
+// Walk prints all the routes of the current router.
+func (r *Router) Walk() *Router {
+	r.Router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+		tpl, err1 := route.GetPathTemplate()
+		met, err2 := route.GetMethods()
+		log.Println("Path:", tpl, "Err:", err1, "Methods:", met, "Err:", err2)
+		return nil
+	})
+	return r
+}
 
-	return middleware.CORSMiddleware(router)
+// WithCORS provides basic CORS middleware for a router.
+func (r *Router) WithCORS() http.Handler {
+	return middleware.CORSMiddleware(r.Router)
 }
