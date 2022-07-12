@@ -25,7 +25,7 @@ func loadEnv(env string) {
 func main() {
 	loadEnv("development")
 
-	r := rest.NewRouter(validator.New(), mongodb.New()).Walk().WithCORS()
+	r := rest.NewRouter(validator.New(), mongodb.New()).Walk().HandlerWithCORS()
 
 	port := os.Getenv("PORT")
 	log.Println("Server up and running on port: " + port)
