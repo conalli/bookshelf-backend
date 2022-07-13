@@ -9,6 +9,7 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/password"
 	"github.com/go-playground/validator/v10"
+	"go.uber.org/zap"
 )
 
 // UserRepository provides access to the user storage.
@@ -34,13 +35,14 @@ type UserService interface {
 }
 
 type userService struct {
+	l *zap.SugaredLogger
 	v *validator.Validate
 	r UserRepository
 }
 
 // NewUserService creates a search service with the necessary dependencies.
-func NewUserService(v *validator.Validate, r UserRepository) UserService {
-	return &userService{v, r}
+func NewUserService(l *zap.SugaredLogger, v *validator.Validate, r UserRepository) UserService {
+	return &userService{l, v, r}
 }
 
 // Search returns the url of a given cmd.

@@ -12,6 +12,7 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/services/search"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 // Router wraps the *mux.Router type.
@@ -20,9 +21,9 @@ type Router struct {
 }
 
 // NewRouter returns a router with all handlers assigned to it
-func NewRouter(v *validator.Validate, store db.Storage) *Router {
-	u := accounts.NewUserService(v, store)
-	s := search.NewService(store)
+func NewRouter(l *zap.SugaredLogger, v *validator.Validate, store db.Storage) *Router {
+	u := accounts.NewUserService(l, v, store)
+	s := search.NewService(l, v, store)
 
 	r := &Router{mux.NewRouter()}
 	api := r.initRouter()

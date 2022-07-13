@@ -10,6 +10,7 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 )
 
 func loadEnv(env string) {
@@ -24,8 +25,11 @@ func loadEnv(env string) {
 
 func main() {
 	loadEnv("development")
-
-	r := rest.NewRouter(validator.New(), mongodb.New()).Walk().HandlerWithCORS()
+	logger, err := zap.NewProduction()
+	if err != nil {
+		log.Fatalf("Couldn't make a new logger, %v", err)
+	}
+	r := rest.NewRouter(logger.Sugar(), validator.New(), mongodb.New()).Walk().HandlerWithCORS()
 
 	port := os.Getenv("PORT")
 	log.Println("Server up and running on port: " + port)

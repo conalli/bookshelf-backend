@@ -10,12 +10,15 @@ import (
 	"github.com/conalli/bookshelf-backend/internal/handlerstest"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/go-playground/validator/v10"
+	"go.uber.org/zap"
 )
 
 func TestGetCmds(t *testing.T) {
 	t.Parallel()
 	db := dbtest.New().AddDefaultUsers()
-	r := rest.NewRouter(validator.New(), db)
+	logger, _ := zap.NewDevelopment()
+	sugar := logger.Sugar()
+	r := rest.NewRouter(sugar, validator.New(), db)
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 	APIKey := db.Users["1"].APIKey
