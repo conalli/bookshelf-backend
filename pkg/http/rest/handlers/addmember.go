@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 )
 
@@ -19,7 +20,7 @@ type addMemberResponse struct {
 func AddMember(t accounts.TeamService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("AddMember endpoint hit")
-		var newMemberReq accounts.AddMemberRequest
+		var newMemberReq request.AddMember
 		json.NewDecoder(r.Body).Decode(&newMemberReq)
 		ok, err := t.AddMember(r.Context(), newMemberReq)
 		if err != nil {

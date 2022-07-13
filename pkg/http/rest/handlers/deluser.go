@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/gorilla/mux"
 )
@@ -23,8 +24,11 @@ func DelUser(u accounts.UserService) func(w http.ResponseWriter, r *http.Request
 		log.Println("delacc endpoint hit")
 		vars := mux.Vars(r)
 		APIKey := vars["APIKey"]
-		var delAccReq accounts.DelUserRequest
-		json.NewDecoder(r.Body).Decode(&delAccReq)
+		delAccReq, parseErr := request.DecodeJSONRequest[request.DeleteUser](r.Body)
+		if parseErr != nil {
+			errRes := errors.NewBadRequestError("could not parse request body")
+			errors.APIErrorResponse(w, errRes)
+		}
 		numDeleted, err := u.Delete(r.Context(), delAccReq, APIKey)
 		if err != nil {
 			log.Printf("error returned while trying to delete user: %v", err)

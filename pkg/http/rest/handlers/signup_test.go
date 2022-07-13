@@ -8,6 +8,7 @@ import (
 
 	"github.com/conalli/bookshelf-backend/internal/dbtest"
 	"github.com/conalli/bookshelf-backend/internal/handlerstest"
+	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
@@ -20,7 +21,7 @@ func TestSignUp(t *testing.T) {
 	r := rest.NewRouter(validator.New(), db)
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
-	body, err := handlerstest.MakeRequestBody(accounts.SignUpRequest{
+	body, err := handlerstest.MakeRequestBody(request.SignUp{
 		Name:     "signuptest",
 		Password: "password",
 	})

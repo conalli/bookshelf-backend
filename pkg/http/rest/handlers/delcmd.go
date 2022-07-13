@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/gorilla/mux"
 )
@@ -23,9 +24,11 @@ func DeleteCmd(u accounts.UserService) func(w http.ResponseWriter, r *http.Reque
 		log.Println("DelCmd endpoint hit")
 		vars := mux.Vars(r)
 		APIKey := vars["APIKey"]
-		var delCmdReq accounts.DelCmdRequest
-		json.NewDecoder(r.Body).Decode(&delCmdReq)
-
+		delCmdReq, parseErr := request.DecodeJSONRequest[request.DeleteCmd](r.Body)
+		if parseErr != nil {
+			errRes := errors.NewBadRequestError("could not parse request body")
+			errors.APIErrorResponse(w, errRes)
+		}
 		result, err := u.DeleteCmd(r.Context(), delCmdReq, APIKey)
 		if err != nil {
 			log.Printf("error returned while trying to remove a cmd: %v", err)
@@ -61,7 +64,7 @@ func DelTeamCmd(t accounts.TeamService) func(w http.ResponseWriter, r *http.Requ
 		log.Println("DelCmd endpoint hit")
 		vars := mux.Vars(r)
 		APIKey := vars["APIKey"]
-		var delCmdReq accounts.DelTeamCmdRequest
+		var delCmdReq request.DeleteTeamCmd
 		json.NewDecoder(r.Body).Decode(&delCmdReq)
 
 		result, err := t.DeleteCmd(r.Context(), delCmdReq, APIKey)

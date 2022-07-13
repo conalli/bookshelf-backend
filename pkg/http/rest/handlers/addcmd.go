@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/gorilla/mux"
 )
@@ -24,9 +25,11 @@ func AddCmd(u accounts.UserService) func(w http.ResponseWriter, r *http.Request)
 		log.Println("SetCmd endpoint hit")
 		vars := mux.Vars(r)
 		APIKey := vars["APIKey"]
-		var setCmdReq accounts.AddCmdRequest
-		json.NewDecoder(r.Body).Decode(&setCmdReq)
-
+		setCmdReq, parseErr := request.DecodeJSONRequest[request.AddCmd](r.Body)
+		if parseErr != nil {
+			errRes := errors.NewBadRequestError("could not parse request body")
+			errors.APIErrorResponse(w, errRes)
+		}
 		numUpdated, err := u.AddCmd(r.Context(), setCmdReq, APIKey)
 		if err != nil {
 			log.Printf("error returned while trying to add a new cmd: %v", err)
@@ -62,7 +65,7 @@ type addTeamCmdResponse struct {
 func AddTeamCmd(t accounts.TeamService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("SetCmd endpoint hit")
-		var setCmdReq accounts.AddTeamCmdRequest
+		var setCmdReq request.AddTeamCmd
 		json.NewDecoder(r.Body).Decode(&setCmdReq)
 
 		numUpdated, err := t.AddCmd(r.Context(), setCmdReq)

@@ -7,9 +7,9 @@ import (
 
 	"github.com/conalli/bookshelf-backend/internal/dbtest"
 	"github.com/conalli/bookshelf-backend/internal/handlerstest"
+	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest/handlers"
-	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -20,7 +20,7 @@ func TestDeleteCmd(t *testing.T) {
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 	APIKey := db.Users["1"].APIKey
-	body, err := handlerstest.MakeRequestBody(accounts.DelCmdRequest{
+	body, err := handlerstest.MakeRequestBody(request.DeleteCmd{
 		ID:  db.Users["1"].ID,
 		Cmd: "bbc",
 	})

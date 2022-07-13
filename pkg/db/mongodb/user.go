@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/password"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"go.mongodb.org/mongo-driver/bson"
@@ -15,7 +16,7 @@ import (
 )
 
 // NewUser is a func.
-func (m *Mongo) NewUser(ctx context.Context, requestData accounts.SignUpRequest) (accounts.User, errors.APIErr) {
+func (m *Mongo) NewUser(ctx context.Context, requestData request.SignUp) (accounts.User, errors.APIErr) {
 	m.Initialize()
 	err := m.client.Connect(ctx)
 	if err != nil {
@@ -64,7 +65,7 @@ func (m *Mongo) NewUser(ctx context.Context, requestData accounts.SignUpRequest)
 }
 
 // GetUserByName checks the users credentials returns the user if password is correct.
-func (m *Mongo) GetUserByName(ctx context.Context, requestData accounts.LogInRequest) (accounts.User, error) {
+func (m *Mongo) GetUserByName(ctx context.Context, requestData request.LogIn) (accounts.User, error) {
 	m.Initialize()
 	err := m.client.Connect(ctx)
 	if err != nil {
@@ -161,7 +162,7 @@ func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]strin
 
 // AddCmd attempts to either add or update a cmd for the user, returning the number
 // of updated cmds.
-func (m *Mongo) AddCmd(ctx context.Context, requestData accounts.AddCmdRequest, APIKey string) (int, errors.APIErr) {
+func (m *Mongo) AddCmd(ctx context.Context, requestData request.AddCmd, APIKey string) (int, errors.APIErr) {
 	m.Initialize()
 	err := m.client.Connect(ctx)
 	if err != nil {
@@ -184,7 +185,7 @@ func (m *Mongo) AddCmd(ctx context.Context, requestData accounts.AddCmdRequest, 
 }
 
 // addCmdToUser takes a given username along with the cmd and URL to set and adds the data to their bookmarks.
-func addCmdToUser(ctx context.Context, collection *mongo.Collection, requestData accounts.AddCmdRequest) (*mongo.UpdateResult, error) {
+func addCmdToUser(ctx context.Context, collection *mongo.Collection, requestData request.AddCmd) (*mongo.UpdateResult, error) {
 	opts := options.Update().SetUpsert(true)
 	filter, err := primitive.ObjectIDFromHex(requestData.ID)
 	if err != nil {
@@ -200,7 +201,7 @@ func addCmdToUser(ctx context.Context, collection *mongo.Collection, requestData
 
 // DeleteCmd attempts to either rempve a cmd from the user, returning the number
 // of updated cmds.
-func (m *Mongo) DeleteCmd(ctx context.Context, requestData accounts.DelCmdRequest, APIKey string) (int, errors.APIErr) {
+func (m *Mongo) DeleteCmd(ctx context.Context, requestData request.DeleteCmd, APIKey string) (int, errors.APIErr) {
 	m.Initialize()
 	err := m.client.Connect(ctx)
 	if err != nil {
@@ -232,7 +233,7 @@ func removeUserCmd(ctx context.Context, collection *mongo.Collection, userID, cm
 
 // Delete attempts to delete a user from the db, returning the number of deleted users.
 // TODO: remove user from all users teams.
-func (m *Mongo) Delete(ctx context.Context, requestData accounts.DelUserRequest, APIKey string) (int, errors.APIErr) {
+func (m *Mongo) Delete(ctx context.Context, requestData request.DeleteUser, APIKey string) (int, errors.APIErr) {
 	m.Initialize()
 	err := m.client.Connect(ctx)
 	if err != nil {

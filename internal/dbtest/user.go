@@ -4,23 +4,24 @@ import (
 	"context"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 )
 
 // NewUser creates a new user in the testdb.
-func (t *Testdb) NewUser(ctx context.Context, requestData accounts.SignUpRequest) (accounts.User, errors.APIErr) {
-	found := t.dataAlreadyExists(requestData.Name, "users")
+func (t *Testdb) NewUser(ctx context.Context, body request.SignUp) (accounts.User, errors.APIErr) {
+	found := t.dataAlreadyExists(body.Name, "users")
 	if found {
-		return accounts.User{}, errors.NewBadRequestError("error creating new user; user with name " + requestData.Name + " already exists")
+		return accounts.User{}, errors.NewBadRequestError("error creating new user; user with name " + body.Name + " already exists")
 	}
 	key, err := accounts.GenerateAPIKey()
 	if err != nil {
 		return accounts.User{}, errors.NewInternalServerError()
 	}
 	usr := accounts.User{
-		ID:        requestData.Name + "999",
-		Name:      requestData.Name,
-		Password:  requestData.Password,
+		ID:        body.Name + "999",
+		Name:      body.Name,
+		Password:  body.Password,
 		APIKey:    key,
 		Bookmarks: map[string]string{},
 		Teams:     map[string]string{},
@@ -30,10 +31,10 @@ func (t *Testdb) NewUser(ctx context.Context, requestData accounts.SignUpRequest
 }
 
 // GetUserByName gets a user by their name in the test db.
-func (t *Testdb) GetUserByName(ctx context.Context, requestData accounts.LogInRequest) (accounts.User, error) {
+func (t *Testdb) GetUserByName(ctx context.Context, body request.LogIn) (accounts.User, error) {
 	for _, v := range t.Users {
-		if v.Name == requestData.Name {
-			if v.Password == requestData.Password {
+		if v.Name == body.Name {
+			if v.Password == body.Password {
 				return accounts.User{}, errors.NewAPIError(403, errors.ErrWrongCredentials.Error(), "error: name or password incorrect")
 			}
 			return v, nil
@@ -74,31 +75,31 @@ func (t *Testdb) GetAllCmds(ctx context.Context, APIKey string) (map[string]stri
 }
 
 // AddCmd adds a cmd to a user in the test db.
-func (t *Testdb) AddCmd(reqCtx context.Context, requestData accounts.AddCmdRequest, APIKey string) (int, errors.APIErr) {
+func (t *Testdb) AddCmd(reqCtx context.Context, body request.AddCmd, APIKey string) (int, errors.APIErr) {
 	usr := t.findUserByAPIKey(APIKey)
 	if usr == nil {
 		return 0, errors.NewBadRequestError("error: could not find user with value " + APIKey)
 	}
-	usr.Bookmarks[requestData.Cmd] = requestData.URL
+	usr.Bookmarks[body.Cmd] = body.URL
 	return 1, nil
 }
 
 // DeleteCmd removes a cmd from a user in the test db.
-func (t *Testdb) DeleteCmd(ctx context.Context, requestData accounts.DelCmdRequest, APIKey string) (int, errors.APIErr) {
+func (t *Testdb) DeleteCmd(ctx context.Context, body request.DeleteCmd, APIKey string) (int, errors.APIErr) {
 	usr := t.findUserByAPIKey(APIKey)
 	if usr == nil {
 		return 0, errors.NewBadRequestError("error: could not find user with value " + APIKey)
 	}
-	delete(usr.Bookmarks, requestData.Cmd)
+	delete(usr.Bookmarks, body.Cmd)
 	return 1, nil
 }
 
 // Delete removes a user from the test db.
-func (t *Testdb) Delete(reqCtx context.Context, requestData accounts.DelUserRequest, APIKey string) (int, errors.APIErr) {
+func (t *Testdb) Delete(reqCtx context.Context, body request.DeleteUser, APIKey string) (int, errors.APIErr) {
 	usr := t.findUserByAPIKey(APIKey)
 	if usr == nil {
 		return 0, errors.NewBadRequestError("error: could not find user with value " + APIKey)
 	}
-	delete(t.Users, requestData.ID)
+	delete(t.Users, body.ID)
 	return 1, nil
 }

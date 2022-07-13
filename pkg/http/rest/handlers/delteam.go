@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 )
 
@@ -14,7 +15,7 @@ import (
 func DelTeam(t accounts.TeamService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("DelTeam endpoint hit")
-		var delTeamReq accounts.DelTeamRequest
+		var delTeamReq request.DeleteTeam
 		json.NewDecoder(r.Body).Decode(&delTeamReq)
 		numDeleted, err := t.Delete(r.Context(), delTeamReq)
 		if err != nil {

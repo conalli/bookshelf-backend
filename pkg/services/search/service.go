@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/conalli/bookshelf-backend/pkg/http/reqcontext"
+	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 )
 
@@ -29,7 +29,7 @@ func NewService(r Repository) Service {
 
 // Search returns the url of a given cmd.
 func (s *service) Search(ctx context.Context, APIKey, cmd string) (string, error) {
-	ctx, cancelFunc := reqcontext.WithDefaultTimeout(ctx)
+	ctx, cancelFunc := request.WithDefaultTimeout(ctx)
 	defer cancelFunc()
 	// TODO: add validation here for team/ user cmd
 	usr, err := s.r.GetUserByAPIKey(ctx, APIKey)

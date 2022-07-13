@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 )
 
@@ -18,7 +19,7 @@ type delMemberResponse struct {
 func DelMember(t accounts.TeamService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("DelMember endpoint hit")
-		var delMemberReq accounts.DelMemberRequest
+		var delMemberReq request.DeleteMember
 		json.NewDecoder(r.Body).Decode(&delMemberReq)
 		ok, err := t.DeleteMember(r.Context(), delMemberReq)
 		if err != nil {
@@ -49,7 +50,7 @@ func DelMember(t accounts.TeamService) func(w http.ResponseWriter, r *http.Reque
 func DelSelf(t accounts.TeamService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("DelSelf endpoint hit")
-		var delSelfReq accounts.DelSelfRequest
+		var delSelfReq request.DeleteSelf
 		json.NewDecoder(r.Body).Decode(&delSelfReq)
 		ok, err := t.DeleteSelf(r.Context(), delSelfReq)
 		if err != nil {

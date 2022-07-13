@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 )
@@ -22,9 +23,11 @@ type LogInResponse struct {
 func LogIn(u accounts.UserService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("LogIn endpoint hit")
-		var logInReq accounts.LogInRequest
-		json.NewDecoder(r.Body).Decode(&logInReq)
-
+		logInReq, parseErr := request.DecodeJSONRequest[request.LogIn](r.Body)
+		if parseErr != nil {
+			errRes := errors.NewBadRequestError("could not parse request body")
+			errors.APIErrorResponse(w, errRes)
+		}
 		currUser, err := u.LogIn(r.Context(), logInReq)
 		if err != nil {
 			log.Printf("error returned while trying to get check credentials: %v", err)

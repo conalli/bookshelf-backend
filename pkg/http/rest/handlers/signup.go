@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 )
@@ -16,8 +17,11 @@ import (
 func SignUp(u accounts.UserService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("SignUp endpoint hit")
-		var newUserReq accounts.SignUpRequest
-		json.NewDecoder(r.Body).Decode(&newUserReq)
+		newUserReq, parseErr := request.DecodeJSONRequest[request.SignUp](r.Body)
+		if parseErr != nil {
+			errRes := errors.NewBadRequestError("could not parse request body")
+			errors.APIErrorResponse(w, errRes)
+		}
 		newUser, err := u.NewUser(r.Context(), newUserReq)
 		if err != nil {
 			log.Printf("error returned while trying to create a new user: %v", err)
@@ -55,7 +59,7 @@ func SignUp(u accounts.UserService) func(w http.ResponseWriter, r *http.Request)
 func NewTeam(t accounts.TeamService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("NewTeam endpoint hit")
-		var newTeamReq accounts.NewTeamRequest
+		var newTeamReq request.NewTeam
 		json.NewDecoder(r.Body).Decode(&newTeamReq)
 		teamID, err := t.New(r.Context(), newTeamReq)
 		if err != nil {
