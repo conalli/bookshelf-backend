@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
+	"go.uber.org/zap"
 )
 
 // LogInResponse represents the data returned upon successfully logging in.
@@ -20,9 +20,9 @@ type LogInResponse struct {
 
 // LogIn is the handler for the login endpoint. Checks credentials and if
 // correct returns JWT cookie for use with getcmds and setcmd.
-func LogIn(u accounts.UserService) func(w http.ResponseWriter, r *http.Request) {
+func LogIn(u accounts.UserService, log *zap.SugaredLogger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("LogIn endpoint hit")
+		log.Info("Log In endpoint hit")
 		logInReq, parseErr := request.DecodeJSONRequest[request.LogIn](r.Body)
 		if parseErr != nil {
 			errRes := errors.NewBadRequestError("could not parse request body")
@@ -30,13 +30,13 @@ func LogIn(u accounts.UserService) func(w http.ResponseWriter, r *http.Request) 
 		}
 		currUser, err := u.LogIn(r.Context(), logInReq)
 		if err != nil {
-			log.Printf("error returned while trying to get check credentials: %v", err)
+			log.Errorf("error returned while trying to get check credentials: %v", err)
 			errors.APIErrorResponse(w, err)
 			return
 		}
 		token, err := jwtauth.NewToken(currUser.APIKey)
 		if err != nil {
-			log.Printf("error returned while trying to create a new token: %v", err)
+			log.Errorf("error returned while trying to create a new token: %v", err)
 			errors.APIErrorResponse(w, err)
 			return
 		}
@@ -49,7 +49,7 @@ func LogIn(u accounts.UserService) func(w http.ResponseWriter, r *http.Request) 
 			// Secure:   true,
 			SameSite: http.SameSiteNoneMode,
 		}
-		log.Println("successfully returned token as cookie")
+		log.Info("successfully returned token as cookie")
 		http.SetCookie(w, &cookie)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)

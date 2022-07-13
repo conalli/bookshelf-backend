@@ -27,8 +27,8 @@ func NewRouter(l *zap.SugaredLogger, v *validator.Validate, store db.Storage) *R
 
 	r := &Router{mux.NewRouter()}
 	api := r.initRouter()
-	addUserRoutes(api, u)
-	addSearchRoutes(api, s)
+	addUserRoutes(api, u, l)
+	addSearchRoutes(api, s, l)
 
 	return r
 }
@@ -60,15 +60,15 @@ func (r *Router) HandlerWithCORS() http.Handler {
 	return middleware.CORSMiddleware(r.router)
 }
 
-func addUserRoutes(router *mux.Router, u accounts.UserService) {
+func addUserRoutes(router *mux.Router, u accounts.UserService, l *zap.SugaredLogger) {
 	user := router.PathPrefix("/user").Subrouter()
-	user.HandleFunc("", handlers.SignUp(u)).Methods("POST")
-	user.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.DelUser(u))).Methods("DELETE")
-	user.HandleFunc("/login", handlers.LogIn(u)).Methods("POST")
+	user.HandleFunc("", handlers.SignUp(u, l)).Methods("POST")
+	user.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.DelUser(u, l))).Methods("DELETE")
+	user.HandleFunc("/login", handlers.LogIn(u, l)).Methods("POST")
 	// user.HandleFunc("/teams/{APIKey}", jwtauth.Authorized(handlers.GetAllTeams(u))).Methods("GET")
-	user.HandleFunc("/cmds/{APIKey}", jwtauth.Authorized(handlers.GetCmds(u))).Methods("GET")
-	user.HandleFunc("/addcmd/{APIKey}", jwtauth.Authorized(handlers.AddCmd(u))).Methods("PATCH")
-	user.HandleFunc("/delcmd/{APIKey}", jwtauth.Authorized(handlers.DeleteCmd(u))).Methods("PATCH")
+	user.HandleFunc("/cmds/{APIKey}", jwtauth.Authorized(handlers.GetCmds(u, l))).Methods("GET")
+	user.HandleFunc("/addcmd/{APIKey}", jwtauth.Authorized(handlers.AddCmd(u, l))).Methods("PATCH")
+	user.HandleFunc("/delcmd/{APIKey}", jwtauth.Authorized(handlers.DeleteCmd(u, l))).Methods("PATCH")
 }
 
 // func addTeamRoutes(router *mux.Router, t accounts.TeamService) {
@@ -82,7 +82,7 @@ func addUserRoutes(router *mux.Router, u accounts.UserService) {
 // 	team.HandleFunc("/delcmd/{APIKey}", jwtauth.Authorized(handlers.DelTeamCmd(t))).Methods("PATCH")
 // }
 
-func addSearchRoutes(router *mux.Router, s search.Service) {
+func addSearchRoutes(router *mux.Router, s search.Service, l *zap.SugaredLogger) {
 	search := router.PathPrefix("/search").Subrouter()
-	search.HandleFunc("/{APIKey}/{cmd}", handlers.Search(s)).Methods("GET")
+	search.HandleFunc("/{APIKey}/{cmd}", handlers.Search(s, l)).Methods("GET")
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 // DeleteCmdResponse represents the data returned upon successfully deleting a cmd.
@@ -19,9 +20,9 @@ type DeleteCmdResponse struct {
 
 // DeleteCmd is the handler for the delcmd endpoint. Checks credentials + JWT and if
 // authorized deletes given cmd.
-func DeleteCmd(u accounts.UserService) func(w http.ResponseWriter, r *http.Request) {
+func DeleteCmd(u accounts.UserService, log *zap.SugaredLogger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("DelCmd endpoint hit")
+		log.Info("DELETE CMD endpoint hit")
 		vars := mux.Vars(r)
 		APIKey := vars["APIKey"]
 		delCmdReq, parseErr := request.DecodeJSONRequest[request.DeleteCmd](r.Body)
@@ -31,17 +32,17 @@ func DeleteCmd(u accounts.UserService) func(w http.ResponseWriter, r *http.Reque
 		}
 		result, err := u.DeleteCmd(r.Context(), delCmdReq, APIKey)
 		if err != nil {
-			log.Printf("error returned while trying to remove a cmd: %v", err)
+			log.Errorf("error returned while trying to remove a cmd: %v", err)
 			errors.APIErrorResponse(w, err)
 			return
 		}
 		if result == 0 {
-			log.Printf("could not remove cmd... maybe %s doesn't exists?", delCmdReq.Cmd)
+			log.Errorf("could not remove cmd... maybe %s doesn't exists?", delCmdReq.Cmd)
 			err := errors.NewBadRequestError("error: could not remove cmd")
 			errors.APIErrorResponse(w, err)
 			return
 		}
-		log.Printf("successfully updates cmds: %s, removed %d", delCmdReq.Cmd, result)
+		log.Infof("successfully updates cmds: %s, removed %d", delCmdReq.Cmd, result)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		res := DeleteCmdResponse{

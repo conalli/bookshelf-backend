@@ -21,9 +21,9 @@ type Service interface {
 }
 
 type service struct {
-	l *zap.SugaredLogger
-	v *validator.Validate
-	r Repository
+	log      *zap.SugaredLogger
+	validate *validator.Validate
+	db       Repository
 }
 
 // NewService creates a search service with the necessary dependencies.
@@ -36,14 +36,16 @@ func (s *service) Search(ctx context.Context, APIKey, cmd string) (string, error
 	ctx, cancelFunc := request.WithDefaultTimeout(ctx)
 	defer cancelFunc()
 	// TODO: add validation here for team/ user cmd
-	usr, err := s.r.GetUserByAPIKey(ctx, APIKey)
+	usr, err := s.db.GetUserByAPIKey(ctx, APIKey)
 	defaultSearch := fmt.Sprintf("http://www.google.com/search?q=%s", cmd)
 	if err != nil {
+		s.log.Errorf("Could not GET USER BY API KEY: %v", err)
 		return defaultSearch, err
 	}
 	url, ok := usr.Bookmarks[cmd]
 	if !ok {
-		return defaultSearch, err
+		s.log.Infof("Cmd %s does not exist. Returning default search", cmd)
+		return defaultSearch, nil
 	}
-	return formatURL(url), err
+	return formatURL(url), nil
 }

@@ -13,25 +13,26 @@ import (
 	"go.uber.org/zap"
 )
 
-func loadEnv(env string) {
+func loadEnv(env string) error {
 	if env == "production" {
-		return
+		return nil
 	}
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Could not load .env file")
-	}
+	return godotenv.Load()
+
 }
 
 func main() {
-	loadEnv("development")
 	logger, err := zap.NewProduction()
 	if err != nil {
 		log.Fatalf("Couldn't make a new logger, %v", err)
 	}
+	defer logger.Sync()
+	err = loadEnv("development")
+	if err != nil {
+		logger.Fatal("Could not load .env file")
+	}
 	r := rest.NewRouter(logger.Sugar(), validator.New(), mongodb.New()).Walk().HandlerWithCORS()
-
 	port := os.Getenv("PORT")
-	log.Println("Server up and running on port: " + port)
+	logger.Info("Server up and running on port: " + port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), r))
 }

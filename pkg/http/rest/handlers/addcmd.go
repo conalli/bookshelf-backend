@@ -9,6 +9,7 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 // AddCmdResponse represents the data returned upon successfully adding a cmd.
@@ -20,9 +21,9 @@ type AddCmdResponse struct {
 
 // AddCmd is the handler for the setcmd endpoint. Checks credentials + JWT and if
 // authorized sets new cmd.
-func AddCmd(u accounts.UserService) func(w http.ResponseWriter, r *http.Request) {
+func AddCmd(u accounts.UserService, log *zap.SugaredLogger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("SetCmd endpoint hit")
+		log.Info("ADD CMD endpoint hit")
 		vars := mux.Vars(r)
 		APIKey := vars["APIKey"]
 		setCmdReq, parseErr := request.DecodeJSONRequest[request.AddCmd](r.Body)
@@ -32,17 +33,17 @@ func AddCmd(u accounts.UserService) func(w http.ResponseWriter, r *http.Request)
 		}
 		numUpdated, err := u.AddCmd(r.Context(), setCmdReq, APIKey)
 		if err != nil {
-			log.Printf("error returned while trying to add a new cmd: %v", err)
+			log.Errorf("error returned while trying to add a new cmd: %v", err)
 			errors.APIErrorResponse(w, err)
 			return
 		}
 		if numUpdated == 0 {
-			log.Printf("could not update cmds... maybe %s:%s already exists?", setCmdReq.Cmd, setCmdReq.URL)
+			log.Errorf("could not update cmds... maybe %s:%s already exists?", setCmdReq.Cmd, setCmdReq.URL)
 			err := errors.NewBadRequestError("error: could not update cmds")
 			errors.APIErrorResponse(w, err)
 			return
 		}
-		log.Printf("successfully set cmd: %s, url: %s", setCmdReq.Cmd, setCmdReq.URL)
+		log.Infof("successfully set cmd: %s, url: %s", setCmdReq.Cmd, setCmdReq.URL)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		res := AddCmdResponse{
