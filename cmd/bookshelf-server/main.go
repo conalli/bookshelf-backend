@@ -18,7 +18,6 @@ func loadEnv(env string) error {
 		return nil
 	}
 	return godotenv.Load()
-
 }
 
 func main() {
@@ -27,12 +26,11 @@ func main() {
 		log.Fatalf("Couldn't make a new logger, %v", err)
 	}
 	defer logger.Sync()
-	err = loadEnv("development")
-	if err != nil {
-		logger.Fatal("Could not load .env file")
+	if err = loadEnv("development"); err != nil {
+		log.Fatal("Could not load .env file")
 	}
 	r := rest.NewRouter(logger.Sugar(), validator.New(), mongodb.New()).Walk().HandlerWithCORS()
 	port := os.Getenv("PORT")
-	logger.Info("Server up and running on port: " + port)
+	log.Println("Server up and running on port: " + port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), r))
 }
