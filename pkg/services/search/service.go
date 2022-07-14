@@ -38,15 +38,16 @@ func (s *service) Search(ctx context.Context, APIKey, cmd string) (string, error
 	defer cancelFunc()
 	err := s.validate.Var(APIKey, "uuid")
 	if err != nil {
+		s.log.Error("invalid API key")
 		return "", errors.NewBadRequestError("invalid API key")
 	}
 	usr, err := s.db.GetUserByAPIKey(ctx, APIKey)
 	defaultSearch := fmt.Sprintf("http://www.google.com/search?q=%s", cmd)
 	if err != nil {
-		s.log.Errorf("Could not GET USER BY API KEY: %v", err)
+		s.log.Errorf("could not get user by API key: %v", err)
 		return defaultSearch, err
 	}
-	url, ok := usr.Bookmarks[cmd]
+	url, ok := usr.Cmds[cmd]
 	if !ok {
 		s.log.Infof("Cmd %s does not exist. Returning default search", cmd)
 		return defaultSearch, nil

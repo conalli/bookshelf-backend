@@ -40,24 +40,40 @@ func (m *Mongo) NewUser(ctx context.Context, requestData request.SignUp) (accoun
 		return accounts.User{}, errors.NewInternalServerError()
 	}
 	signUpData := accounts.User{
-		Name:      requestData.Name,
-		Password:  hashedPassword,
-		APIKey:    APIKey,
-		Bookmarks: map[string]string{},
-		Teams:     map[string]string{},
+		Name:     requestData.Name,
+		Password: hashedPassword,
+		APIKey:   APIKey,
+		Cmds:     map[string]string{},
+		Teams:    map[string]string{},
 	}
-	res, err := collection.InsertOne(ctx, signUpData)
+	oidHex, err := m.SessionWithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
+		result, err := collection.InsertOne(sessCtx, signUpData)
+		if err != nil {
+			m.log.Error("could not create new user")
+			return "", errors.NewInternalServerError()
+		}
+		oid, ok := result.InsertedID.(primitive.ObjectID)
+		if !ok {
+			m.log.Error("error getting objectID from newly inserted user")
+			return "", errors.NewInternalServerError()
+		}
+		err = m.NewBookmarkAccount(sessCtx, APIKey)
+		if err != nil {
+			m.log.Errorf("could not create new bookmark account: %v", err)
+			return "", errors.NewInternalServerError()
+		}
+		return oid.Hex(), nil
+	})
 	if err != nil {
-		m.log.Error("could not create new user")
 		return accounts.User{}, errors.NewInternalServerError()
 	}
-	oid, ok := res.InsertedID.(primitive.ObjectID)
+	hex, ok := oidHex.(string)
 	if !ok {
-		m.log.Error("error getting objectID from newly inserted user")
-		return accounts.User{}, errors.NewInternalServerError()
+		m.log.Error("could not assert ObjectID Hex as string for new user")
+		return accounts.User{ID: "", Name: requestData.Name, APIKey: APIKey}, nil
 	}
 	newUserData := accounts.User{
-		ID:     oid.Hex(),
+		ID:     hex,
 		Name:   requestData.Name,
 		APIKey: APIKey,
 	}
@@ -76,6 +92,17 @@ func (m *Mongo) GetUserByName(ctx context.Context, requestData request.LogIn) (a
 	collection := m.db.Collection(CollectionUsers)
 	res := m.GetByKey(ctx, collection, "name", requestData.Name)
 	return m.DecodeUser(res)
+}
+
+// NewBookmarkAccount creates a new bookmark account for users upon signing up.
+func (m *Mongo) NewBookmarkAccount(ctx context.Context, APIKey string) error {
+	collection := m.db.Collection(CollectionBookmarks)
+	_, err := collection.InsertOne(ctx, accounts.BookmarkAccount{APIKey: APIKey, Bookmarks: []accounts.Bookmark{}})
+	if err != nil {
+		m.log.Error("could not create new bookmark account")
+		return err
+	}
+	return nil
 }
 
 // GetTeams uses user id to get all users teams from the db.
@@ -160,7 +187,7 @@ func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]strin
 	if err != nil {
 		return nil, errors.ParseGetUserError(APIKey, err)
 	}
-	return user.Bookmarks, nil
+	return user.Cmds, nil
 }
 
 // AddCmd attempts to either add or update a cmd for the user, returning the number
@@ -196,7 +223,7 @@ func (m *Mongo) addCmdToUser(ctx context.Context, collection *mongo.Collection, 
 		m.log.Error("could not get ObjectID from Hex")
 		return nil, err
 	}
-	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: fmt.Sprintf("bookmarks.%s", requestData.Cmd), Value: requestData.URL}}}}
+	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: fmt.Sprintf("cmds.%s", requestData.Cmd), Value: requestData.URL}}}}
 	result, err := collection.UpdateByID(ctx, filter, update, opts)
 	if err != nil {
 		m.log.Errorf("could not get update user by id: %v", err)
@@ -232,7 +259,7 @@ func (m *Mongo) removeUserCmd(ctx context.Context, collection *mongo.Collection,
 		m.log.Error("could not get ObjectID from Hex")
 		return nil, err
 	}
-	update := bson.D{primitive.E{Key: "$unset", Value: bson.D{primitive.E{Key: fmt.Sprintf("bookmarks.%s", cmd), Value: ""}}}}
+	update := bson.D{primitive.E{Key: "$unset", Value: bson.D{primitive.E{Key: fmt.Sprintf("cmds.%s", cmd), Value: ""}}}}
 	result, err := collection.UpdateByID(ctx, filter, update, opts)
 	if err != nil {
 		m.log.Errorf("could not get remove user cmd by ID: %v", err)

@@ -32,7 +32,7 @@ func TestGetCmds(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Couldn't decode json body upon getting cmds.")
 	}
-	if fmt.Sprint(response) != fmt.Sprint(db.Users["1"].Bookmarks) {
-		t.Errorf("Expected commands for user %s to be %v: got %v", db.Users["1"].Name, db.Users["1"].Bookmarks, response)
+	if fmt.Sprint(response) != fmt.Sprint(db.Users["1"].Cmds) {
+		t.Errorf("Expected commands for user %s to be %v: got %v", db.Users["1"].Name, db.Users["1"].Cmds, response)
 	}
 }

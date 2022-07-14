@@ -42,6 +42,6 @@ func TestAddCmd(t *testing.T) {
 		t.Fatalf("Couldn't decode json body upon adding cmds.")
 	}
 	if response.CmdsSet != 1 || response.Cmd != "yt" || response.URL != "https://www.youtube.com" {
-		t.Errorf("Expected commands for user %s to be %v: got %v", db.Users["1"].Name, db.Users["1"].Bookmarks, response)
+		t.Errorf("Expected commands for user %s to be %v: got %v", db.Users["1"].Name, db.Users["1"].Cmds, response)
 	}
 }

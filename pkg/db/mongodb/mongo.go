@@ -18,8 +18,9 @@ import (
 
 // Names for each MongoDB collection used.
 const (
-	CollectionUsers = "users"
-	CollectionTeams = "teams"
+	CollectionUsers     = "users"
+	CollectionTeams     = "teams"
+	CollectionBookmarks = "bookmarks"
 )
 
 // Mongo represents a Mongodb client and database.

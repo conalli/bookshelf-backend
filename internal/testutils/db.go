@@ -24,7 +24,13 @@ func NewDB() *Testdb {
 func (t *Testdb) AddDefaultUsers() *Testdb {
 	pw, _ := password.HashPassword("password")
 	usrs := map[string]accounts.User{
-		"1": {ID: "c55fdaace3388c2189875fc5", Name: "user1", Password: pw, APIKey: "bd1eb780-0124-11ed-b939-0242ac120002", Bookmarks: map[string]string{"bbc": "https://www.bbc.co.uk"}},
+		"1": {
+			ID:       "c55fdaace3388c2189875fc5",
+			Name:     "user1",
+			Password: pw,
+			APIKey:   "bd1eb780-0124-11ed-b939-0242ac120002",
+			Cmds:     map[string]string{"bbc": "https://www.bbc.co.uk"},
+		},
 	}
 	t.Users = usrs
 	return t
@@ -68,12 +74,12 @@ func (t *Testdb) NewUser(ctx context.Context, body request.SignUp) (accounts.Use
 		return accounts.User{}, errors.NewInternalServerError()
 	}
 	usr := accounts.User{
-		ID:        body.Name + "999",
-		Name:      body.Name,
-		Password:  body.Password,
-		APIKey:    key,
-		Bookmarks: map[string]string{},
-		Teams:     map[string]string{},
+		ID:       body.Name + "999",
+		Name:     body.Name,
+		Password: body.Password,
+		APIKey:   key,
+		Cmds:     map[string]string{},
+		Teams:    map[string]string{},
 	}
 	t.Users[usr.ID] = usr
 	return usr, nil
@@ -120,7 +126,7 @@ func (t *Testdb) GetAllCmds(ctx context.Context, APIKey string) (map[string]stri
 	if usr == nil {
 		return nil, errors.NewBadRequestError("error: could not find user with value " + APIKey)
 	}
-	return usr.Bookmarks, nil
+	return usr.Cmds, nil
 }
 
 // AddCmd adds a cmd to a user in the test db.
@@ -129,7 +135,7 @@ func (t *Testdb) AddCmd(reqCtx context.Context, body request.AddCmd, APIKey stri
 	if usr == nil {
 		return 0, errors.NewBadRequestError("error: could not find user with value " + APIKey)
 	}
-	usr.Bookmarks[body.Cmd] = body.URL
+	usr.Cmds[body.Cmd] = body.URL
 	return 1, nil
 }
 
@@ -139,7 +145,7 @@ func (t *Testdb) DeleteCmd(ctx context.Context, body request.DeleteCmd, APIKey s
 	if usr == nil {
 		return 0, errors.NewBadRequestError("error: could not find user with value " + APIKey)
 	}
-	delete(usr.Bookmarks, body.Cmd)
+	delete(usr.Cmds, body.Cmd)
 	return 1, nil
 }
 
@@ -159,7 +165,7 @@ func (t *Testdb) Search(ctx context.Context, APIKey, cmd string) (string, error)
 	if usr == nil {
 		return "", errors.NewBadRequestError("error: could not find user with value " + APIKey)
 	}
-	val, found := usr.Bookmarks[cmd]
+	val, found := usr.Cmds[cmd]
 	if !found {
 		return "http://www.google.com/search?q=" + cmd, nil
 	}

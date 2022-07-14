@@ -18,7 +18,7 @@ func TestSearch(t *testing.T) {
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 	for _, usr := range db.Users {
-		for k, v := range usr.Bookmarks {
+		for k, v := range usr.Cmds {
 			res, err := http.Get(fmt.Sprintf("%s/api/search/%s/%s", srv.URL, usr.APIKey, k))
 			if err != nil {
 				t.Fatalf("Could not create Search request - %v", err)
