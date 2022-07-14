@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
@@ -35,7 +36,10 @@ func NewService(l logs.Logger, v *validator.Validate, r Repository) Service {
 func (s *service) Search(ctx context.Context, APIKey, cmd string) (string, error) {
 	ctx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
-	// TODO: add validation here for team/ user cmd
+	err := s.validate.Var(APIKey, "uuid")
+	if err != nil {
+		return "", errors.NewBadRequestError("invalid API key")
+	}
 	usr, err := s.db.GetUserByAPIKey(ctx, APIKey)
 	defaultSearch := fmt.Sprintf("http://www.google.com/search?q=%s", cmd)
 	if err != nil {
