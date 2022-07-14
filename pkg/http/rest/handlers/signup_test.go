@@ -8,20 +8,18 @@ import (
 
 	"github.com/conalli/bookshelf-backend/internal/dbtest"
 	"github.com/conalli/bookshelf-backend/internal/handlerstest"
+	"github.com/conalli/bookshelf-backend/internal/logstest"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/go-playground/validator/v10"
-	"go.uber.org/zap"
 )
 
 func TestSignUp(t *testing.T) {
 	t.Parallel()
 	db := dbtest.New().AddDefaultUsers()
-	logger, _ := zap.NewDevelopment()
-	sugar := logger.Sugar()
-	r := rest.NewRouter(sugar, validator.New(), db)
+	r := rest.NewRouter(logstest.New(), validator.New(), db)
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 	body, err := handlerstest.MakeRequestBody(request.SignUp{

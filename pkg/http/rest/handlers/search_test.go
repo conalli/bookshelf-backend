@@ -7,17 +7,15 @@ import (
 	"testing"
 
 	"github.com/conalli/bookshelf-backend/internal/dbtest"
+	"github.com/conalli/bookshelf-backend/internal/logstest"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/go-playground/validator/v10"
-	"go.uber.org/zap"
 )
 
 func TestSearch(t *testing.T) {
 	t.Parallel()
 	db := dbtest.New().AddDefaultUsers()
-	logger, _ := zap.NewDevelopment()
-	sugar := logger.Sugar()
-	r := rest.NewRouter(sugar, validator.New(), db)
+	r := rest.NewRouter(logstest.New(), validator.New(), db)
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 	for _, usr := range db.Users {
