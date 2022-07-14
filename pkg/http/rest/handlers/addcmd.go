@@ -7,9 +7,9 @@ import (
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
+	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/gorilla/mux"
-	"go.uber.org/zap"
 )
 
 // AddCmdResponse represents the data returned upon successfully adding a cmd.
@@ -21,7 +21,7 @@ type AddCmdResponse struct {
 
 // AddCmd is the handler for the setcmd endpoint. Checks credentials + JWT and if
 // authorized sets new cmd.
-func AddCmd(u accounts.UserService, log *zap.SugaredLogger) func(w http.ResponseWriter, r *http.Request) {
+func AddCmd(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Info("ADD CMD endpoint hit")
 		vars := mux.Vars(r)

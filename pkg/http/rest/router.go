@@ -8,11 +8,11 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/middleware"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest/handlers"
 	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
+	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/services/search"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
-	"go.uber.org/zap"
 )
 
 // Router wraps the *mux.Router type.
@@ -21,7 +21,7 @@ type Router struct {
 }
 
 // NewRouter returns a router with all handlers assigned to it
-func NewRouter(l *zap.SugaredLogger, v *validator.Validate, store db.Storage) *Router {
+func NewRouter(l logs.Logger, v *validator.Validate, store db.Storage) *Router {
 	u := accounts.NewUserService(l, v, store)
 	s := search.NewService(l, v, store)
 
@@ -51,7 +51,7 @@ func (r *Router) Walk() *Router {
 }
 
 // Handler returns the router as an http.Handler.
-func (r Router) Handler() http.Handler {
+func (r *Router) Handler() http.Handler {
 	return r.router
 }
 
@@ -60,7 +60,7 @@ func (r *Router) HandlerWithCORS() http.Handler {
 	return middleware.CORSMiddleware(r.router)
 }
 
-func addUserRoutes(router *mux.Router, u accounts.UserService, l *zap.SugaredLogger) {
+func addUserRoutes(router *mux.Router, u accounts.UserService, l logs.Logger) {
 	user := router.PathPrefix("/user").Subrouter()
 	user.HandleFunc("", handlers.SignUp(u, l)).Methods("POST")
 	user.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.DelUser(u, l))).Methods("DELETE")
@@ -82,7 +82,7 @@ func addUserRoutes(router *mux.Router, u accounts.UserService, l *zap.SugaredLog
 // 	team.HandleFunc("/delcmd/{APIKey}", jwtauth.Authorized(handlers.DelTeamCmd(t))).Methods("PATCH")
 // }
 
-func addSearchRoutes(router *mux.Router, s search.Service, l *zap.SugaredLogger) {
+func addSearchRoutes(router *mux.Router, s search.Service, l logs.Logger) {
 	search := router.PathPrefix("/search").Subrouter()
 	search.HandleFunc("/{APIKey}/{cmd}", handlers.Search(s, l)).Methods("GET")
 }

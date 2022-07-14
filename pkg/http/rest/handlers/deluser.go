@@ -6,9 +6,9 @@ import (
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
+	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/gorilla/mux"
-	"go.uber.org/zap"
 )
 
 // DelUserResponse represents the data returned upon successfully deleting a user.
@@ -19,7 +19,7 @@ type DelUserResponse struct {
 
 // DelUser is the handler for the delacc endpoint. Checks credentials and if
 // authorized deletes user.
-func DelUser(u accounts.UserService, log *zap.SugaredLogger) func(w http.ResponseWriter, r *http.Request) {
+func DelUser(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Info("DELETE USER endpoint hit")
 		vars := mux.Vars(r)

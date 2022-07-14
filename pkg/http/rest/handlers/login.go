@@ -8,8 +8,8 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
+	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
-	"go.uber.org/zap"
 )
 
 // LogInResponse represents the data returned upon successfully logging in.
@@ -20,7 +20,7 @@ type LogInResponse struct {
 
 // LogIn is the handler for the login endpoint. Checks credentials and if
 // correct returns JWT cookie for use with getcmds and setcmd.
-func LogIn(u accounts.UserService, log *zap.SugaredLogger) func(w http.ResponseWriter, r *http.Request) {
+func LogIn(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Info("Log In endpoint hit")
 		logInReq, parseErr := request.DecodeJSONRequest[request.LogIn](r.Body)

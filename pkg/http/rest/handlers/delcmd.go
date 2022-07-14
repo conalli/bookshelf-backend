@@ -7,9 +7,9 @@ import (
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
+	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/gorilla/mux"
-	"go.uber.org/zap"
 )
 
 // DeleteCmdResponse represents the data returned upon successfully deleting a cmd.
@@ -20,7 +20,7 @@ type DeleteCmdResponse struct {
 
 // DeleteCmd is the handler for the delcmd endpoint. Checks credentials + JWT and if
 // authorized deletes given cmd.
-func DeleteCmd(u accounts.UserService, log *zap.SugaredLogger) func(w http.ResponseWriter, r *http.Request) {
+func DeleteCmd(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Info("DELETE CMD endpoint hit")
 		vars := mux.Vars(r)

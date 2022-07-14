@@ -9,13 +9,13 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
+	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
-	"go.uber.org/zap"
 )
 
 // SignUp is the handler for the signup endpoint. Checks db for username and if
 // unique adds new user with given credentials.
-func SignUp(u accounts.UserService, log *zap.SugaredLogger) func(w http.ResponseWriter, r *http.Request) {
+func SignUp(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Info("Sign Up endpoint hit")
 		newUserReq, parseErr := request.DecodeJSONRequest[request.SignUp](r.Body)

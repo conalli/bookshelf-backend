@@ -5,14 +5,14 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/gorilla/mux"
-	"go.uber.org/zap"
 )
 
 // GetCmds is the handler for the getcmds endpoint. Checks credentials + JWT and if
 // authorized returns all users cmds.
-func GetCmds(u accounts.UserService, log *zap.SugaredLogger) func(w http.ResponseWriter, r *http.Request) {
+func GetCmds(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Info("GET CMDS endpoint hit")
 		vars := mux.Vars(r)

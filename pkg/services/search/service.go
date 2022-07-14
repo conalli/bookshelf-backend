@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
+	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/go-playground/validator/v10"
-	"go.uber.org/zap"
 )
 
 // Repository provides access to storage.
@@ -21,13 +21,13 @@ type Service interface {
 }
 
 type service struct {
-	log      *zap.SugaredLogger
+	log      logs.Logger
 	validate *validator.Validate
 	db       Repository
 }
 
 // NewService creates a search service with the necessary dependencies.
-func NewService(l *zap.SugaredLogger, v *validator.Validate, r Repository) Service {
+func NewService(l logs.Logger, v *validator.Validate, r Repository) Service {
 	return &service{l, v, r}
 }
 
