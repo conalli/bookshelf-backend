@@ -20,7 +20,7 @@ package mongodb
 // func (m *Mongo) NewTeam(ctx context.Context, requestData request.NewTeam) (string, errors.APIErr) {
 // 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 // 	defer cancelFunc()
-// 	m.Initialize()
+// 	m.Initialize(log)
 // 	err := m.client.Connect(reqCtx)
 // 	if err != nil {
 // 		log.Printf("couldn't connect to db on new team, %+v", err)
@@ -91,7 +91,7 @@ package mongodb
 // func (m *Mongo) DeleteTeam(ctx context.Context, requestData accounts.request.DeleteTeam) (int, errors.APIErr) {
 // 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 // 	defer cancelFunc()
-// 	m.Initialize()
+// 	m.Initialize(log)
 // 	err := m.client.Connect(reqCtx)
 // 	if err != nil {
 // 		log.Printf("couldn't connect to db on new team, %+v\n", err)
@@ -197,7 +197,7 @@ package mongodb
 // func (m *Mongo) AddMember(ctx context.Context, requestData accounts.request.AddMember) (bool, errors.APIErr) {
 // 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 // 	defer cancelFunc()
-// 	m.Initialize()
+// 	m.Initialize(log)
 // 	err := m.client.Connect(reqCtx)
 // 	if err != nil {
 // 		log.Printf("couldn't connect to db on new team, %+v", err)
@@ -269,7 +269,7 @@ package mongodb
 // func (m *Mongo) DeleteSelf(ctx context.Context, requestData accounts.request.DeleteSelf) (bool, errors.APIErr) {
 // 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 // 	defer cancelFunc()
-// 	m.Initialize()
+// 	m.Initialize(log)
 // 	err := m.client.Connect(reqCtx)
 // 	if err != nil {
 // 		log.Printf("couldn't connect to db on new team, %+v", err)
@@ -320,7 +320,7 @@ package mongodb
 // func (m *Mongo) DeleteMember(ctx context.Context, requestData accounts.request.DeleteMember) (bool, errors.APIErr) {
 // 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 // 	defer cancelFunc()
-// 	m.Initialize()
+// 	m.Initialize(log)
 // 	err := m.client.Connect(reqCtx)
 // 	if err != nil {
 // 		log.Printf("couldn't connect to db on new team, %+v", err)
@@ -392,7 +392,7 @@ package mongodb
 // func (m *Mongo) AddTeamCmd(ctx context.Context, requestData accounts.request.AddTeamCmd) (int, errors.APIErr) {
 // 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 // 	defer cancelFunc()
-// 	m.Initialize()
+// 	m.Initialize(log)
 // 	err := m.client.Connect(reqCtx)
 // 	if err != nil {
 // 		log.Printf("couldn't connect to db on new team, %+v", err)
@@ -432,7 +432,7 @@ package mongodb
 // func (m *Mongo) DelTeamCmd(ctx context.Context, requestData accounts.request.DeleteTeamCmd, APIKey string) (int, errors.APIErr) {
 // 	reqCtx, cancelFunc := db.ReqContextWithTimeout(ctx)
 // 	defer cancelFunc()
-// 	m.Initialize()
+// 	m.Initialize(log)
 // 	err := m.client.Connect(reqCtx)
 // 	if err != nil {
 // 		log.Printf("couldn't connect to db on new team, %+v", err)

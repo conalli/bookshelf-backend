@@ -29,7 +29,8 @@ func main() {
 	if err = loadEnv("development"); err != nil {
 		log.Fatal("Could not load .env file")
 	}
-	r := rest.NewRouter(logger.Sugar(), validator.New(), mongodb.New()).Walk().HandlerWithCORS()
+	sugar := logger.Sugar()
+	r := rest.NewRouter(sugar, validator.New(), mongodb.New(sugar)).Walk().HandlerWithCORS()
 	port := os.Getenv("PORT")
 	log.Println("Server up and running on port: " + port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), r))

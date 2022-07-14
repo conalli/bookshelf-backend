@@ -3,7 +3,6 @@ package mongodb
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
@@ -18,25 +17,26 @@ import (
 // NewUser is a func.
 func (m *Mongo) NewUser(ctx context.Context, requestData request.SignUp) (accounts.User, errors.APIErr) {
 	m.Initialize()
+	defer m.client.Disconnect(ctx)
 	err := m.client.Connect(ctx)
 	if err != nil {
-		log.Printf("couldn't connect to db on new user, %+v", err)
+		m.log.Errorf("could not connect to db, %+v", err)
+		return accounts.User{}, errors.NewInternalServerError()
 	}
-	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
-	userExists := DataAlreadyExists(ctx, collection, "name", requestData.Name)
+	userExists := m.DataAlreadyExists(ctx, collection, "name", requestData.Name)
 	if userExists {
-		log.Println("user already exists")
+		m.log.Error("user already exists")
 		return accounts.User{}, errors.NewBadRequestError(fmt.Sprintf("error creating new user; user with name %v already exists", requestData.Name))
 	}
 	APIKey, err := accounts.GenerateAPIKey()
 	if err != nil {
-		log.Println("error generating uuid")
+		m.log.Error("could not generate uuid")
 		return accounts.User{}, errors.NewInternalServerError()
 	}
 	hashedPassword, err := password.HashPassword(requestData.Password)
 	if err != nil {
-		log.Println("error hashing password")
+		m.log.Error("could not hash password")
 		return accounts.User{}, errors.NewInternalServerError()
 	}
 	signUpData := accounts.User{
@@ -48,12 +48,12 @@ func (m *Mongo) NewUser(ctx context.Context, requestData request.SignUp) (accoun
 	}
 	res, err := collection.InsertOne(ctx, signUpData)
 	if err != nil {
-		log.Printf("error creating new user with data: \n username: %v\n password: %v", requestData.Name, requestData.Password)
+		m.log.Error("could not create new user")
 		return accounts.User{}, errors.NewInternalServerError()
 	}
 	oid, ok := res.InsertedID.(primitive.ObjectID)
 	if !ok {
-		log.Println("error getting objectID from newly inserted user")
+		m.log.Error("error getting objectID from newly inserted user")
 		return accounts.User{}, errors.NewInternalServerError()
 	}
 	newUserData := accounts.User{
@@ -67,35 +67,37 @@ func (m *Mongo) NewUser(ctx context.Context, requestData request.SignUp) (accoun
 // GetUserByName checks the users credentials returns the user if password is correct.
 func (m *Mongo) GetUserByName(ctx context.Context, requestData request.LogIn) (accounts.User, error) {
 	m.Initialize()
+	defer m.client.Disconnect(ctx)
 	err := m.client.Connect(ctx)
 	if err != nil {
-		log.Println("couldn't connect to db on login")
+		m.log.Error("couldn't connect to db")
+		return accounts.User{}, errors.NewInternalServerError()
 	}
-	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
-	res := GetByKey(ctx, collection, "name", requestData.Name)
-	return DecodeUser(res)
+	res := m.GetByKey(ctx, collection, "name", requestData.Name)
+	return m.DecodeUser(res)
 }
 
 // GetTeams uses user id to get all users teams from the db.
 func (m *Mongo) GetTeams(ctx context.Context, APIKey string) ([]accounts.Team, errors.APIErr) {
 	m.Initialize()
+	defer m.client.Disconnect(ctx)
 	err := m.client.Connect(ctx)
 	if err != nil {
-		log.Println("couldn't connect to db on login")
+		m.log.Error("could not connect to db")
+		return nil, errors.NewInternalServerError()
 	}
-	defer m.client.Disconnect(ctx)
 	res, err := m.SessionWithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
 		userCollection := m.db.Collection(CollectionUsers)
-		res := GetByKey(sessCtx, userCollection, "APIKey", APIKey)
-		currUser, err := DecodeUser(res)
+		res := m.GetByKey(sessCtx, userCollection, "APIKey", APIKey)
+		currUser, err := m.DecodeUser(res)
 		if err != nil {
-			log.Printf("error getting user by APIKey: %s -> %+v\n", APIKey, err)
+			m.log.Error("could not get user by APIKey")
 			return nil, err
 		}
-		teamIDs, err := convertIDs(currUser.Teams)
+		teamIDs, err := m.convertIDs(currUser.Teams)
 		if err != nil {
-			log.Printf("error converting teams to ids: error -> %+v\n", err)
+			m.log.Errorf("could not convert teams to ids: %+v", err)
 			return nil, err
 		}
 		teamCollection := m.db.Collection(CollectionTeams)
@@ -103,7 +105,7 @@ func (m *Mongo) GetTeams(ctx context.Context, APIKey string) ([]accounts.Team, e
 		opts := options.Find()
 		teamCursor, err := teamCollection.Find(sessCtx, filter, opts)
 		if err != nil {
-			log.Printf("error converting teams to ids -> %+v\n", err)
+			m.log.Errorf("could not convert teams to ids: %+v", err)
 			return nil, err
 		}
 		defer teamCursor.Close(sessCtx)
@@ -111,7 +113,7 @@ func (m *Mongo) GetTeams(ctx context.Context, APIKey string) ([]accounts.Team, e
 		for teamCursor.Next(sessCtx) {
 			var currTeam accounts.Team
 			if err := teamCursor.Decode(&currTeam); err != nil {
-				log.Printf("error could not get team from found teams -> %+v\n", err)
+				m.log.Errorf("could not get team from found teams: %+v", err)
 				return nil, err
 			}
 			teams = append(teams, currTeam)
@@ -119,22 +121,23 @@ func (m *Mongo) GetTeams(ctx context.Context, APIKey string) ([]accounts.Team, e
 		return teams, nil
 	})
 	if err != nil {
-		log.Printf("error could not get data from transaction -> %+v\n", err)
+		m.log.Errorf("could not get data from transaction -> %+v", err)
 		return nil, errors.NewInternalServerError()
 	}
 	teams, ok := res.([]accounts.Team)
 	if !ok {
-		log.Println("error could not assert type []Team")
+		m.log.Error("could not assert type")
 		return nil, errors.NewInternalServerError()
 	}
 	return teams, nil
 }
 
-func convertIDs(teams map[string]string) ([]primitive.ObjectID, error) {
+func (m *Mongo) convertIDs(teams map[string]string) ([]primitive.ObjectID, error) {
 	output := make([]primitive.ObjectID, len(teams))
 	for id := range teams {
 		res, err := primitive.ObjectIDFromHex(id)
 		if err != nil {
+			m.log.Error("could not get ObjectID from Hex")
 			return nil, err
 		}
 		output = append(output, res)
@@ -145,15 +148,15 @@ func convertIDs(teams map[string]string) ([]primitive.ObjectID, error) {
 // GetAllCmds uses req info to get all users current cmds from the db.
 func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.APIErr) {
 	m.Initialize()
+	defer m.client.Disconnect(ctx)
 	err := m.client.Connect(ctx)
 	if err != nil {
-		log.Println("couldn't connect to db on login")
+		m.log.Error("couldn't connect to db")
+		return nil, errors.NewInternalServerError()
 	}
-	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
-
-	res := GetByKey(ctx, collection, "APIKey", APIKey)
-	user, err := DecodeUser(res)
+	res := m.GetByKey(ctx, collection, "APIKey", APIKey)
+	user, err := m.DecodeUser(res)
 	if err != nil {
 		return nil, errors.ParseGetUserError(APIKey, err)
 	}
@@ -164,15 +167,16 @@ func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]strin
 // of updated cmds.
 func (m *Mongo) AddCmd(ctx context.Context, requestData request.AddCmd, APIKey string) (int, errors.APIErr) {
 	m.Initialize()
+	defer m.client.Disconnect(ctx)
 	err := m.client.Connect(ctx)
 	if err != nil {
-		log.Println("couldn't connect to db on login")
+		m.log.Error("couldn't connect to db")
+		return 0, errors.NewInternalServerError()
 	}
-	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
-
-	result, err := addCmdToUser(ctx, collection, requestData)
+	result, err := m.addCmdToUser(ctx, collection, requestData)
 	if err != nil {
+		m.log.Errorf("could not add cmd to user: %v", err)
 		return 0, errors.NewInternalServerError()
 	}
 	var numUpdated int
@@ -185,15 +189,17 @@ func (m *Mongo) AddCmd(ctx context.Context, requestData request.AddCmd, APIKey s
 }
 
 // addCmdToUser takes a given username along with the cmd and URL to set and adds the data to their bookmarks.
-func addCmdToUser(ctx context.Context, collection *mongo.Collection, requestData request.AddCmd) (*mongo.UpdateResult, error) {
+func (m *Mongo) addCmdToUser(ctx context.Context, collection *mongo.Collection, requestData request.AddCmd) (*mongo.UpdateResult, error) {
 	opts := options.Update().SetUpsert(true)
 	filter, err := primitive.ObjectIDFromHex(requestData.ID)
 	if err != nil {
+		m.log.Error("could not get ObjectID from Hex")
 		return nil, err
 	}
 	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: fmt.Sprintf("bookmarks.%s", requestData.Cmd), Value: requestData.URL}}}}
 	result, err := collection.UpdateByID(ctx, filter, update, opts)
 	if err != nil {
+		m.log.Errorf("could not get update user by id: %v", err)
 		return nil, err
 	}
 	return result, nil
@@ -203,29 +209,33 @@ func addCmdToUser(ctx context.Context, collection *mongo.Collection, requestData
 // of updated cmds.
 func (m *Mongo) DeleteCmd(ctx context.Context, requestData request.DeleteCmd, APIKey string) (int, errors.APIErr) {
 	m.Initialize()
+	defer m.client.Disconnect(ctx)
 	err := m.client.Connect(ctx)
 	if err != nil {
-		log.Println("couldn't connect to db on login")
+		m.log.Error("could not connect to db")
+		return 0, errors.NewInternalServerError()
 	}
-	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
-	result, err := removeUserCmd(ctx, collection, requestData.ID, requestData.Cmd)
+	result, err := m.removeUserCmd(ctx, collection, requestData.ID, requestData.Cmd)
 	if err != nil {
+		m.log.Errorf("couldn't remove cmd from user: %v", err)
 		return 0, errors.NewInternalServerError()
 	}
 	return int(result.ModifiedCount), nil
 }
 
 // removeUserCmd takes a given username along with the cmd and removes the cmd from their bookmarks.
-func removeUserCmd(ctx context.Context, collection *mongo.Collection, userID, cmd string) (*mongo.UpdateResult, error) {
+func (m *Mongo) removeUserCmd(ctx context.Context, collection *mongo.Collection, userID, cmd string) (*mongo.UpdateResult, error) {
 	opts := options.Update().SetUpsert(true)
 	filter, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
+		m.log.Error("could not get ObjectID from Hex")
 		return nil, err
 	}
 	update := bson.D{primitive.E{Key: "$unset", Value: bson.D{primitive.E{Key: fmt.Sprintf("bookmarks.%s", cmd), Value: ""}}}}
 	result, err := collection.UpdateByID(ctx, filter, update, opts)
 	if err != nil {
+		m.log.Errorf("could not get remove user cmd by ID: %v", err)
 		return nil, err
 	}
 	return result, nil
@@ -235,41 +245,42 @@ func removeUserCmd(ctx context.Context, collection *mongo.Collection, userID, cm
 // TODO: remove user from all users teams.
 func (m *Mongo) Delete(ctx context.Context, requestData request.DeleteUser, APIKey string) (int, errors.APIErr) {
 	m.Initialize()
+	defer m.client.Disconnect(ctx)
 	err := m.client.Connect(ctx)
 	if err != nil {
-		log.Println("couldn't connect to db on login")
+		m.log.Error("could not connect to db")
+		return 0, errors.NewInternalServerError()
 	}
-	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
-	res, err := GetByID(ctx, collection, requestData.ID)
+	res, err := m.GetByID(ctx, collection, requestData.ID)
 	if err != nil {
-		log.Printf("error deleting user: couldn't find user -> %v", err)
+		m.log.Errorf("could not find user to delete:  %v", err)
 		return 0, errors.NewBadRequestError("could not find user to delete")
 	}
-	userData, err := DecodeUser(res)
+	userData, err := m.DecodeUser(res)
 	if err != nil {
-		log.Printf("error decoding user -> %v", err)
+		m.log.Errorf("could not decode user: %v", err)
 		return 0, errors.NewBadRequestError("could not find user to delete")
 	}
 	ok := password.CheckHashedPassword(userData.Password, requestData.Password)
 	if !ok {
-		log.Printf("error deleting user: password incorrect -> %v", err)
+		m.log.Errorf("could not delete user - password incorrect: %v", err)
 		return 0, errors.NewWrongCredentialsError("password incorrect")
 	}
-	result, err := deleteUserFromDB(ctx, collection, requestData.ID)
+	result, err := m.deleteUserFromDB(ctx, collection, requestData.ID)
 	if err != nil {
-		log.Printf("error deleting user: error -> %v", err)
+		m.log.Errorf("could not delete user: %v", err)
 		return 0, errors.NewInternalServerError()
 	}
 	if result.DeletedCount == 0 {
-		log.Printf("could not remove user... maybe user:%s doesn't exists?", requestData.Name)
+		m.log.Error("no users deleted")
 		return 0, errors.NewBadRequestError("error: could not remove cmd")
 	}
 	return int(result.DeletedCount), nil
 }
 
 // deleteUserFromDB takes a given userID and removes the user from the database.
-func deleteUserFromDB(ctx context.Context, collection *mongo.Collection, userID string) (*mongo.DeleteResult, error) {
+func (m *Mongo) deleteUserFromDB(ctx context.Context, collection *mongo.Collection, userID string) (*mongo.DeleteResult, error) {
 	opts := options.Delete().SetCollation(&options.Collation{
 		Locale:    "en_US",
 		Strength:  1,
@@ -277,11 +288,13 @@ func deleteUserFromDB(ctx context.Context, collection *mongo.Collection, userID 
 	})
 	id, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
+		m.log.Error("could not get ObjectID from hex")
 		return nil, err
 	}
 	filter := bson.D{primitive.E{Key: "_id", Value: id}}
 	result, err := collection.DeleteOne(ctx, filter, opts)
 	if err != nil {
+		m.log.Errorf("could not delete user: %v", err)
 		return nil, err
 	}
 	return result, nil
@@ -292,10 +305,10 @@ func (m *Mongo) GetUserByAPIKey(ctx context.Context, APIKey string) (accounts.Us
 	m.Initialize()
 	err := m.client.Connect(ctx)
 	if err != nil {
-		log.Println("couldjnt connect to db on search")
+		m.log.Error("could not connect to db")
 	}
 	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
-	res := GetByKey(ctx, collection, "APIKey", APIKey)
-	return DecodeUser(res)
+	res := m.GetByKey(ctx, collection, "APIKey", APIKey)
+	return m.DecodeUser(res)
 }
