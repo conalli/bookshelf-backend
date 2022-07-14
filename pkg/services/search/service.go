@@ -33,7 +33,7 @@ func NewService(l logs.Logger, v *validator.Validate, r Repository) Service {
 
 // Search returns the url of a given cmd.
 func (s *service) Search(ctx context.Context, APIKey, cmd string) (string, error) {
-	ctx, cancelFunc := request.WithDefaultTimeout(ctx)
+	ctx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	// TODO: add validation here for team/ user cmd
 	usr, err := s.db.GetUserByAPIKey(ctx, APIKey)

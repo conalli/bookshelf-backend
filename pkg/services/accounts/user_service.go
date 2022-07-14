@@ -47,7 +47,7 @@ func NewUserService(l logs.Logger, v *validator.Validate, r UserRepository) User
 
 // Search returns the url of a given cmd.
 func (s *userService) NewUser(ctx context.Context, requestData request.SignUp) (User, errors.APIErr) {
-	reqCtx, cancelFunc := request.WithDefaultTimeout(ctx)
+	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	validateErr := s.validate.Struct(requestData)
 	if validateErr != nil {
@@ -60,7 +60,7 @@ func (s *userService) NewUser(ctx context.Context, requestData request.SignUp) (
 
 // Login takes in request data, checks the db and returns the username and apikey is successful.
 func (s *userService) LogIn(ctx context.Context, requestData request.LogIn) (User, errors.APIErr) {
-	reqCtx, cancelFunc := request.WithDefaultTimeout(ctx)
+	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	validateErr := s.validate.Struct(requestData)
 	if validateErr != nil {
@@ -77,7 +77,7 @@ func (s *userService) LogIn(ctx context.Context, requestData request.LogIn) (Use
 
 // // GetTeams calls the GetTeams method and returns all teams for a user.
 // func (s *userService) GetTeams(ctx context.Context, APIKey string) ([]Team, errors.APIErr) {
-// reqCtx, cancelFunc := request.WithDefaultTimeout(ctx)
+// reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 // defer cancelFunc()
 // 	teams, err := s.db.GetTeams(reqCtx, APIKey)
 // 	return teams, err
@@ -85,7 +85,7 @@ func (s *userService) LogIn(ctx context.Context, requestData request.LogIn) (Use
 
 // GetAllCmds calls the GetAllCmds method and returns all the users commands.
 func (s *userService) GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.APIErr) {
-	reqCtx, cancelFunc := request.WithDefaultTimeout(ctx)
+	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	validateErr := s.validate.Var(APIKey, "uuid")
 	if validateErr != nil {
@@ -98,7 +98,7 @@ func (s *userService) GetAllCmds(ctx context.Context, APIKey string) (map[string
 
 // AddCmd calls the AddCmd method and returns the number of updated commands.
 func (s *userService) AddCmd(ctx context.Context, requestData request.AddCmd, APIKey string) (int, errors.APIErr) {
-	reqCtx, cancelFunc := request.WithDefaultTimeout(ctx)
+	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	validateReqErr := s.validate.Struct(requestData)
 	validateAPIKeyErr := s.validate.Var(APIKey, "uuid")
@@ -112,7 +112,7 @@ func (s *userService) AddCmd(ctx context.Context, requestData request.AddCmd, AP
 
 // DelCmd calls the DelCmd method and returns the number of updated commands.
 func (s *userService) DeleteCmd(ctx context.Context, requestData request.DeleteCmd, APIKey string) (int, errors.APIErr) {
-	reqCtx, cancelFunc := request.WithDefaultTimeout(ctx)
+	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	validateReqErr := s.validate.Struct(requestData)
 	validateAPIKeyErr := s.validate.Var(APIKey, "uuid")
@@ -126,7 +126,7 @@ func (s *userService) DeleteCmd(ctx context.Context, requestData request.DeleteC
 
 // Delete calls the Delete method and returns the number of deleted users.
 func (s *userService) Delete(ctx context.Context, requestData request.DeleteUser, APIKey string) (int, errors.APIErr) {
-	reqCtx, cancelFunc := request.WithDefaultTimeout(ctx)
+	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	validateReqErr := s.validate.Struct(requestData)
 	validateAPIKeyErr := s.validate.Var(APIKey, "uuid")

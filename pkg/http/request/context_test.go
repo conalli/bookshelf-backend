@@ -11,7 +11,7 @@ import (
 func TestCtxWithDefaultTimeout(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	reqCtx, _ := request.WithDefaultTimeout(ctx)
+	reqCtx, _ := request.CtxWithDefaultTimeout(ctx)
 	want := time.Now().Add(time.Second * 5).Round(time.Second)
 	deadline, ok := reqCtx.Deadline()
 	got := deadline.Round(time.Second)
