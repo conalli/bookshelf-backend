@@ -1,10 +1,10 @@
-package logstest
+package testutils
 
 // TestLogger is a dummy logger used only in testing.
 type TestLogger struct{}
 
-// New creates a new TestLogger.
-func New() *TestLogger {
+// NewLogger creates a new TestLogger.
+func NewLogger() *TestLogger {
 	return &TestLogger{}
 }
 

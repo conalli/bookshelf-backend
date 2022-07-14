@@ -6,9 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/conalli/bookshelf-backend/internal/dbtest"
-	"github.com/conalli/bookshelf-backend/internal/handlerstest"
-	"github.com/conalli/bookshelf-backend/internal/logstest"
+	"github.com/conalli/bookshelf-backend/internal/testutils"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
@@ -18,11 +16,11 @@ import (
 
 func TestSignUp(t *testing.T) {
 	t.Parallel()
-	db := dbtest.New().AddDefaultUsers()
-	r := rest.NewRouter(logstest.New(), validator.New(), db)
+	db := testutils.NewDB().AddDefaultUsers()
+	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db)
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
-	body, err := handlerstest.MakeRequestBody(request.SignUp{
+	body, err := testutils.MakeRequestBody(request.SignUp{
 		Name:     "signuptest",
 		Password: "password",
 	})

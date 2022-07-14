@@ -6,21 +6,19 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/conalli/bookshelf-backend/internal/dbtest"
-	"github.com/conalli/bookshelf-backend/internal/handlerstest"
-	"github.com/conalli/bookshelf-backend/internal/logstest"
+	"github.com/conalli/bookshelf-backend/internal/testutils"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/go-playground/validator/v10"
 )
 
 func TestGetCmds(t *testing.T) {
 	t.Parallel()
-	db := dbtest.New().AddDefaultUsers()
-	r := rest.NewRouter(logstest.New(), validator.New(), db)
+	db := testutils.NewDB().AddDefaultUsers()
+	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db)
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 	APIKey := db.Users["1"].APIKey
-	res, err := handlerstest.RequestWithCookie("GET", srv.URL+"/api/user/cmds/"+APIKey, nil, APIKey)
+	res, err := testutils.RequestWithCookie("GET", srv.URL+"/api/user/cmds/"+APIKey, nil, APIKey)
 	if err != nil {
 		t.Fatalf("Couldn't create request to get cmds with cookie.")
 	}

@@ -1,12 +1,61 @@
-package dbtest
+package testutils
 
 import (
 	"context"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
+	"github.com/conalli/bookshelf-backend/pkg/password"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 )
+
+// Testdb represents a testutils.
+type Testdb struct {
+	Users map[string]accounts.User
+	Teams map[string]accounts.Team
+}
+
+// NewDB returns a new Testdb.
+func NewDB() *Testdb {
+	return &Testdb{}
+}
+
+// AddDefaultUsers adds users to an empty testutils.
+func (t *Testdb) AddDefaultUsers() *Testdb {
+	pw, _ := password.HashPassword("password")
+	usrs := map[string]accounts.User{
+		"1": {ID: "c55fdaace3388c2189875fc5", Name: "user1", Password: pw, APIKey: "bd1eb780-0124-11ed-b939-0242ac120002", Bookmarks: map[string]string{"bbc": "https://www.bbc.co.uk"}},
+	}
+	t.Users = usrs
+	return t
+}
+
+func (t *Testdb) dataAlreadyExists(name string, coll string) bool {
+	if coll == "users" {
+		for _, v := range t.Users {
+			if v.Name == name {
+				return true
+			}
+		}
+	}
+	if coll == "teams" {
+		for _, v := range t.Teams {
+			if v.Name == name {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (t *Testdb) findUserByAPIKey(APIKey string) *accounts.User {
+	for _, v := range t.Users {
+		if v.APIKey == APIKey {
+			return &v
+		}
+	}
+	return nil
+}
 
 // NewUser creates a new user in the testdb.
 func (t *Testdb) NewUser(ctx context.Context, body request.SignUp) (accounts.User, errors.APIErr) {
@@ -102,4 +151,17 @@ func (t *Testdb) Delete(reqCtx context.Context, body request.DeleteUser, APIKey 
 	}
 	delete(t.Users, body.ID)
 	return 1, nil
+}
+
+// Search function for the testutils.
+func (t *Testdb) Search(ctx context.Context, APIKey, cmd string) (string, error) {
+	usr := t.findUserByAPIKey(APIKey)
+	if usr == nil {
+		return "", errors.NewBadRequestError("error: could not find user with value " + APIKey)
+	}
+	val, found := usr.Bookmarks[cmd]
+	if !found {
+		return "http://www.google.com/search?q=" + cmd, nil
+	}
+	return val, nil
 }

@@ -5,9 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/conalli/bookshelf-backend/internal/dbtest"
-	"github.com/conalli/bookshelf-backend/internal/handlerstest"
-	"github.com/conalli/bookshelf-backend/internal/logstest"
+	"github.com/conalli/bookshelf-backend/internal/testutils"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest/handlers"
@@ -16,19 +14,19 @@ import (
 
 func TestDeleteCmd(t *testing.T) {
 	t.Parallel()
-	db := dbtest.New().AddDefaultUsers()
-	r := rest.NewRouter(logstest.New(), validator.New(), db)
+	db := testutils.NewDB().AddDefaultUsers()
+	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db)
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 	APIKey := db.Users["1"].APIKey
-	body, err := handlerstest.MakeRequestBody(request.DeleteCmd{
+	body, err := testutils.MakeRequestBody(request.DeleteCmd{
 		ID:  db.Users["1"].ID,
 		Cmd: "bbc",
 	})
 	if err != nil {
 		t.Fatalf("Couldn't create del cmd request body.")
 	}
-	res, err := handlerstest.RequestWithCookie("PATCH", srv.URL+"/api/user/delcmd/"+APIKey, body, APIKey)
+	res, err := testutils.RequestWithCookie("PATCH", srv.URL+"/api/user/delcmd/"+APIKey, body, APIKey)
 	if err != nil {
 		t.Fatalf("Couldn't create request to del cmd with cookie.")
 	}

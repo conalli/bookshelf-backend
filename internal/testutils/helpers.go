@@ -1,4 +1,4 @@
-package handlerstest
+package testutils
 
 import (
 	"bytes"

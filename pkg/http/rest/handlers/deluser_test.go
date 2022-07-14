@@ -5,9 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/conalli/bookshelf-backend/internal/dbtest"
-	"github.com/conalli/bookshelf-backend/internal/handlerstest"
-	"github.com/conalli/bookshelf-backend/internal/logstest"
+	"github.com/conalli/bookshelf-backend/internal/testutils"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest/handlers"
@@ -16,12 +14,12 @@ import (
 
 func TestDelUser(t *testing.T) {
 	t.Parallel()
-	db := dbtest.New().AddDefaultUsers()
-	r := rest.NewRouter(logstest.New(), validator.New(), db)
+	db := testutils.NewDB().AddDefaultUsers()
+	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db)
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 	APIKey := db.Users["1"].APIKey
-	body, err := handlerstest.MakeRequestBody(request.DeleteUser{
+	body, err := testutils.MakeRequestBody(request.DeleteUser{
 		ID:       db.Users["1"].ID,
 		Name:     db.Users["1"].Name,
 		Password: "password",
@@ -29,7 +27,7 @@ func TestDelUser(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Couldn't create del user request body.")
 	}
-	res, err := handlerstest.RequestWithCookie("DELETE", srv.URL+"/api/user/"+APIKey, body, APIKey)
+	res, err := testutils.RequestWithCookie("DELETE", srv.URL+"/api/user/"+APIKey, body, APIKey)
 	if err != nil {
 		t.Fatalf("Couldn't create request to delete user with cookie.")
 	}
