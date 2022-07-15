@@ -1,31 +1,46 @@
 package request
 
-// SignUp represents the expected JSON request for the user/signup endpoint.
+// SignUp represents the expected JSON request for the user POST endpoint.
 type SignUp struct {
 	Name     string `json:"name" validate:"min=3,max=30"`
 	Password string `json:"password" validate:"min=6,max=30"`
 }
 
-// LogIn represents the expected JSON request for the user/login endpoint.
+// LogIn represents the expected JSON request for the user/login POST endpoint.
 type LogIn struct {
 	Name     string `json:"name" validate:"min=3,max=30"`
 	Password string `json:"password" validate:"min=6,max=30"`
 }
 
-// AddCmd represents the expected JSON request for the user/addcmd endpoint.
+// AddCmd represents the expected JSON request for the user/cmd POST endpoint.
 type AddCmd struct {
 	ID  string `json:"id" validate:"len=24,hexadecimal"`
 	Cmd string `json:"cmd" validate:"min=1,max=30"`
 	URL string `json:"url" validate:"min=5,max=100"`
 }
 
-// DeleteCmd represents the expected JSON request for the user/delcmd endpoint.
+// DeleteCmd represents the expected JSON request for the user/cmd DELETE endpoint.
 type DeleteCmd struct {
 	ID  string `json:"id" validate:"len=24,hexadecimal"`
 	Cmd string `json:"cmd" validate:"min=1,max=30"`
 }
 
-// DeleteUser represents the expected JSON request for the user/del endpoint.
+// AddBookmark represents the expected JSON request for the user/bookmark POST endpoint.
+type AddBookmark struct {
+	ID   string `json:"id" validate:"len=24,hexadecimal"`
+	Name string `json:"name,omitempty" validate:"max=30"`
+	Path string `json:"path" validate:"max=50"`
+	URL  string `json:"url" validate:"min=5,max=50"`
+}
+
+// DeleteBookmark represents the expected JSON request for the user/bookmark POST endpoint.
+type DeleteBookmark struct {
+	ID   string `json:"id" validate:"len=24,hexadecimal"`
+	Path string `json:"path" validate:"max=50"`
+	URL  string `json:"url" validate:"min=5,max=50"`
+}
+
+// DeleteUser represents the expected JSON request for the user DELETE endpoint.
 type DeleteUser struct {
 	ID       string `json:"id" validate:"len=24,hexadecimal"`
 	Name     string `json:"name" validate:"min=3,max=30"`

@@ -11,8 +11,9 @@ import (
 
 // Testdb represents a testutils.
 type Testdb struct {
-	Users map[string]accounts.User
-	Teams map[string]accounts.Team
+	Users     map[string]accounts.User
+	Bookmarks map[string]accounts.BookmarkAccount
+	Teams     map[string]accounts.Team
 }
 
 // NewDB returns a new Testdb.
@@ -146,6 +147,36 @@ func (t *Testdb) DeleteCmd(ctx context.Context, body request.DeleteCmd, APIKey s
 		return 0, errors.NewBadRequestError("error: could not find user with value " + APIKey)
 	}
 	delete(usr.Cmds, body.Cmd)
+	return 1, nil
+}
+
+// AddBookmark adds a bookmark to the test db.
+func (t *Testdb) AddBookmark(reqCtx context.Context, requestData request.AddBookmark, APIKey string) (int, errors.APIErr) {
+	account := t.Bookmarks[APIKey]
+	bookmark := accounts.Bookmark{
+		Name: requestData.Name,
+		Path: requestData.Path,
+		URL:  requestData.URL,
+	}
+	account.Bookmarks = append(account.Bookmarks, bookmark)
+	return 1, nil
+}
+
+// DeleteBookmark removes a bookmark from the test db.
+func (t *Testdb) DeleteBookmark(reqCtx context.Context, requestData request.DeleteBookmark, APIKey string) (int, errors.APIErr) {
+	account := t.Bookmarks[APIKey]
+	i := -1
+	for idx, bk := range account.Bookmarks {
+		if bk.URL == requestData.URL {
+			i = idx
+			break
+		}
+	}
+	if i < 0 {
+		return 0, errors.NewBadRequestError("url not in bookmarks")
+	}
+	account.Bookmarks[i] = account.Bookmarks[len(account.Bookmarks)-1]
+	account.Bookmarks = account.Bookmarks[:len(account.Bookmarks)-1]
 	return 1, nil
 }
 

@@ -66,9 +66,11 @@ func addUserRoutes(router *mux.Router, u accounts.UserService, l logs.Logger) {
 	user.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.DelUser(u, l))).Methods("DELETE")
 	user.HandleFunc("/login", handlers.LogIn(u, l)).Methods("POST")
 	// user.HandleFunc("/teams/{APIKey}", jwtauth.Authorized(handlers.GetAllTeams(u))).Methods("GET")
-	user.HandleFunc("/cmds/{APIKey}", jwtauth.Authorized(handlers.GetCmds(u, l))).Methods("GET")
-	user.HandleFunc("/addcmd/{APIKey}", jwtauth.Authorized(handlers.AddCmd(u, l))).Methods("PATCH")
-	user.HandleFunc("/delcmd/{APIKey}", jwtauth.Authorized(handlers.DeleteCmd(u, l))).Methods("PATCH")
+	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.GetCmds(u, l))).Methods("GET")
+	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.AddCmd(u, l))).Methods("POST")
+	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.DeleteCmd(u, l))).Methods("DELETE")
+	user.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.AddBookmark(u, l))).Methods("POST")
+	user.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.DeleteBookmark(u, l))).Methods("DELETE")
 }
 
 // func addTeamRoutes(router *mux.Router, t accounts.TeamService) {

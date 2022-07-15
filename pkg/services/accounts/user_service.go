@@ -20,6 +20,8 @@ type UserRepository interface {
 	GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.APIErr)
 	AddCmd(reqCtx context.Context, requestData request.AddCmd, APIKey string) (int, errors.APIErr)
 	DeleteCmd(ctx context.Context, requestData request.DeleteCmd, APIKey string) (int, errors.APIErr)
+	AddBookmark(reqCtx context.Context, requestData request.AddBookmark, APIKey string) (int, errors.APIErr)
+	DeleteBookmark(reqCtx context.Context, requestData request.DeleteBookmark, APIKey string) (int, errors.APIErr)
 	Delete(reqCtx context.Context, requestData request.DeleteUser, APIKey string) (int, errors.APIErr)
 }
 
@@ -31,6 +33,8 @@ type UserService interface {
 	GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.APIErr)
 	AddCmd(reqCtx context.Context, requestData request.AddCmd, APIKey string) (int, errors.APIErr)
 	DeleteCmd(ctx context.Context, requestData request.DeleteCmd, APIKey string) (int, errors.APIErr)
+	AddBookmark(reqCtx context.Context, requestData request.AddBookmark, APIKey string) (int, errors.APIErr)
+	DeleteBookmark(reqCtx context.Context, requestData request.DeleteBookmark, APIKey string) (int, errors.APIErr)
 	Delete(ctx context.Context, requestData request.DeleteUser, APIKey string) (int, errors.APIErr)
 }
 
@@ -110,7 +114,7 @@ func (s *userService) AddCmd(ctx context.Context, requestData request.AddCmd, AP
 	return numUpdated, err
 }
 
-// DelCmd calls the DelCmd method and returns the number of updated commands.
+// DeleteCmd calls the DelCmd method and returns the number of updated commands.
 func (s *userService) DeleteCmd(ctx context.Context, requestData request.DeleteCmd, APIKey string) (int, errors.APIErr) {
 	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
@@ -121,6 +125,34 @@ func (s *userService) DeleteCmd(ctx context.Context, requestData request.DeleteC
 		return 0, errors.NewBadRequestError("request format incorrect.")
 	}
 	numUpdated, err := s.db.DeleteCmd(reqCtx, requestData, APIKey)
+	return numUpdated, err
+}
+
+// AddBookmark adds a bookmark for an account.
+func (s *userService) AddBookmark(ctx context.Context, requestData request.AddBookmark, APIKey string) (int, errors.APIErr) {
+	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
+	defer cancelFunc()
+	validateReqErr := s.validate.Struct(requestData)
+	validateAPIKeyErr := s.validate.Var(APIKey, "uuid")
+	if validateReqErr != nil || validateAPIKeyErr != nil {
+		s.log.Errorf("Could not validate ADD BOOKMARK request: %v - %v", validateReqErr, validateAPIKeyErr)
+		return 0, errors.NewBadRequestError("request format incorrect.")
+	}
+	numUpdated, err := s.db.AddBookmark(reqCtx, requestData, APIKey)
+	return numUpdated, err
+}
+
+// DeleteBookmark removes a bookmark from an account.
+func (s *userService) DeleteBookmark(ctx context.Context, requestData request.DeleteBookmark, APIKey string) (int, errors.APIErr) {
+	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
+	defer cancelFunc()
+	validateReqErr := s.validate.Struct(requestData)
+	validateAPIKeyErr := s.validate.Var(APIKey, "uuid")
+	if validateReqErr != nil || validateAPIKeyErr != nil {
+		s.log.Errorf("Could not validate DELETE BOOKMARK request: %v - %v", validateReqErr, validateAPIKeyErr)
+		return 0, errors.NewBadRequestError("request format incorrect.")
+	}
+	numUpdated, err := s.db.DeleteBookmark(reqCtx, requestData, APIKey)
 	return numUpdated, err
 }
 
