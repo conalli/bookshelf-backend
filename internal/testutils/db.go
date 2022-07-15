@@ -2,6 +2,7 @@ package testutils
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
@@ -34,6 +35,19 @@ func (t *Testdb) AddDefaultUsers() *Testdb {
 		},
 	}
 	t.Users = usrs
+	t.Bookmarks = map[string]accounts.BookmarkAccount{
+		usrs["1"].APIKey: {
+			ID:     "c55fdaace3388c2189875fc5",
+			APIKey: "bd1eb780-0124-11ed-b939-0242ac120002",
+			Bookmarks: []accounts.Bookmark{
+				{
+					Name: "bbc",
+					Path: "",
+					URL:  "bbc.co.uk",
+				},
+			},
+		},
+	}
 	return t
 }
 
@@ -148,6 +162,34 @@ func (t *Testdb) DeleteCmd(ctx context.Context, body request.DeleteCmd, APIKey s
 	}
 	delete(usr.Cmds, body.Cmd)
 	return 1, nil
+}
+
+// GetAllBookmarks gets all bookmarks from the test db.
+func (t *Testdb) GetAllBookmarks(ctx context.Context, APIKey string) ([]accounts.Bookmark, errors.APIErr) {
+	account, ok := t.Bookmarks[APIKey]
+	if !ok {
+		return nil, errors.NewBadRequestError("error: could not find user with value " + APIKey)
+	}
+	return account.Bookmarks, nil
+}
+
+// GetBookmarksFolder gets all bookmarks from the test db.
+func (t *Testdb) GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]accounts.Bookmark, errors.APIErr) {
+	account, ok := t.Bookmarks[APIKey]
+	if !ok {
+		return nil, errors.NewBadRequestError("error: could not find user with value " + APIKey)
+	}
+	folder := []accounts.Bookmark{}
+	for _, val := range account.Bookmarks {
+		match, err := regexp.Match(path, []byte(val.Path))
+		if err != nil {
+			return nil, errors.NewBadRequestError("invalid bookmark folder path")
+		}
+		if match {
+			folder = append(folder, val)
+		}
+	}
+	return folder, nil
 }
 
 // AddBookmark adds a bookmark to the test db.

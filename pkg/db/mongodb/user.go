@@ -3,6 +3,7 @@ package mongodb
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
@@ -254,7 +255,7 @@ func (m *Mongo) DeleteCmd(ctx context.Context, requestData request.DeleteCmd, AP
 
 // removeUserCmd takes a given username along with the cmd and removes the cmd from their bookmarks.
 func (m *Mongo) removeUserCmd(ctx context.Context, collection *mongo.Collection, userID, cmd string) (*mongo.UpdateResult, error) {
-	opts := options.Update().SetUpsert(true)
+	opts := options.Update().SetUpsert(false)
 	filter, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		m.log.Error("could not get ObjectID from Hex")
@@ -267,6 +268,53 @@ func (m *Mongo) removeUserCmd(ctx context.Context, collection *mongo.Collection,
 		return nil, err
 	}
 	return result, nil
+}
+
+// GetAllBookmarks gets all a users bookmarks from the db.
+func (m *Mongo) GetAllBookmarks(ctx context.Context, APIKey string) ([]accounts.Bookmark, errors.APIErr) {
+	m.Initialize()
+	defer m.client.Disconnect(ctx)
+	err := m.client.Connect(ctx)
+	if err != nil {
+		m.log.Error("couldn't connect to db")
+		return nil, errors.NewInternalServerError()
+	}
+	collection := m.db.Collection(CollectionBookmarks)
+	res := m.GetByKey(ctx, collection, "APIKey", APIKey)
+	account, err := m.DecodeBookmarksAccount(res)
+	if err != nil {
+		return nil, errors.NewInternalServerError()
+	}
+	return account.Bookmarks, nil
+}
+
+// GetBookmarksFolder gets all a users bookmarks from the db.
+func (m *Mongo) GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]accounts.Bookmark, errors.APIErr) {
+	m.Initialize()
+	defer m.client.Disconnect(ctx)
+	err := m.client.Connect(ctx)
+	if err != nil {
+		m.log.Error("couldn't connect to db")
+		return nil, errors.NewInternalServerError()
+	}
+	collection := m.db.Collection(CollectionBookmarks)
+	res := m.GetByKey(ctx, collection, "APIKey", APIKey)
+	account, err := m.DecodeBookmarksAccount(res)
+	if err != nil {
+		return nil, errors.NewInternalServerError()
+	}
+	folder := []accounts.Bookmark{}
+	for _, val := range account.Bookmarks {
+		match, err := regexp.Match(path, []byte(val.Path))
+		if err != nil {
+			m.log.Error("invalid bookmark folder path")
+			return nil, errors.NewBadRequestError("invalid bookmark folder path")
+		}
+		if match {
+			folder = append(folder, val)
+		}
+	}
+	return folder, nil
 }
 
 // AddBookmark adds a new bookmark for a given user.

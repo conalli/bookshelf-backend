@@ -20,6 +20,8 @@ type UserRepository interface {
 	GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.APIErr)
 	AddCmd(reqCtx context.Context, requestData request.AddCmd, APIKey string) (int, errors.APIErr)
 	DeleteCmd(ctx context.Context, requestData request.DeleteCmd, APIKey string) (int, errors.APIErr)
+	GetAllBookmarks(ctx context.Context, APIKey string) ([]Bookmark, errors.APIErr)
+	GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]Bookmark, errors.APIErr)
 	AddBookmark(reqCtx context.Context, requestData request.AddBookmark, APIKey string) (int, errors.APIErr)
 	DeleteBookmark(reqCtx context.Context, requestData request.DeleteBookmark, APIKey string) (int, errors.APIErr)
 	Delete(reqCtx context.Context, requestData request.DeleteUser, APIKey string) (int, errors.APIErr)
@@ -33,6 +35,8 @@ type UserService interface {
 	GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.APIErr)
 	AddCmd(reqCtx context.Context, requestData request.AddCmd, APIKey string) (int, errors.APIErr)
 	DeleteCmd(ctx context.Context, requestData request.DeleteCmd, APIKey string) (int, errors.APIErr)
+	GetAllBookmarks(ctx context.Context, APIKey string) ([]Bookmark, errors.APIErr)
+	GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]Bookmark, errors.APIErr)
 	AddBookmark(reqCtx context.Context, requestData request.AddBookmark, APIKey string) (int, errors.APIErr)
 	DeleteBookmark(reqCtx context.Context, requestData request.DeleteBookmark, APIKey string) (int, errors.APIErr)
 	Delete(ctx context.Context, requestData request.DeleteUser, APIKey string) (int, errors.APIErr)
@@ -126,6 +130,30 @@ func (s *userService) DeleteCmd(ctx context.Context, requestData request.DeleteC
 	}
 	numUpdated, err := s.db.DeleteCmd(reqCtx, requestData, APIKey)
 	return numUpdated, err
+}
+
+func (s *userService) GetAllBookmarks(ctx context.Context, APIKey string) ([]Bookmark, errors.APIErr) {
+	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
+	defer cancelFunc()
+	validateErr := s.validate.Var(APIKey, "uuid")
+	if validateErr != nil {
+		s.log.Errorf("Could not validate GET ALL BOOKMARKS request: %v", validateErr)
+		return nil, errors.NewBadRequestError("request format incorrect.")
+	}
+	books, err := s.db.GetAllBookmarks(reqCtx, APIKey)
+	return books, err
+}
+
+func (s *userService) GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]Bookmark, errors.APIErr) {
+	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
+	defer cancelFunc()
+	validateErr := s.validate.Var(APIKey, "uuid")
+	if validateErr != nil {
+		s.log.Errorf("Could not validate GET BOOKMARKS FOLDER request: %v", validateErr)
+		return nil, errors.NewBadRequestError("request format incorrect.")
+	}
+	books, err := s.db.GetBookmarksFolder(reqCtx, path, APIKey)
+	return books, err
 }
 
 // AddBookmark adds a bookmark for an account.
