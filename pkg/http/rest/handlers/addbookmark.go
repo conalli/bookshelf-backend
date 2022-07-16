@@ -13,10 +13,10 @@ import (
 
 // AddBookmarkResponse represents a successful response from the /user/bookmark POST endpoint.
 type AddBookmarkResponse struct {
-	BookmarksChanged int    `json:"bookmarksChanged"`
-	Name             string `json:"name,omitempty"`
-	Path             string `json:"path"`
-	URL              string `json:"url"`
+	NumAdded int    `json:"numAdded"`
+	Name     string `json:"name,omitempty"`
+	Path     string `json:"path"`
+	URL      string `json:"url"`
 }
 
 // AddBookmark is the handler for the bookmark POST endpoint.
@@ -46,10 +46,10 @@ func AddBookmark(u accounts.UserService, log logs.Logger) func(w http.ResponseWr
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		res := AddBookmarkResponse{
-			BookmarksChanged: numUpdated,
-			Name:             addBookReq.Name,
-			Path:             addBookReq.Path,
-			URL:              addBookReq.URL,
+			NumAdded: numUpdated,
+			Name:     addBookReq.Name,
+			Path:     addBookReq.Path,
+			URL:      addBookReq.URL,
 		}
 		json.NewEncoder(w).Encode(res)
 	}

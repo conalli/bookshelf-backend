@@ -13,9 +13,10 @@ import (
 
 // DeleteBookmarkResponse represents a successful response from the /user/bookmark POST endpoint.
 type DeleteBookmarkResponse struct {
-	BookmarksChanged int    `json:"bookmarksChanged"`
-	Path             string `json:"path"`
-	URL              string `json:"url"`
+	NumDeleted int    `json:"numDeleted"`
+	Name       string `json:"name,omitempty"`
+	Path       string `json:"path,omitempty"`
+	URL        string `json:"url"`
 }
 
 // DeleteBookmark is the handler for the bookmark POST endpoint.
@@ -44,10 +45,10 @@ func DeleteBookmark(u accounts.UserService, log logs.Logger) func(w http.Respons
 		log.Info("successfully deleted bookmark")
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		res := AddBookmarkResponse{
-			BookmarksChanged: numUpdated,
-			Path:             delBookReq.Path,
-			URL:              delBookReq.URL,
+		res := DeleteBookmarkResponse{
+			NumDeleted: numUpdated,
+			Path:       delBookReq.Path,
+			URL:        delBookReq.URL,
 		}
 		json.NewEncoder(w).Encode(res)
 	}

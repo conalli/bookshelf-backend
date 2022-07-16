@@ -36,7 +36,7 @@ type AddBookmark struct {
 type DeleteBookmark struct {
 	ID   string `json:"id" validate:"len=24,hexadecimal"`
 	Path string `json:"path,omitempty" validate:"max=100"`
-	URL  string `json:"url,omitempty" validate:"min=5,max=200"`
+	URL  string `json:"url,omitempty" validate:"max=200"`
 }
 
 // DeleteUser represents the expected JSON request for the user DELETE endpoint.

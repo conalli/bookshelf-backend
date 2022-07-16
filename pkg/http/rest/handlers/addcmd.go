@@ -14,9 +14,9 @@ import (
 
 // AddCmdResponse represents the data returned upon successfully adding a cmd.
 type AddCmdResponse struct {
-	CmdsSet int    `json:"cmdsSet"`
-	Cmd     string `json:"cmd"`
-	URL     string `json:"url"`
+	NumAdded int    `json:"numAdded"`
+	Cmd      string `json:"cmd"`
+	URL      string `json:"url"`
 }
 
 // AddCmd is the handler for the setcmd endpoint. Checks credentials + JWT and if
@@ -47,18 +47,18 @@ func AddCmd(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter,
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		res := AddCmdResponse{
-			CmdsSet: numUpdated,
-			Cmd:     setCmdReq.Cmd,
-			URL:     setCmdReq.URL,
+			NumAdded: numUpdated,
+			Cmd:      setCmdReq.Cmd,
+			URL:      setCmdReq.URL,
 		}
 		json.NewEncoder(w).Encode(res)
 	}
 }
 
 type addTeamCmdResponse struct {
-	CmdsSet int    `json:"cmdsSet"`
-	Cmd     string `json:"cmd"`
-	URL     string `json:"url"`
+	NumAdded int    `json:"numAdded"`
+	Cmd      string `json:"cmd"`
+	URL      string `json:"url"`
 }
 
 // AddTeamCmd is the handler for the team/addcmd endpoint. Checks credentials + JWT and if
@@ -85,9 +85,9 @@ func AddTeamCmd(t accounts.TeamService) func(w http.ResponseWriter, r *http.Requ
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		res := addTeamCmdResponse{
-			CmdsSet: numUpdated,
-			Cmd:     setCmdReq.Cmd,
-			URL:     setCmdReq.URL,
+			NumAdded: numUpdated,
+			Cmd:      setCmdReq.Cmd,
+			URL:      setCmdReq.URL,
 		}
 		json.NewEncoder(w).Encode(res)
 	}

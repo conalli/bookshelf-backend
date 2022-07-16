@@ -2,6 +2,7 @@ package testutils
 
 import (
 	"context"
+	"log"
 	"regexp"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
@@ -40,7 +41,7 @@ func (t *Testdb) AddDefaultUsers() *Testdb {
 			ID:     "c55fdaace3388c2189875fc5",
 			APIKey: "bd1eb780-0124-11ed-b939-0242ac120002",
 			Name:   "bbc",
-			Path:   "",
+			Path:   ",News,",
 			URL:    "bbc.co.uk",
 		},
 	}
@@ -162,12 +163,13 @@ func (t *Testdb) DeleteCmd(ctx context.Context, body request.DeleteCmd, APIKey s
 
 // GetAllBookmarks gets all bookmarks from the test db.
 func (t *Testdb) GetAllBookmarks(ctx context.Context, APIKey string) ([]accounts.Bookmark, errors.APIErr) {
-	// account, ok := t.Bookmarks[APIKey]
-	// if !ok {
-	// 	return nil, errors.NewBadRequestError("error: could not find user with value " + APIKey)
-	// }
-	// return account, nil
-	return nil, nil
+	books := make([]accounts.Bookmark, 0)
+	for _, v := range t.Bookmarks {
+		if v.APIKey == APIKey {
+			books = append(books, v)
+		}
+	}
+	return books, nil
 }
 
 // GetBookmarksFolder gets all bookmarks from the test db.
@@ -200,14 +202,15 @@ func (t *Testdb) AddBookmark(reqCtx context.Context, requestData request.AddBook
 // DeleteBookmark removes a bookmark from the test db.
 func (t *Testdb) DeleteBookmark(reqCtx context.Context, requestData request.DeleteBookmark, APIKey string) (int, errors.APIErr) {
 	i := -1
-	for idx, bk := range t.Bookmarks {
-		if bk.URL == requestData.URL {
+	for idx := range t.Bookmarks {
+		log.Println(idx, t.Bookmarks[idx], t.Bookmarks[idx].ID == requestData.ID)
+		if t.Bookmarks[idx].ID == requestData.ID {
 			i = idx
 			break
 		}
 	}
 	if i < 0 {
-		return 0, errors.NewBadRequestError("url not in bookmarks")
+		return 0, errors.NewBadRequestError("id not in bookmarks")
 	}
 	t.Bookmarks[i] = t.Bookmarks[len(t.Bookmarks)-1]
 	t.Bookmarks = t.Bookmarks[:len(t.Bookmarks)-1]
