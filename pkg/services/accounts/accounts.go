@@ -24,18 +24,13 @@ type Team struct {
 	Members    map[string]string `json:"members" bson:"members"`
 }
 
-// BookmarkAccount represents an account that owns bookmarks.
-type BookmarkAccount struct {
-	ID        string     `json:"id" bson:"_id,omitempty"`
-	APIKey    string     `json:"APIKey" bson:"APIKey"`
-	Bookmarks []Bookmark `json:"bookmarks" bson:"bookmarks"`
-}
-
 // Bookmark represents a web bookmark.
 type Bookmark struct {
-	Path string `json:"path" bson:"path,omitempty"`
-	Name string `json:"name,omitempty" bson:"name,omitempty"`
-	URL  string `json:"url" bson:"url"`
+	ID     string `json:"id" bson:"_id,omitempty"`
+	APIKey string `json:"APIKey" bson:"APIKey"`
+	Path   string `json:"path" bson:"path"`
+	Name   string `json:"name" bson:"name"`
+	URL    string `json:"url" bson:"url"`
 }
 
 // Represents the current authorization roles for team members.

@@ -3,7 +3,6 @@ package mongodb
 import (
 	"context"
 	"fmt"
-	"regexp"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
@@ -40,42 +39,25 @@ func (m *Mongo) NewUser(ctx context.Context, requestData request.SignUp) (accoun
 		m.log.Error("could not hash password")
 		return accounts.User{}, errors.NewInternalServerError()
 	}
-	usr, err := m.SessionWithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
-		oid, err := m.NewBookmarkAccount(sessCtx, APIKey)
-		if err != nil {
-			m.log.Errorf("could not create new bookmark account: %v", err)
-			return accounts.User{}, errors.NewInternalServerError()
-		}
-		signUpData := accounts.User{
-			Name:       requestData.Name,
-			Password:   hashedPassword,
-			APIKey:     APIKey,
-			BookmarkID: oid,
-			Cmds:       map[string]string{},
-			Teams:      map[string]string{},
-		}
-		result, err := collection.InsertOne(sessCtx, signUpData)
-		if err != nil {
-			m.log.Error("could not create new user")
-			return accounts.User{}, errors.NewInternalServerError()
-		}
-		userOID, ok := result.InsertedID.(primitive.ObjectID)
-		if !ok {
-			m.log.Error("error getting objectID from newly inserted user")
-			return accounts.User{}, errors.NewInternalServerError()
-		}
-		signUpData.ID = userOID.Hex()
-		return signUpData, nil
-	})
+	signUpData := accounts.User{
+		Name:     requestData.Name,
+		Password: hashedPassword,
+		APIKey:   APIKey,
+		Cmds:     map[string]string{},
+		Teams:    map[string]string{},
+	}
+	result, err := collection.InsertOne(ctx, signUpData)
 	if err != nil {
+		m.log.Error("could not create new user")
 		return accounts.User{}, errors.NewInternalServerError()
 	}
-	user, ok := usr.(accounts.User)
+	userOID, ok := result.InsertedID.(primitive.ObjectID)
 	if !ok {
-		m.log.Error("could not assert user from transaction")
-		return accounts.User{ID: "", Name: requestData.Name, APIKey: APIKey}, nil
+		m.log.Error("error getting objectID from newly inserted user")
+		return accounts.User{}, errors.NewInternalServerError()
 	}
-	return user, nil
+	signUpData.ID = userOID.Hex()
+	return signUpData, nil
 }
 
 // GetUserByName checks the users credentials returns the user if password is correct.
@@ -90,21 +72,6 @@ func (m *Mongo) GetUserByName(ctx context.Context, requestData request.LogIn) (a
 	collection := m.db.Collection(CollectionUsers)
 	res := m.GetByKey(ctx, collection, "name", requestData.Name)
 	return m.DecodeUser(res)
-}
-
-// NewBookmarkAccount creates a new bookmark account for users upon signing up.
-func (m *Mongo) NewBookmarkAccount(ctx context.Context, APIKey string) (string, error) {
-	collection := m.db.Collection(CollectionBookmarks)
-	res, err := collection.InsertOne(ctx, accounts.BookmarkAccount{APIKey: APIKey, Bookmarks: []accounts.Bookmark{}})
-	if err != nil {
-		m.log.Error("could not create new bookmark account")
-		return "", err
-	}
-	oid, ok := res.InsertedID.(primitive.ObjectID)
-	if !ok {
-		return "", errors.NewInternalServerError()
-	}
-	return oid.Hex(), nil
 }
 
 // GetTeams uses user id to get all users teams from the db.
@@ -280,12 +247,19 @@ func (m *Mongo) GetAllBookmarks(ctx context.Context, APIKey string) ([]accounts.
 		return nil, errors.NewInternalServerError()
 	}
 	collection := m.db.Collection(CollectionBookmarks)
-	res := m.GetByKey(ctx, collection, "APIKey", APIKey)
-	account, err := m.DecodeBookmarksAccount(res)
+	filter := bson.D{primitive.E{Key: "APIKey", Value: APIKey}}
+	cursor, err := collection.Find(ctx, filter)
 	if err != nil {
+		m.log.Errorf("could not find all bookmarks by APIKey: %v", err)
 		return nil, errors.NewInternalServerError()
 	}
-	return account.Bookmarks, nil
+	var bookmarks []accounts.Bookmark
+	err = cursor.All(ctx, &bookmarks)
+	if err != nil {
+		m.log.Errorf("could not get bookmarks from db cursor: %v", err)
+		return nil, errors.NewInternalServerError()
+	}
+	return bookmarks, nil
 }
 
 // GetBookmarksFolder gets all a users bookmarks from the db.
@@ -298,23 +272,25 @@ func (m *Mongo) GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]
 		return nil, errors.NewInternalServerError()
 	}
 	collection := m.db.Collection(CollectionBookmarks)
-	res := m.GetByKey(ctx, collection, "APIKey", APIKey)
-	account, err := m.DecodeBookmarksAccount(res)
+	filter := bson.D{
+		primitive.E{Key: "APIKey", Value: APIKey},
+		primitive.E{Key: "path", Value: bson.D{
+			primitive.E{Key: "$regex", Value: primitive.Regex{Pattern: path}},
+		},
+		},
+	}
+	cursor, err := collection.Find(ctx, filter)
 	if err != nil {
+		m.log.Errorf("could not find all bookmarks by APIKey: %v", err)
 		return nil, errors.NewInternalServerError()
 	}
-	folder := []accounts.Bookmark{}
-	for _, val := range account.Bookmarks {
-		match, err := regexp.Match(path, []byte(val.Path))
-		if err != nil {
-			m.log.Error("invalid bookmark folder path")
-			return nil, errors.NewBadRequestError("invalid bookmark folder path")
-		}
-		if match {
-			folder = append(folder, val)
-		}
+	var bookmarks []accounts.Bookmark
+	err = cursor.All(ctx, &bookmarks)
+	if err != nil {
+		m.log.Errorf("could not get bookmarks from db cursor: %v", err)
+		return nil, errors.NewInternalServerError()
 	}
-	return folder, nil
+	return bookmarks, nil
 }
 
 // AddBookmark adds a new bookmark for a given user.
@@ -327,39 +303,18 @@ func (m *Mongo) AddBookmark(ctx context.Context, requestData request.AddBookmark
 		return 0, errors.NewInternalServerError()
 	}
 	collection := m.db.Collection(CollectionBookmarks)
-	result, err := m.addBookmarkToAccount(ctx, collection, requestData, APIKey)
+	data := accounts.Bookmark{
+		APIKey: APIKey,
+		Name:   requestData.Name,
+		Path:   requestData.Path,
+		URL:    requestData.URL,
+	}
+	_, err = collection.InsertOne(ctx, data)
 	if err != nil {
-		m.log.Errorf("couldn't remove cmd from user: %v", err)
+		m.log.Errorf("couldn't insert bookmark: %v", err)
 		return 0, errors.NewInternalServerError()
 	}
-	return int(result.ModifiedCount), nil
-}
-
-// addCmdToUser takes a given username along with the cmd and URL to set and adds the data to their bookmarks.
-func (m *Mongo) addBookmarkToAccount(ctx context.Context, collection *mongo.Collection, requestData request.AddBookmark, APIKey string) (*mongo.UpdateResult, error) {
-	opts := options.Update().SetUpsert(false)
-	filter, err := primitive.ObjectIDFromHex(requestData.ID)
-	if err != nil {
-		m.log.Error("could not get ObjectID from Hex")
-		return nil, err
-	}
-	update := bson.D{primitive.E{
-		Key: "$push", Value: bson.D{
-			primitive.E{
-				Key: "bookmarks", Value: bson.D{
-					primitive.E{Key: "name", Value: requestData.Name},
-					primitive.E{Key: "path", Value: requestData.Path},
-					primitive.E{Key: "url", Value: requestData.URL},
-				},
-			},
-		},
-	}}
-	result, err := collection.UpdateByID(ctx, filter, update, opts)
-	if err != nil {
-		m.log.Errorf("could not add bookmark to user by id: %v", err)
-		return nil, err
-	}
-	return result, nil
+	return 1, nil
 }
 
 // DeleteBookmark adds a new bookmark for a given user.
@@ -372,38 +327,18 @@ func (m *Mongo) DeleteBookmark(ctx context.Context, requestData request.DeleteBo
 		return 0, errors.NewInternalServerError()
 	}
 	collection := m.db.Collection(CollectionBookmarks)
-	result, err := m.removeBookmark(ctx, collection, requestData, APIKey)
+	oid, err := primitive.ObjectIDFromHex(requestData.ID)
+	if err != nil {
+		m.log.Error("could not get ObjectID from Hex")
+		return 0, errors.NewBadRequestError("invalid bookmark id")
+	}
+	filter := bson.D{primitive.E{Key: "_id", Value: oid}}
+	result, err := collection.DeleteOne(ctx, filter)
 	if err != nil {
 		m.log.Errorf("couldn't remove cmd from user: %v", err)
 		return 0, errors.NewInternalServerError()
 	}
-	return int(result.ModifiedCount), nil
-}
-
-// removeBookmark takes a given username along with the cmd and URL to set and adds the data to their bookmarks.
-func (m *Mongo) removeBookmark(ctx context.Context, collection *mongo.Collection, requestData request.DeleteBookmark, APIKey string) (*mongo.UpdateResult, error) {
-	opts := options.Update().SetUpsert(false)
-	filter, err := primitive.ObjectIDFromHex(requestData.ID)
-	if err != nil {
-		m.log.Error("could not get ObjectID from Hex")
-		return nil, err
-	}
-	update := bson.D{primitive.E{
-		Key: "$pull", Value: bson.D{
-			primitive.E{
-				Key: "bookmarks", Value: bson.D{
-					primitive.E{Key: "path", Value: requestData.Path},
-					primitive.E{Key: "url", Value: requestData.URL},
-				},
-			},
-		},
-	}}
-	result, err := collection.UpdateByID(ctx, filter, update, opts)
-	if err != nil {
-		m.log.Errorf("could not add bookmark to user by id: %v", err)
-		return nil, err
-	}
-	return result, nil
+	return int(result.DeletedCount), nil
 }
 
 // Delete attempts to delete a user from the db, returning the number of deleted users.

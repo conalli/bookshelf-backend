@@ -16,7 +16,7 @@ type LogIn struct {
 type AddCmd struct {
 	ID  string `json:"id" validate:"len=24,hexadecimal"`
 	Cmd string `json:"cmd" validate:"min=1,max=30"`
-	URL string `json:"url" validate:"min=5,max=100"`
+	URL string `json:"url" validate:"min=5,max=200"`
 }
 
 // DeleteCmd represents the expected JSON request for the user/cmd DELETE endpoint.
@@ -27,17 +27,16 @@ type DeleteCmd struct {
 
 // AddBookmark represents the expected JSON request for the user/bookmark POST endpoint.
 type AddBookmark struct {
-	ID   string `json:"id" validate:"len=24,hexadecimal"`
 	Name string `json:"name,omitempty" validate:"max=30"`
-	Path string `json:"path" validate:"max=50"`
-	URL  string `json:"url" validate:"min=5,max=50"`
+	Path string `json:"path" validate:"max=100"`
+	URL  string `json:"url" validate:"min=5,max=200"`
 }
 
 // DeleteBookmark represents the expected JSON request for the user/bookmark POST endpoint.
 type DeleteBookmark struct {
 	ID   string `json:"id" validate:"len=24,hexadecimal"`
-	Path string `json:"path" validate:"max=50"`
-	URL  string `json:"url" validate:"min=5,max=50"`
+	Path string `json:"path,omitempty" validate:"max=100"`
+	URL  string `json:"url,omitempty" validate:"min=5,max=200"`
 }
 
 // DeleteUser represents the expected JSON request for the user DELETE endpoint.

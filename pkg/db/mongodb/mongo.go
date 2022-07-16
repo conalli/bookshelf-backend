@@ -156,13 +156,3 @@ func (m *Mongo) DecodeTeam(res *mongo.SingleResult) (accounts.Team, error) {
 	}
 	return team, nil
 }
-
-// DecodeBookmarksAccount decodes the update result to the BookmarkAccount type.
-func (m *Mongo) DecodeBookmarksAccount(res *mongo.SingleResult) (accounts.BookmarkAccount, error) {
-	var account accounts.BookmarkAccount
-	err := res.Decode(&account)
-	if err != nil {
-		return accounts.BookmarkAccount{}, err
-	}
-	return account, nil
-}
