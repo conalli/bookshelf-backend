@@ -46,7 +46,7 @@ func LogIn(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, 
 			Value:    token,
 			Expires:  time.Now().Add(30 * time.Minute),
 			HttpOnly: true,
-			// Secure:   true,
+			Secure:   true,
 			SameSite: http.SameSiteNoneMode,
 		}
 		log.Info("successfully returned token as cookie")

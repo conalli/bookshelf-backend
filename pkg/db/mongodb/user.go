@@ -275,7 +275,7 @@ func (m *Mongo) GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]
 	filter := bson.D{
 		primitive.E{Key: "APIKey", Value: APIKey},
 		primitive.E{Key: "path", Value: bson.D{
-			primitive.E{Key: "$regex", Value: primitive.Regex{Pattern: path}},
+			primitive.E{Key: "$regex", Value: primitive.Regex{Pattern: path, Options: "i"}},
 		},
 		},
 	}
