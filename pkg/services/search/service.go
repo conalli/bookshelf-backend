@@ -2,7 +2,9 @@ package search
 
 import (
 	"context"
+	"flag"
 	"fmt"
+	"strings"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
@@ -25,11 +27,13 @@ type service struct {
 	log      logs.Logger
 	validate *validator.Validate
 	db       Repository
+	flags    map[string]flag.FlagSet
 }
 
 // NewService creates a search service with the necessary dependencies.
 func NewService(l logs.Logger, v *validator.Validate, r Repository) Service {
-	return &service{l, v, r}
+	f := make(map[string]flag.FlagSet)
+	return &service{l, v, r, f}
 }
 
 // Search returns the url of a given cmd.
@@ -41,6 +45,7 @@ func (s *service) Search(ctx context.Context, APIKey, cmd string) (string, error
 		s.log.Error("invalid API key")
 		return "", errors.NewBadRequestError("invalid API key")
 	}
+	strings.Fields(cmd)
 	usr, err := s.db.GetUserByAPIKey(ctx, APIKey)
 	defaultSearch := fmt.Sprintf("http://www.google.com/search?q=%s", cmd)
 	if err != nil {
@@ -53,4 +58,8 @@ func (s *service) Search(ctx context.Context, APIKey, cmd string) (string, error
 		return defaultSearch, nil
 	}
 	return formatURL(url), nil
+}
+
+func (s *service) Evaluate(args []string) error {
+	return nil
 }
