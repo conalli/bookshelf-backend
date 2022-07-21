@@ -22,11 +22,11 @@ func TestNewToken(t *testing.T) {
 
 	for _, n := range tn {
 		t.Run(n, func(t *testing.T) {
-			tkn, err := jwtauth.NewToken(n)
+			tkn, err := jwtauth.NewTokens(n)
 			if err != nil {
 				t.Fatalf("couldn't make a new token with name: %s", n)
 			}
-			token, e := jwt.ParseWithClaims(tkn, &jwtauth.CustomClaims{}, func(t *jwt.Token) (interface{}, error) { return signingKey, nil })
+			token, e := jwt.ParseWithClaims(tkn["access_token"], &jwtauth.CustomClaims{}, func(t *jwt.Token) (interface{}, error) { return signingKey, nil })
 			if e != nil {
 				t.Fatalf("couldn't parse token: %+v", e)
 			}

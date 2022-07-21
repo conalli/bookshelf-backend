@@ -17,11 +17,11 @@ func RequestWithCookie(method, url string, body io.Reader, APIKey string) (*http
 	if err != nil {
 		return nil, err
 	}
-	jwt, err := jwtauth.NewToken(APIKey)
+	jwt, err := jwtauth.NewTokens(APIKey)
 	if err != nil {
 		return nil, err
 	}
-	req.AddCookie(&http.Cookie{Name: "bookshelfjwt", Value: jwt})
+	req.AddCookie(&http.Cookie{Name: "bookshelfjwt", Value: jwt["access_token"]})
 	return client.Do(req)
 }
 
