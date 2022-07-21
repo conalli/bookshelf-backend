@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/logs"
@@ -17,10 +18,15 @@ func Search(s search.Service, log logs.Logger) func(w http.ResponseWriter, r *ht
 		APIKey := vars["APIKey"]
 		cmd := vars["cmd"]
 		log.Info(cmd)
-		url, err := s.Search(r.Context(), APIKey, cmd)
+		res, err := s.Search(r.Context(), APIKey, cmd)
 		if err != nil {
 			log.Errorf("could not find cmd: %v", err)
 		}
-		http.Redirect(w, r, url, http.StatusSeeOther)
+		if url, ok := res.(string); ok {
+			http.Redirect(w, r, string(url), http.StatusSeeOther)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(res)
 	}
 }
