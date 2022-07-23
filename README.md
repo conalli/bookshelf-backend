@@ -23,7 +23,7 @@ This example uses Google Chrome, however setup is similar across most browsers.
 
 This is the repository for the backend. If you would like to work on the frontend, check out the [frontend repository](https://github.com/conalli/bookshelf-web) 📘.
 
-The backend is written entirely in Go, using Redis and MongoDB (with MongoDB Atlas).
+The backend is written entirely in Go, using Redis and MongoDB (with MongoDB Atlas) and currently deployed to Heroku.
 To get started
 
 - Clone this repository.
