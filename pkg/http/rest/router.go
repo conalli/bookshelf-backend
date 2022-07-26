@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/db"
@@ -17,6 +16,7 @@ import (
 
 // Router wraps the *mux.Router type.
 type Router struct {
+	log    logs.Logger
 	router *mux.Router
 }
 
@@ -25,7 +25,7 @@ func NewRouter(l logs.Logger, v *validator.Validate, store db.Storage) *Router {
 	u := accounts.NewUserService(l, v, store)
 	s := search.NewService(l, v, store)
 
-	r := &Router{mux.NewRouter()}
+	r := &Router{l, mux.NewRouter()}
 	api := r.initRouter()
 	addUserRoutes(api, u, l)
 	addSearchRoutes(api, s, l)
@@ -44,7 +44,7 @@ func (r *Router) Walk() *Router {
 	r.router.Walk(func(route *mux.Route, _ *mux.Router, _ []*mux.Route) error {
 		tpl, err1 := route.GetPathTemplate()
 		met, err2 := route.GetMethods()
-		log.Println("Path:", tpl, "Err:", err1, "Methods:", met, "Err:", err2)
+		r.log.Infof("Path:", tpl, "Err:", err1, "Methods:", met, "Err:", err2)
 		return nil
 	})
 	return r
