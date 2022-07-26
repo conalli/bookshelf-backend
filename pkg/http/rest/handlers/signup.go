@@ -30,7 +30,7 @@ func SignUp(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter,
 			return
 		}
 		log.Infof("successfully created a new user: %+v", newUser)
-		tokens, err := jwtauth.NewTokens(newUser.APIKey)
+		tokens, err := jwtauth.NewTokens(newUser.APIKey, log)
 		if err != nil {
 			log.Errorf("error returned while trying to create a new token: %v", err)
 			errors.APIErrorResponse(w, err)

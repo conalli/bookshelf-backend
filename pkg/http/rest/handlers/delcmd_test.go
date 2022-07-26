@@ -26,7 +26,7 @@ func TestDeleteCmd(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Couldn't create del cmd request body.")
 	}
-	res, err := testutils.RequestWithCookie("DELETE", srv.URL+"/api/user/cmd/"+APIKey, body, APIKey)
+	res, err := testutils.RequestWithCookie("DELETE", srv.URL+"/api/user/cmd/"+APIKey, body, APIKey, testutils.NewLogger())
 	if err != nil {
 		t.Fatalf("Couldn't create request to del cmd with cookie.")
 	}

@@ -27,7 +27,7 @@ func TestDelUser(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Couldn't create del user request body.")
 	}
-	res, err := testutils.RequestWithCookie("DELETE", srv.URL+"/api/user/"+APIKey, body, APIKey)
+	res, err := testutils.RequestWithCookie("DELETE", srv.URL+"/api/user/"+APIKey, body, APIKey, testutils.NewLogger())
 	if err != nil {
 		t.Fatalf("Couldn't create request to delete user with cookie.")
 	}

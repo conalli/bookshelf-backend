@@ -25,7 +25,7 @@ func TestDeleteBookmark(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Couldn't create del bookmark request body.")
 	}
-	res, err := testutils.RequestWithCookie("DELETE", srv.URL+"/api/user/bookmark/"+APIKey, body, APIKey)
+	res, err := testutils.RequestWithCookie("DELETE", srv.URL+"/api/user/bookmark/"+APIKey, body, APIKey, testutils.NewLogger())
 	if err != nil {
 		t.Fatalf("Couldn't create request to del bookmark with cookie.")
 	}

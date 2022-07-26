@@ -34,7 +34,7 @@ func LogIn(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, 
 			errors.APIErrorResponse(w, err)
 			return
 		}
-		tokens, err := jwtauth.NewTokens(currUser.APIKey)
+		tokens, err := jwtauth.NewTokens(currUser.APIKey, log)
 		if err != nil {
 			log.Errorf("error returned while trying to create a new token: %v", err)
 			errors.APIErrorResponse(w, err)
