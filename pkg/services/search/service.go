@@ -3,6 +3,7 @@ package search
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
@@ -15,7 +16,6 @@ import (
 // Repository provides access to storage.
 type Repository interface {
 	GetUserByAPIKey(ctx context.Context, APIKey string) (accounts.User, error)
-	GetAllBookmarks(ctx context.Context, APIKey string) ([]accounts.Bookmark, errors.APIErr)
 	AddBookmark(reqCtx context.Context, requestData request.AddBookmark, APIKey string) (int, errors.APIErr)
 }
 
@@ -36,7 +36,7 @@ func NewService(l logs.Logger, v *validator.Validate, r Repository) Service {
 }
 
 // Search returns the url of a given cmd.
-func (s *service) Search(ctx context.Context, APIKey, cmd string) (any, error) {
+func (s *service) Search(ctx context.Context, APIKey, args string) (interface{}, error) {
 	ctx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	err := s.validate.Var(APIKey, "uuid")
@@ -44,25 +44,29 @@ func (s *service) Search(ctx context.Context, APIKey, cmd string) (any, error) {
 		s.log.Error("invalid API key")
 		return "", errors.NewBadRequestError("invalid API key")
 	}
-	cmds := strings.Fields(cmd)
-	switch cmds[0] {
+	cmds := strings.Fields(args)
+	res, err := s.evaluateArgs(ctx, APIKey, cmds)
+	return res, nil
+}
+
+func (s *service) evaluateArgs(ctx context.Context, APIKey string, args []string) (interface{}, error) {
+	switch args[0] {
 	case "ls":
 		ls := NewLSFlagset()
-		err := ls.fs.Parse(cmds[1:])
+		err := ls.fs.Parse(args[1:])
 		if err != nil || *ls.b && *ls.c {
 			s.log.Error("could not parse ls flag cmds")
 			return "", errors.NewBadRequestError("bad ls flags")
 		}
 		if *ls.b {
-			return s.db.GetAllBookmarks(ctx, APIKey)
+			return fmt.Sprintf("%s/webcli/bookmark/APIKey=%s", os.Getenv("ALLOWED_URL_BASE"), APIKey), nil
 		}
 		if *ls.c {
-			usr, err := s.db.GetUserByAPIKey(ctx, APIKey)
-			return usr.Cmds, err
+			return fmt.Sprintf("%s/webcli/command/APIKey=%s", os.Getenv("ALLOWED_URL_BASE"), APIKey), nil
 		}
 	case "touch", "add":
 		touch := NewTouchFlagset()
-		err := touch.fs.Parse(cmds[1:])
+		err := touch.fs.Parse(args[1:])
 		if err != nil {
 			s.log.Error("could not parse ls flag cmds")
 			return "", errors.NewBadRequestError("bad ls flags")
@@ -77,21 +81,17 @@ func (s *service) Search(ctx context.Context, APIKey, cmd string) (any, error) {
 		}
 	default:
 		usr, err := s.db.GetUserByAPIKey(ctx, APIKey)
-		defaultSearch := fmt.Sprintf("http://www.google.com/search?q=%s", cmd)
+		defaultSearch := fmt.Sprintf("http://www.google.com/search?q=%s", args[0])
 		if err != nil {
 			s.log.Errorf("could not get user by API key: %v", err)
 			return defaultSearch, err
 		}
-		url, ok := usr.Cmds[cmd]
+		url, ok := usr.Cmds[args[0]]
 		if !ok {
-			s.log.Infof("Cmd %s does not exist. Returning default search", cmd)
+			s.log.Infof("Cmd %s does not exist. Returning default search", args[0])
 			return defaultSearch, nil
 		}
 		return formatURL(url), nil
 	}
 	return nil, nil
-}
-
-func (s *service) Evaluate(args []string) error {
-	return nil
 }

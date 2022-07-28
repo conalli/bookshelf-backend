@@ -88,5 +88,5 @@ func addUserRoutes(router *mux.Router, u accounts.UserService, l logs.Logger) {
 
 func addSearchRoutes(router *mux.Router, s search.Service, l logs.Logger) {
 	search := router.PathPrefix("/search").Subrouter()
-	search.HandleFunc("/{APIKey}/{cmd}", handlers.Search(s, l)).Methods("GET")
+	search.HandleFunc("/{APIKey}/{args}", handlers.Search(s, l)).Methods("GET")
 }
