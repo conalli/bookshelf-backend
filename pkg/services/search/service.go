@@ -21,7 +21,7 @@ type Repository interface {
 
 // Service provides the search operation.
 type Service interface {
-	Search(ctx context.Context, APIKey, cmd string) (any, error)
+	Search(ctx context.Context, APIKey, cmd string) (string, error)
 }
 
 type service struct {
@@ -36,7 +36,7 @@ func NewService(l logs.Logger, v *validator.Validate, r Repository) Service {
 }
 
 // Search returns the url of a given cmd.
-func (s *service) Search(ctx context.Context, APIKey, args string) (interface{}, error) {
+func (s *service) Search(ctx context.Context, APIKey, args string) (string, error) {
 	ctx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	err := s.validate.Var(APIKey, "uuid")
@@ -49,7 +49,7 @@ func (s *service) Search(ctx context.Context, APIKey, args string) (interface{},
 	return res, nil
 }
 
-func (s *service) evaluateArgs(ctx context.Context, APIKey string, args []string) (interface{}, error) {
+func (s *service) evaluateArgs(ctx context.Context, APIKey string, args []string) (string, error) {
 	switch args[0] {
 	case "ls":
 		ls := NewLSFlagset()
@@ -59,10 +59,10 @@ func (s *service) evaluateArgs(ctx context.Context, APIKey string, args []string
 			return "", errors.NewBadRequestError("bad ls flags")
 		}
 		if *ls.b {
-			return fmt.Sprintf("%s/webcli/bookmark/APIKey=%s", os.Getenv("ALLOWED_URL_BASE"), APIKey), nil
+			return fmt.Sprintf("%s/webcli/bookmark?APIKey=%s", os.Getenv("ALLOWED_URL_BASE"), APIKey), nil
 		}
 		if *ls.c {
-			return fmt.Sprintf("%s/webcli/command/APIKey=%s", os.Getenv("ALLOWED_URL_BASE"), APIKey), nil
+			return fmt.Sprintf("%s/webcli/command?APIKey=%s", os.Getenv("ALLOWED_URL_BASE"), APIKey), nil
 		}
 	case "touch", "add":
 		touch := NewTouchFlagset()
@@ -77,7 +77,14 @@ func (s *service) evaluateArgs(ctx context.Context, APIKey string, args []string
 				URL:  *touch.url,
 				Path: *touch.path,
 			}
-			return s.db.AddBookmark(ctx, req, APIKey)
+			res, err := s.db.AddBookmark(ctx, req, APIKey)
+			if err != nil {
+				return "", err
+			}
+			if res == 0 {
+				return fmt.Sprintf("%s/404", os.Getenv("ALLOWED_URL_BASE")), nil
+			}
+			return fmt.Sprintf("%s/webcli/success", os.Getenv("ALLOWED_URL_BASE")), nil
 		}
 	default:
 		usr, err := s.db.GetUserByAPIKey(ctx, APIKey)
@@ -93,5 +100,5 @@ func (s *service) evaluateArgs(ctx context.Context, APIKey string, args []string
 		}
 		return formatURL(url), nil
 	}
-	return nil, nil
+	return "", nil
 }
