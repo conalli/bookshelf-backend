@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
@@ -60,9 +59,9 @@ type delTeamCmdResponse struct {
 
 // DelTeamCmd is the handler for the team/delcmd endpoint. Checks credentials + JWT and if
 // authorized deletes given cmd.
-func DelTeamCmd(t accounts.TeamService) func(w http.ResponseWriter, r *http.Request) {
+func DelTeamCmd(t accounts.TeamService, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("DelCmd endpoint hit")
+		log.Info("DelCmd endpoint hit")
 		vars := mux.Vars(r)
 		APIKey := vars["APIKey"]
 		var delCmdReq request.DeleteTeamCmd
@@ -70,17 +69,17 @@ func DelTeamCmd(t accounts.TeamService) func(w http.ResponseWriter, r *http.Requ
 
 		result, err := t.DeleteCmd(r.Context(), delCmdReq, APIKey)
 		if err != nil {
-			log.Printf("error returned while trying to remove a cmd: %v", err)
+			log.Errorf("error returned while trying to remove a cmd: %v", err)
 			errors.APIErrorResponse(w, err)
 			return
 		}
 		if result == 0 {
-			log.Printf("could not remove cmd... maybe %s doesn't exists?", delCmdReq.Cmd)
+			log.Errorf("could not remove cmd... maybe %s doesn't exists?", delCmdReq.Cmd)
 			err := errors.NewBadRequestError("error: could not remove cmd")
 			errors.APIErrorResponse(w, err)
 			return
 		}
-		log.Printf("successfully updates cmds: %s, removed %d", delCmdReq.Cmd, result)
+		log.Infof("successfully updates cmds: %s, removed %d", delCmdReq.Cmd, result)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		res := delTeamCmdResponse{

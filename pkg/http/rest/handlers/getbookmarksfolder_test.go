@@ -18,7 +18,7 @@ func TestGetBookmarksFolder(t *testing.T) {
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 	APIKey := db.Users["1"].APIKey
-	res, err := testutils.RequestWithCookie("GET", srv.URL+"/api/user/bookmark/News/"+APIKey, nil, APIKey)
+	res, err := testutils.RequestWithCookie("GET", srv.URL+"/api/user/bookmark/News/"+APIKey, nil, APIKey, testutils.NewLogger())
 	if err != nil {
 		t.Fatalf("Couldn't create request to get bookmarks folder with cookie.")
 	}

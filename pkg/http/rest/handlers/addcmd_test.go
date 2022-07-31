@@ -27,7 +27,7 @@ func TestAddCmd(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Couldn't create add cmd request body.")
 	}
-	res, err := testutils.RequestWithCookie("POST", srv.URL+"/api/user/cmd/"+APIKey, body, APIKey)
+	res, err := testutils.RequestWithCookie("POST", srv.URL+"/api/user/cmd/"+APIKey, body, APIKey, testutils.NewLogger())
 	if err != nil {
 		t.Fatalf("Couldn't create request to add cmd with cookie.")
 	}

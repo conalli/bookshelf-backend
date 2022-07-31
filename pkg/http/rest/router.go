@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/db"
@@ -17,6 +16,7 @@ import (
 
 // Router wraps the *mux.Router type.
 type Router struct {
+	log    logs.Logger
 	router *mux.Router
 }
 
@@ -25,7 +25,7 @@ func NewRouter(l logs.Logger, v *validator.Validate, store db.Storage) *Router {
 	u := accounts.NewUserService(l, v, store)
 	s := search.NewService(l, v, store)
 
-	r := &Router{mux.NewRouter()}
+	r := &Router{l, mux.NewRouter()}
 	api := r.initRouter()
 	addUserRoutes(api, u, l)
 	addSearchRoutes(api, s, l)
@@ -35,16 +35,16 @@ func NewRouter(l logs.Logger, v *validator.Validate, store db.Storage) *Router {
 
 func (r *Router) initRouter() *mux.Router {
 	api := r.router.PathPrefix("/api").Subrouter()
-	api.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("Hello")) }).Methods("GET")
+	api.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) { w.Write([]byte("Hello")) }).Methods("GET")
 	return api
 }
 
 // Walk prints all the routes of the current router.
 func (r *Router) Walk() *Router {
-	r.router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+	r.router.Walk(func(route *mux.Route, _ *mux.Router, _ []*mux.Route) error {
 		tpl, err1 := route.GetPathTemplate()
 		met, err2 := route.GetMethods()
-		log.Println("Path:", tpl, "Err:", err1, "Methods:", met, "Err:", err2)
+		r.log.Infof("Path:", tpl, "Err:", err1, "Methods:", met, "Err:", err2)
 		return nil
 	})
 	return r
@@ -63,16 +63,16 @@ func (r *Router) HandlerWithCORS() http.Handler {
 func addUserRoutes(router *mux.Router, u accounts.UserService, l logs.Logger) {
 	user := router.PathPrefix("/user").Subrouter()
 	user.HandleFunc("", handlers.SignUp(u, l)).Methods("POST")
-	user.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.DelUser(u, l))).Methods("DELETE")
+	user.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.DelUser(u, l), l)).Methods("DELETE")
 	user.HandleFunc("/login", handlers.LogIn(u, l)).Methods("POST")
 	// user.HandleFunc("/teams/{APIKey}", jwtauth.Authorized(handlers.GetAllTeams(u))).Methods("GET")
-	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.GetCmds(u, l))).Methods("GET")
-	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.AddCmd(u, l))).Methods("POST")
-	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.DeleteCmd(u, l))).Methods("DELETE")
-	user.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.GetAllBookmarks(u, l))).Methods("GET")
-	user.HandleFunc("/bookmark/{path}/{APIKey}", jwtauth.Authorized(handlers.GetBookmarksFolder(u, l))).Methods("GET")
-	user.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.AddBookmark(u, l))).Methods("POST")
-	user.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.DeleteBookmark(u, l))).Methods("DELETE")
+	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.GetCmds(u, l), l)).Methods("GET")
+	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.AddCmd(u, l), l)).Methods("POST")
+	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.DeleteCmd(u, l), l)).Methods("PATCH")
+	user.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.GetAllBookmarks(u, l), l)).Methods("GET")
+	user.HandleFunc("/bookmark/{path}/{APIKey}", jwtauth.Authorized(handlers.GetBookmarksFolder(u, l), l)).Methods("GET")
+	user.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.AddBookmark(u, l), l)).Methods("POST")
+	user.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.DeleteBookmark(u, l), l)).Methods("DELETE")
 }
 
 // func addTeamRoutes(router *mux.Router, t accounts.TeamService) {
@@ -88,5 +88,5 @@ func addUserRoutes(router *mux.Router, u accounts.UserService, l logs.Logger) {
 
 func addSearchRoutes(router *mux.Router, s search.Service, l logs.Logger) {
 	search := router.PathPrefix("/search").Subrouter()
-	search.HandleFunc("/{APIKey}/{cmd}", handlers.Search(s, l)).Methods("GET")
+	search.HandleFunc("/{APIKey}/{args}", handlers.Search(s, l)).Methods("GET")
 }

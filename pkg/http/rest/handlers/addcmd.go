@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
@@ -63,25 +62,25 @@ type addTeamCmdResponse struct {
 
 // AddTeamCmd is the handler for the team/addcmd endpoint. Checks credentials + JWT and if
 // authorized sets new cmd.
-func AddTeamCmd(t accounts.TeamService) func(w http.ResponseWriter, r *http.Request) {
+func AddTeamCmd(t accounts.TeamService, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("SetCmd endpoint hit")
+		log.Info("SetCmd endpoint hit")
 		var setCmdReq request.AddTeamCmd
 		json.NewDecoder(r.Body).Decode(&setCmdReq)
 
 		numUpdated, err := t.AddCmd(r.Context(), setCmdReq)
 		if err != nil {
-			log.Printf("error returned while trying to add a new cmd: %v", err)
+			log.Errorf("error returned while trying to add a new cmd: %v", err)
 			errors.APIErrorResponse(w, err)
 			return
 		}
 		if numUpdated == 0 {
-			log.Printf("could not update cmds... maybe %s:%s already exists?", setCmdReq.Cmd, setCmdReq.URL)
+			log.Errorf("could not update cmds... maybe %s:%s already exists?", setCmdReq.Cmd, setCmdReq.URL)
 			err := errors.NewBadRequestError("error: could not update cmds")
 			errors.APIErrorResponse(w, err)
 			return
 		}
-		log.Printf("successfully set cmd: %s, url: %s", setCmdReq.Cmd, setCmdReq.URL)
+		log.Infof("successfully set cmd: %s, url: %s", setCmdReq.Cmd, setCmdReq.URL)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		res := addTeamCmdResponse{

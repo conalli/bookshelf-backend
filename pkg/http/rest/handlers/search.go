@@ -15,8 +15,9 @@ func Search(s search.Service, log logs.Logger) func(w http.ResponseWriter, r *ht
 		log.Info("Search endpoint hit")
 		vars := mux.Vars(r)
 		APIKey := vars["APIKey"]
-		cmd := vars["cmd"]
-		url, err := s.Search(r.Context(), APIKey, cmd)
+		args := vars["args"]
+		log.Info(args)
+		url, err := s.Search(r.Context(), APIKey, args)
 		if err != nil {
 			log.Errorf("could not find cmd: %v", err)
 		}

@@ -34,23 +34,32 @@ func LogIn(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, 
 			errors.APIErrorResponse(w, err)
 			return
 		}
-		token, err := jwtauth.NewToken(currUser.APIKey)
+		tokens, err := jwtauth.NewTokens(currUser.APIKey, log)
 		if err != nil {
 			log.Errorf("error returned while trying to create a new token: %v", err)
 			errors.APIErrorResponse(w, err)
 			return
 		}
-		// Use Secure during production.
-		cookie := http.Cookie{
+		accessToken := http.Cookie{
 			Name:     "bookshelfjwt",
-			Value:    token,
-			Expires:  time.Now().Add(30 * time.Minute),
+			Value:    tokens["access_token"],
+			Path:     "/api",
+			Expires:  time.Now().Add(15 * time.Minute),
 			HttpOnly: true,
-			// Secure:   true,
+			Secure:   true,
+			SameSite: http.SameSiteNoneMode,
+		}
+		refreshToken := http.Cookie{
+			Name:     "bookshelfrefresh",
+			Value:    tokens["refresh_token"],
+			Path:     "/api",
+			Expires:  time.Now().Add(24 * time.Hour),
+			Secure:   true,
 			SameSite: http.SameSiteNoneMode,
 		}
 		log.Info("successfully returned token as cookie")
-		http.SetCookie(w, &cookie)
+		http.SetCookie(w, &accessToken)
+		http.SetCookie(w, &refreshToken)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		res := LogInResponse{
