@@ -12,6 +12,7 @@ func formatURL(url string) string {
 	return "http://" + url
 }
 
+// LSFlag represents the possible flags for the ls command.
 type LSFlag struct {
 	fs *flag.FlagSet
 	b  *bool
@@ -19,6 +20,7 @@ type LSFlag struct {
 	bf *string
 }
 
+// NewLSFlagset returns a new flag set for the ls command.
 func NewLSFlagset() LSFlag {
 	fs := flag.NewFlagSet("ls", flag.ContinueOnError)
 	b := fs.Bool("b", false, "lists all bookmarks")
@@ -33,19 +35,21 @@ func NewLSFlagset() LSFlag {
 	return ls
 }
 
+// TouchFlag represents the possible flags for the touch command.
 type TouchFlag struct {
 	fs   *flag.FlagSet
 	b    *bool
-	c    *bool
+	c    *string
 	url  *string
 	path *string
 	name *string
 }
 
+// NewTouchFlagset returns a new flag set for the touch command.
 func NewTouchFlagset() TouchFlag {
 	fs := flag.NewFlagSet("touch", flag.ContinueOnError)
 	b := fs.Bool("b", false, "adds a bookmark")
-	c := fs.Bool("c", false, "adds a cmds")
+	c := fs.String("c", "", "adds a cmd")
 	url := fs.String("url", "", "url for new bookmark")
 	path := fs.String("path", "", "folder path for new bookmark")
 	name := fs.String("name", "", "name for new bookmark")
@@ -59,8 +63,3 @@ func NewTouchFlagset() TouchFlag {
 	}
 	return ls
 }
-
-// cmds:flags
-// ls: -c | -b | -bf
-// touch | new: -c -url | -b -url -path? -name?
-// man | help

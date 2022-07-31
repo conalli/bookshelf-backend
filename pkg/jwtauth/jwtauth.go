@@ -39,9 +39,9 @@ func NewTokens(name string, log logs.Logger) (map[string]string, errors.APIErr) 
 		Issuer:    "http://bookshelf-backend.jp",
 		Subject:   name,
 	})
-	tkn, err := token.SignedString(signingKey)
-	ref, err := refresh.SignedString(signingKey)
-	if err != nil {
+	tkn, tknErr := token.SignedString(signingKey)
+	ref, refErr := refresh.SignedString(signingKey)
+	if tknErr != nil || refErr != nil {
 		log.Errorf("error when trying to sign tokens %+v", token)
 		return nil, errors.NewInternalServerError()
 	}
@@ -73,7 +73,7 @@ func Authorized(next http.HandlerFunc, log logs.Logger) http.HandlerFunc {
 		if bookshelfCookie != nil {
 			token, err := jwt.ParseWithClaims(bookshelfCookie.Value, &CustomClaims{}, func(t *jwt.Token) (interface{}, error) { return signingKey, nil })
 			tkn, ok := token.Claims.(*CustomClaims)
-			if !ok {
+			if !ok || err != nil {
 				log.Error("failed to convert token to CustomClaims")
 				errors.APIErrorResponse(w, errors.NewJWTClaimsError("failed to convert token to CustomClaims"))
 				return

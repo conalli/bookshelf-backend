@@ -45,33 +45,50 @@ func (s *service) Search(ctx context.Context, APIKey, args string) (string, erro
 		return "", errors.NewBadRequestError("invalid API key")
 	}
 	cmds := strings.Fields(args)
-	res, err := s.evaluateArgs(ctx, APIKey, cmds)
-	return res, nil
+	return s.evaluateArgs(ctx, APIKey, cmds)
 }
 
 func (s *service) evaluateArgs(ctx context.Context, APIKey string, args []string) (string, error) {
 	switch args[0] {
+	case "help":
+		s.log.Info("webcli: help")
+		return fmt.Sprintf("%s/webcli/help", os.Getenv("ALLOWED_URL_BASE")), nil
+
 	case "ls":
 		ls := NewLSFlagset()
 		err := ls.fs.Parse(args[1:])
 		if err != nil || *ls.b && *ls.c {
-			s.log.Error("could not parse ls flag cmds")
+			s.log.Error("webcli: could not parse ls flag cmds")
 			return "", errors.NewBadRequestError("bad ls flags")
 		}
+		if *ls.b && *ls.c || len(*ls.bf) > 0 && *ls.c || *ls.b && len(*ls.bf) > 0 {
+			s.log.Error("webcli: incorrect flags passed")
+			return fmt.Sprintf("%s/404", os.Getenv("ALLOWED_URL_BASE")), nil
+		}
 		if *ls.b {
+			s.log.Info("webcli: list bookmarks")
 			return fmt.Sprintf("%s/webcli/bookmark?APIKey=%s", os.Getenv("ALLOWED_URL_BASE"), APIKey), nil
 		}
 		if *ls.c {
+			s.log.Info("webcli: list commands")
 			return fmt.Sprintf("%s/webcli/command?APIKey=%s", os.Getenv("ALLOWED_URL_BASE"), APIKey), nil
+		}
+		if ls.bf != nil {
+			s.log.Info("webcli: list bookmark folder")
+			return fmt.Sprintf("%s/webcli/bookmark?APIKey=%s&folder=%s", os.Getenv("ALLOWED_URL_BASE"), APIKey, *ls.bf), nil
 		}
 	case "touch", "add":
 		touch := NewTouchFlagset()
 		err := touch.fs.Parse(args[1:])
 		if err != nil {
-			s.log.Error("could not parse ls flag cmds")
-			return "", errors.NewBadRequestError("bad ls flags")
+			s.log.Error("could not parse touch flag cmds")
+			return "", errors.NewBadRequestError("bad touch flags")
 		}
-		if *touch.b && len(*touch.url) > 0 {
+		if len(*touch.url) < 5 || *touch.b && len(*touch.c) > 0 {
+			s.log.Error("webcli: incorrect flags passed")
+			return fmt.Sprintf("%s/404", os.Getenv("ALLOWED_URL_BASE")), nil
+		}
+		if *touch.b {
 			req := request.AddBookmark{
 				Name: *touch.name,
 				URL:  *touch.url,
