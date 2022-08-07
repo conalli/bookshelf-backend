@@ -17,7 +17,7 @@ import (
 func TestSignUp(t *testing.T) {
 	t.Parallel()
 	db := testutils.NewDB().AddDefaultUsers()
-	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db)
+	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db, testutils.NewCache())
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 	body, err := testutils.MakeRequestBody(request.SignUp{
