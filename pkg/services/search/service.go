@@ -19,6 +19,13 @@ type Repository interface {
 	AddBookmark(reqCtx context.Context, requestData request.AddBookmark, APIKey string) (int, errors.APIErr)
 }
 
+// Cache provides access to Caching for the Search service.
+type Cache interface {
+	GetSearchData(ctx context.Context, APIKey, cmd string) (string, error)
+	AddCmds(ctx context.Context, APIKey string, cmds map[string]string) bool
+	DeleteCmds(ctx context.Context, APIKey string) bool
+}
+
 // Service provides the search operation.
 type Service interface {
 	Search(ctx context.Context, APIKey, cmd string) (string, error)
@@ -28,11 +35,12 @@ type service struct {
 	log      logs.Logger
 	validate *validator.Validate
 	db       Repository
+	cache    Cache
 }
 
 // NewService creates a search service with the necessary dependencies.
-func NewService(l logs.Logger, v *validator.Validate, r Repository) Service {
-	return &service{l, v, r}
+func NewService(l logs.Logger, v *validator.Validate, r Repository, c Cache) Service {
+	return &service{l, v, r, c}
 }
 
 // Search returns the url of a given cmd.
@@ -104,11 +112,21 @@ func (s *service) evaluateArgs(ctx context.Context, APIKey string, args []string
 			return fmt.Sprintf("%s/webcli/success", os.Getenv("ALLOWED_URL_BASE")), nil
 		}
 	default:
-		usr, err := s.db.GetUserByAPIKey(ctx, APIKey)
+		cachedURL, err := s.cache.GetSearchData(ctx, APIKey, args[0])
+		if err == nil {
+			s.log.Info("retrieved search data from cache")
+			return formatURL(cachedURL), nil
+		}
+		s.log.Infof("could not get search data from cache: %v", err)
 		defaultSearch := fmt.Sprintf("http://www.google.com/search?q=%s", args[0])
+		usr, err := s.db.GetUserByAPIKey(ctx, APIKey)
 		if err != nil {
 			s.log.Errorf("could not get user by API key: %v", err)
 			return defaultSearch, err
+		}
+		ok := s.cache.AddCmds(ctx, APIKey, usr.Cmds)
+		if !ok {
+			s.log.Errorf("could not add cmds to cache: %v", err)
 		}
 		url, ok := usr.Cmds[args[0]]
 		if !ok {
