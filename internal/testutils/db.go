@@ -2,8 +2,10 @@ package testutils
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"regexp"
+	"strings"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
@@ -90,8 +92,10 @@ func (t *Testdb) NewUser(ctx context.Context, body request.SignUp) (accounts.Use
 		Name:     body.Name,
 		Password: body.Password,
 		APIKey:   key,
-		Cmds:     map[string]string{},
-		Teams:    map[string]string{},
+		Cmds: map[string]string{
+			"yt": "www.youtube.com",
+		},
+		Teams: map[string]string{},
 	}
 	t.Users[usr.ID] = usr
 	return usr, nil
@@ -238,4 +242,39 @@ func (t *Testdb) Search(ctx context.Context, APIKey, cmd string) (string, error)
 		return "http://www.google.com/search?q=" + cmd, nil
 	}
 	return val, nil
+}
+
+// Cache represents a test cache.
+type Cache struct {
+	Cmds map[string]map[string]string
+}
+
+// NewCache returns a new Cache.
+func NewCache() *Cache {
+	return &Cache{Cmds: map[string]map[string]string{}}
+}
+
+// GetSearchData tries to get a URL from the cache.
+func (c *Cache) GetSearchData(ctx context.Context, APIKey, cmd string) (string, error) {
+	val, ok := c.Cmds[APIKey]
+	if !ok {
+		return "", fmt.Errorf("no cmds in cache")
+	}
+	url := val[cmd]
+	if strings.Contains(url, "http://") || strings.Contains(url, "https://") {
+		return url, nil
+	}
+	return "http://" + url, nil
+}
+
+// AddCmds adds cmds to the cache.
+func (c *Cache) AddCmds(ctx context.Context, APIKey string, cmds map[string]string) bool {
+	c.Cmds[APIKey] = cmds
+	return true
+}
+
+// DeleteCmds removes cmds from the cache.
+func (c *Cache) DeleteCmds(ctx context.Context, APIKey string) bool {
+	delete(c.Cmds, APIKey)
+	return true
 }
