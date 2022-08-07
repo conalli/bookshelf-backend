@@ -10,3 +10,8 @@ type Storage interface {
 	accounts.UserRepository
 	search.Repository
 }
+
+// Cache represents the cache for all services.
+type Cache interface {
+	search.Cache
+}

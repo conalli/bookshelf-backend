@@ -21,9 +21,9 @@ type Router struct {
 }
 
 // NewRouter returns a router with all handlers assigned to it
-func NewRouter(l logs.Logger, v *validator.Validate, store db.Storage) *Router {
+func NewRouter(l logs.Logger, v *validator.Validate, store db.Storage, cache db.Cache) *Router {
 	u := accounts.NewUserService(l, v, store)
-	s := search.NewService(l, v, store)
+	s := search.NewService(l, v, store, cache)
 
 	r := &Router{l, mux.NewRouter()}
 	api := r.initRouter()

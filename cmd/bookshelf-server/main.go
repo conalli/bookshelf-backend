@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/conalli/bookshelf-backend/pkg/db/mongodb"
+	"github.com/conalli/bookshelf-backend/pkg/db/redis"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
@@ -30,7 +31,7 @@ func main() {
 		log.Fatal("Could not load .env file")
 	}
 	sugar := logger.Sugar()
-	r := rest.NewRouter(sugar, validator.New(), mongodb.New(sugar)).Walk().HandlerWithCORS()
+	r := rest.NewRouter(sugar, validator.New(), mongodb.New(sugar), redis.NewClient(sugar)).Walk().HandlerWithCORS()
 	port := os.Getenv("PORT")
 	log.Println("Server up and running on port: " + port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), r))
