@@ -13,5 +13,6 @@ type Storage interface {
 
 // Cache represents the cache for all services.
 type Cache interface {
+	accounts.UserCache
 	search.Cache
 }

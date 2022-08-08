@@ -27,6 +27,11 @@ type UserRepository interface {
 	Delete(reqCtx context.Context, requestData request.DeleteUser, APIKey string) (int, errors.APIErr)
 }
 
+// UserCache provides access to the cache.
+type UserCache interface {
+	DeleteCmds(ctx context.Context, APIKey string) bool
+}
+
 // UserService provides the user operations.
 type UserService interface {
 	NewUser(ctx context.Context, requestData request.SignUp) (User, errors.APIErr)
@@ -46,11 +51,12 @@ type userService struct {
 	log      logs.Logger
 	validate *validator.Validate
 	db       UserRepository
+	cache    UserCache
 }
 
 // NewUserService creates a search service with the necessary dependencies.
-func NewUserService(l logs.Logger, v *validator.Validate, r UserRepository) UserService {
-	return &userService{l, v, r}
+func NewUserService(l logs.Logger, v *validator.Validate, r UserRepository, c UserCache) UserService {
+	return &userService{l, v, r, c}
 }
 
 // Search returns the url of a given cmd.
@@ -115,6 +121,7 @@ func (s *userService) AddCmd(ctx context.Context, requestData request.AddCmd, AP
 		return 0, errors.NewBadRequestError("request format incorrect.")
 	}
 	numUpdated, err := s.db.AddCmd(reqCtx, requestData, APIKey)
+	s.cache.DeleteCmds(ctx, APIKey)
 	return numUpdated, err
 }
 
@@ -129,6 +136,7 @@ func (s *userService) DeleteCmd(ctx context.Context, requestData request.DeleteC
 		return 0, errors.NewBadRequestError("request format incorrect.")
 	}
 	numUpdated, err := s.db.DeleteCmd(reqCtx, requestData, APIKey)
+	s.cache.DeleteCmds(ctx, APIKey)
 	return numUpdated, err
 }
 

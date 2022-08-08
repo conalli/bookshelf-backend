@@ -20,7 +20,7 @@ type Cache struct {
 // NewClient uses default values to return a redis caching client.
 func NewClient(log logs.Logger) *Cache {
 	var options *redis.Options
-	if os.Getenv("LOCAL") == "dev" || os.Getenv("LOCAL") == "test" {
+	if os.Getenv("LOCAL") == "dev" || os.Getenv("LOCAL") == "atlas" {
 		options = &redis.Options{
 			Addr:     fmt.Sprintf("%s:6379", os.Getenv("REDIS_HOST")),
 			Password: "",
