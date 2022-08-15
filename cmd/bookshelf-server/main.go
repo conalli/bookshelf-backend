@@ -27,7 +27,7 @@ func main() {
 		log.Fatalf("Couldn't make a new logger, %v", err)
 	}
 	defer logger.Sync()
-	if err = loadEnv("development"); err != nil {
+	if err = loadEnv("production"); err != nil {
 		log.Fatal("Could not load .env file")
 	}
 	sugar := logger.Sugar()
