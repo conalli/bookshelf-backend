@@ -1,6 +1,6 @@
 module github.com/conalli/bookshelf-backend
 
-go 1.18
+go 1.19
 
 require (
 	github.com/go-redis/redis/v8 v8.11.4
@@ -12,6 +12,7 @@ require (
 	go.mongodb.org/mongo-driver v1.8.0
 	go.uber.org/zap v1.21.0
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
+	golang.org/x/net v0.0.0-20220812174116-3211cb980234
 )
 
 require (
@@ -32,7 +33,6 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/net v0.0.0-20220812174116-3211cb980234 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
 	golang.org/x/text v0.3.7 // indirect
