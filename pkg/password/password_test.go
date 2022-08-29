@@ -51,7 +51,7 @@ func TestHashPassword(t *testing.T) {
 }
 
 func TestCheckHashedPassword(t *testing.T) {
-	tp := []struct {
+	tc := []struct {
 		name     string
 		password string
 		hashed   string
@@ -88,16 +88,16 @@ func TestCheckHashedPassword(t *testing.T) {
 		},
 	}
 
-	for _, p := range tp {
-		t.Run(p.name, func(t *testing.T) {
-			pw, err := password.HashPassword(p.password)
+	for _, c := range tc {
+		t.Run(c.name, func(t *testing.T) {
+			pw, err := password.HashPassword(c.password)
 			if err != nil {
-				t.Fatalf("error when attempting to hash password %s", p.password)
+				t.Fatalf("error when attempting to hash password %s", c.password)
 			}
-			p.hashed = pw
-			checked := password.CheckHashedPassword(p.hashed, p.password)
+			c.hashed = pw
+			checked := password.CheckHashedPassword(c.hashed, c.password)
 			if !checked {
-				t.Fatalf("hashed password: %s returned failed to return a hashed result, %s == %s", pw, p.password, pw)
+				t.Fatalf("hashed password: %s returned failed to return a hashed result, %s == %s", pw, c.password, pw)
 			}
 		})
 	}
