@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/conalli/bookshelf-backend/internal/testutils"
+	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest/handlers"
@@ -22,13 +23,13 @@ func TestLogin(t *testing.T) {
 	defer srv.Close()
 	tc := []struct {
 		name       string
-		body       request.LogIn
+		req        request.LogIn
 		statusCode int
 		res        handlers.LogInResponse
 	}{
 		{
-			name: "Default user, correct request",
-			body: request.LogIn{
+			name: "Default user",
+			req: request.LogIn{
 				Name:     "user1",
 				Password: "password",
 			},
@@ -38,11 +39,18 @@ func TestLogin(t *testing.T) {
 				APIKey: db.Users["1"].APIKey,
 			},
 		},
+		{
+			name: "Incorrect user",
+			req: request.LogIn{
+				Name:     "incorrect_user",
+				Password: "password",
+			},
+			statusCode: 401,
+		},
 	}
 	for _, c := range tc {
 		t.Run(c.name, func(t *testing.T) {
-
-			body, err := testutils.MakeRequestBody(c.body)
+			body, err := testutils.MakeRequestBody(c.req)
 			if err != nil {
 				t.Fatalf("Couldn't marshal json body to log in.")
 			}
@@ -51,20 +59,28 @@ func TestLogin(t *testing.T) {
 				t.Fatalf("Couldn't make post request.")
 			}
 			if res.StatusCode != c.statusCode {
-				t.Errorf("Expected sign up request %v to give status code %d: got %d", body, c.statusCode, res.StatusCode)
+				t.Errorf("Expected sign up request %v to give status code %d: got %d", c.req, c.statusCode, res.StatusCode)
 			}
-			defer res.Body.Close()
-			var response handlers.LogInResponse
-			err = json.NewDecoder(res.Body).Decode(&response)
-			if err != nil {
-				t.Fatalf("Couldn't decode json body upon sign up.")
+			if res.StatusCode >= 400 {
+				var response errors.ResError
+				err = json.NewDecoder(res.Body).Decode(&response)
+				if err != nil {
+					t.Fatalf("Couldn't decode json body upon sign up.")
+				}
+			} else {
+				var response handlers.LogInResponse
+				err = json.NewDecoder(res.Body).Decode(&response)
+				if err != nil {
+					t.Fatalf("Couldn't decode json body upon sign up.")
+				}
+				if response.ID != c.res.ID || response.APIKey != c.res.APIKey {
+					t.Fatalf("Unexpected log in data")
+				}
+				if jwtauth.FilterCookies(c.res.APIKey, res.Cookies()) != nil {
+					t.Errorf("Expected jwt cookie to be returned upon log in.")
+				}
 			}
-			if response.ID != c.res.ID || response.APIKey != c.res.APIKey {
-				t.Fatalf("Unexpected log in data")
-			}
-			if jwtauth.FilterCookies(c.res.APIKey, res.Cookies()) != nil {
-				t.Errorf("Expected jwt cookie to be returned upon log in.")
-			}
+			res.Body.Close()
 		})
 	}
 }
