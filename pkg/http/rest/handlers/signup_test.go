@@ -68,7 +68,6 @@ func TestSignUp(t *testing.T) {
 				if jwtauth.FilterCookies(db.Users["1"].APIKey, res.Cookies()) != nil {
 					t.Errorf("Expected jwt cookie to be returned upon log in.")
 				}
-				// Check user already exists case
 			}
 			res.Body.Close()
 		})

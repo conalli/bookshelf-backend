@@ -18,30 +18,44 @@ func TestAddCmd(t *testing.T) {
 	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db, testutils.NewCache())
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
-	APIKey := db.Users["1"].APIKey
-	body, err := testutils.MakeRequestBody(request.AddCmd{
-		ID:  db.Users["1"].ID,
-		Cmd: "yt",
-		URL: "https://www.youtube.com",
-	})
-	if err != nil {
-		t.Fatalf("Couldn't create add cmd request body.")
+	tc := []struct {
+		name       string
+		req        request.AddCmd
+		APIKey     string
+		statusCode int
+	}{
+		{
+			name: "Default User",
+			req: request.AddCmd{
+				ID:  db.Users["1"].ID,
+				Cmd: "yt",
+				URL: "https://www.youtube.com",
+			},
+			APIKey:     db.Users["1"].APIKey,
+			statusCode: 200,
+		},
 	}
-	res, err := testutils.RequestWithCookie("POST", srv.URL+"/api/user/cmd/"+APIKey, body, APIKey, testutils.NewLogger())
-	if err != nil {
-		t.Fatalf("Couldn't create request to add cmd with cookie.")
-	}
-	want := 200
-	if res.StatusCode != want {
-		t.Errorf("Expected add cmd request to give status code %d: got %d", want, res.StatusCode)
-	}
-	defer res.Body.Close()
-	var response handlers.AddCmdResponse
-	err = json.NewDecoder(res.Body).Decode(&response)
-	if err != nil {
-		t.Fatalf("Couldn't decode json body upon adding cmds.")
-	}
-	if response.NumAdded != 1 || response.Cmd != "yt" || response.URL != "https://www.youtube.com" {
-		t.Errorf("Expected commands for user %s to be %v: got %v", db.Users["1"].Name, db.Users["1"].Cmds, response)
+
+	for _, c := range tc {
+		body, err := testutils.MakeRequestBody(c.req)
+		if err != nil {
+			t.Fatalf("Couldn't create add cmd request body.")
+		}
+		res, err := testutils.RequestWithCookie("POST", srv.URL+"/api/user/cmd/"+c.APIKey, body, c.APIKey, testutils.NewLogger())
+		if err != nil {
+			t.Fatalf("Couldn't create request to add cmd with cookie.")
+		}
+		if res.StatusCode != c.statusCode {
+			t.Errorf("Expected add cmd request to give status code %d: got %d", c.statusCode, res.StatusCode)
+		}
+		defer res.Body.Close()
+		var response handlers.AddCmdResponse
+		err = json.NewDecoder(res.Body).Decode(&response)
+		if err != nil {
+			t.Fatalf("Couldn't decode json body upon adding cmds.")
+		}
+		if response.NumAdded != 1 {
+			t.Errorf("Expected 1 command for user  with API key %s: got %d", c.APIKey, response.NumAdded)
+		}
 	}
 }
