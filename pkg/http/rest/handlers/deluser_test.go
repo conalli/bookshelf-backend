@@ -18,30 +18,50 @@ func TestDelUser(t *testing.T) {
 	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db, testutils.NewCache())
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
-	APIKey := db.Users["1"].APIKey
-	body, err := testutils.MakeRequestBody(request.DeleteUser{
-		ID:       db.Users["1"].ID,
-		Name:     db.Users["1"].Name,
-		Password: "password",
-	})
-	if err != nil {
-		t.Fatalf("Couldn't create del user request body.")
+	tc := []struct {
+		name       string
+		req        request.DeleteUser
+		APIKey     string
+		statusCode int
+		res        handlers.DelUserResponse
+	}{
+		{
+			name: "Default user, correct request.",
+			req: request.DeleteUser{
+				ID:       db.Users["1"].ID,
+				Name:     db.Users["1"].Name,
+				Password: "password",
+			},
+			APIKey:     db.Users["1"].APIKey,
+			statusCode: 200,
+			res: handlers.DelUserResponse{
+				NumDeleted: 1,
+				Name:       db.Users["1"].Name,
+			},
+		},
 	}
-	res, err := testutils.RequestWithCookie("DELETE", srv.URL+"/api/user/"+APIKey, body, APIKey, testutils.NewLogger())
-	if err != nil {
-		t.Fatalf("Couldn't create request to delete user with cookie.")
-	}
-	want := 200
-	if res.StatusCode != want {
-		t.Errorf("Expected del user request to give status code %d: got %d", want, res.StatusCode)
-	}
-	defer res.Body.Close()
-	var response handlers.DelUserResponse
-	err = json.NewDecoder(res.Body).Decode(&response)
-	if err != nil {
-		t.Fatalf("Couldn't decode json body upon deleting user.")
-	}
-	if response.NumDeleted != 1 || response.Name != "user1" {
-		t.Errorf("Expected NumDeleted to be %d for user %s: got %d", 1, db.Users["1"].Name, response.NumDeleted)
+	for _, c := range tc {
+		t.Run(c.name, func(t *testing.T) {
+			body, err := testutils.MakeRequestBody(c.req)
+			if err != nil {
+				t.Fatalf("Couldn't create del user request body.")
+			}
+			res, err := testutils.RequestWithCookie("DELETE", srv.URL+"/api/user/"+c.APIKey, body, c.APIKey, testutils.NewLogger())
+			if err != nil {
+				t.Fatalf("Couldn't create request to delete user with cookie.")
+			}
+			if res.StatusCode != c.statusCode {
+				t.Errorf("Expected del user request to give status code %d: got %d", c.statusCode, res.StatusCode)
+			}
+			var response handlers.DelUserResponse
+			err = json.NewDecoder(res.Body).Decode(&response)
+			if err != nil {
+				t.Fatalf("Couldn't decode json body upon deleting user.")
+			}
+			if response.NumDeleted != c.res.NumDeleted || response.Name != c.res.Name {
+				t.Errorf("Expected NumDeleted to be %d for user %s: got %d", c.res.NumDeleted, c.res.Name, response.NumDeleted)
+			}
+			res.Body.Close()
+		})
 	}
 }

@@ -37,25 +37,27 @@ func TestAddCmd(t *testing.T) {
 	}
 
 	for _, c := range tc {
-		body, err := testutils.MakeRequestBody(c.req)
-		if err != nil {
-			t.Fatalf("Couldn't create add cmd request body.")
-		}
-		res, err := testutils.RequestWithCookie("POST", srv.URL+"/api/user/cmd/"+c.APIKey, body, c.APIKey, testutils.NewLogger())
-		if err != nil {
-			t.Fatalf("Couldn't create request to add cmd with cookie.")
-		}
-		if res.StatusCode != c.statusCode {
-			t.Errorf("Expected add cmd request to give status code %d: got %d", c.statusCode, res.StatusCode)
-		}
-		defer res.Body.Close()
-		var response handlers.AddCmdResponse
-		err = json.NewDecoder(res.Body).Decode(&response)
-		if err != nil {
-			t.Fatalf("Couldn't decode json body upon adding cmds.")
-		}
-		if response.NumAdded != 1 {
-			t.Errorf("Expected 1 command for user  with API key %s: got %d", c.APIKey, response.NumAdded)
-		}
+		t.Run(c.name, func(t *testing.T) {
+			body, err := testutils.MakeRequestBody(c.req)
+			if err != nil {
+				t.Fatalf("Couldn't create add cmd request body.")
+			}
+			res, err := testutils.RequestWithCookie("POST", srv.URL+"/api/user/cmd/"+c.APIKey, body, c.APIKey, testutils.NewLogger())
+			if err != nil {
+				t.Fatalf("Couldn't create request to add cmd with cookie.")
+			}
+			if res.StatusCode != c.statusCode {
+				t.Errorf("Expected add cmd request to give status code %d: got %d", c.statusCode, res.StatusCode)
+			}
+			var response handlers.AddCmdResponse
+			err = json.NewDecoder(res.Body).Decode(&response)
+			if err != nil {
+				t.Fatalf("Couldn't decode json body upon adding cmds.")
+			}
+			if response.NumAdded != 1 {
+				t.Errorf("Expected 1 command for user  with API key %s: got %d", c.APIKey, response.NumAdded)
+			}
+			res.Body.Close()
+		})
 	}
 }
