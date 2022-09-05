@@ -17,22 +17,37 @@ func TestGetBookmarks(t *testing.T) {
 	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db, testutils.NewCache())
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
-	APIKey := db.Users["1"].APIKey
-	res, err := testutils.RequestWithCookie("GET", srv.URL+"/api/user/bookmark/"+APIKey, nil, APIKey, testutils.NewLogger())
-	if err != nil {
-		t.Fatalf("Couldn't create request to get bookmarks with cookie.")
+	tc := []struct {
+		name       string
+		APIKey     string
+		statusCode int
+		res        []accounts.Bookmark
+	}{
+		{
+			name:       "Default user, correct req",
+			APIKey:     db.Users["1"].APIKey,
+			statusCode: 200,
+			res:        []accounts.Bookmark{db.Bookmarks[0]},
+		},
 	}
-	want := 200
-	if res.StatusCode != want {
-		t.Errorf("Expected get bookmarks request to give status code %d: got %d", want, res.StatusCode)
-	}
-	defer res.Body.Close()
-	var response []accounts.Bookmark
-	err = json.NewDecoder(res.Body).Decode(&response)
-	if err != nil {
-		t.Fatalf("Couldn't decode json body upon getting bookmarks.")
-	}
-	if len(response) != 1 {
-		t.Errorf("Expected 1 bookmark for user: got %d", len(response))
+	for _, c := range tc {
+		t.Run(c.name, func(t *testing.T) {
+			res, err := testutils.RequestWithCookie("GET", srv.URL+"/api/user/bookmark/"+c.APIKey, nil, c.APIKey, testutils.NewLogger())
+			if err != nil {
+				t.Fatalf("Couldn't create request to get bookmarks with cookie.")
+			}
+			if res.StatusCode != c.statusCode {
+				t.Errorf("Expected get bookmarks request to give status code %d: got %d", c.statusCode, res.StatusCode)
+			}
+			var response []accounts.Bookmark
+			err = json.NewDecoder(res.Body).Decode(&response)
+			if err != nil {
+				t.Fatalf("Couldn't decode json body upon getting bookmarks.")
+			}
+			if len(response) != len(c.res) {
+				t.Errorf("Expected 1 bookmark for user: got %d", len(response))
+			}
+			res.Body.Close()
+		})
 	}
 }
