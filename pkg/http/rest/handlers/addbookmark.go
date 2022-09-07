@@ -29,6 +29,7 @@ func AddBookmark(u accounts.UserService, log logs.Logger) func(w http.ResponseWr
 		if parseErr != nil {
 			errRes := errors.NewBadRequestError("could not parse request body")
 			errors.APIErrorResponse(w, errRes)
+			return
 		}
 		numUpdated, err := u.AddBookmark(r.Context(), addBookReq, APIKey)
 		if err != nil {
