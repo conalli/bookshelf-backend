@@ -17,7 +17,6 @@ import (
 type Testdb struct {
 	Users     map[string]accounts.User
 	Bookmarks []accounts.Bookmark
-	Teams     map[string]accounts.Team
 }
 
 // NewDB returns a new Testdb.
@@ -58,13 +57,7 @@ func (t *Testdb) dataAlreadyExists(name string, coll string) bool {
 			}
 		}
 	}
-	if coll == "teams" {
-		for _, v := range t.Teams {
-			if v.Name == name {
-				return true
-			}
-		}
-	}
+
 	return false
 }
 

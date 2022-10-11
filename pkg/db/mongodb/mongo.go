@@ -146,13 +146,3 @@ func (m *Mongo) DecodeUser(res *mongo.SingleResult) (accounts.User, error) {
 	}
 	return user, nil
 }
-
-// DecodeTeam decodes the update result to the Team type.
-func (m *Mongo) DecodeTeam(res *mongo.SingleResult) (accounts.Team, error) {
-	var team accounts.Team
-	err := res.Decode(&team)
-	if err != nil {
-		return accounts.Team{}, err
-	}
-	return team, nil
-}

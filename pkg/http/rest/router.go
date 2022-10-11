@@ -65,26 +65,15 @@ func addUserRoutes(router *mux.Router, u accounts.UserService, l logs.Logger) {
 	user.HandleFunc("", handlers.SignUp(u, l)).Methods("POST")
 	user.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.DelUser(u, l), l)).Methods("DELETE")
 	user.HandleFunc("/login", handlers.LogIn(u, l)).Methods("POST")
-	// user.HandleFunc("/teams/{APIKey}", jwtauth.Authorized(handlers.GetAllTeams(u))).Methods("GET")
 	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.GetCmds(u, l), l)).Methods("GET")
 	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.AddCmd(u, l), l)).Methods("POST")
 	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.DeleteCmd(u, l), l)).Methods("PATCH")
 	user.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.GetAllBookmarks(u, l), l)).Methods("GET")
 	user.HandleFunc("/bookmark/{path}/{APIKey}", jwtauth.Authorized(handlers.GetBookmarksFolder(u, l), l)).Methods("GET")
 	user.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.AddBookmark(u, l), l)).Methods("POST")
+	// user.HandleFunc("/bookmark/file/{APIKey}", jwtauth.Authorized(handlers.AddBookmarkFile(u, l), l)).Methods("POST")
 	user.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.DeleteBookmark(u, l), l)).Methods("DELETE")
 }
-
-// func addTeamRoutes(router *mux.Router, t accounts.TeamService) {
-// 	team := router.PathPrefix("/team").Subrouter()
-// 	team.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.NewTeam(t))).Methods("POST")
-// 	team.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.DelTeam(t))).Methods("DELETE")
-// 	team.HandleFunc("/addmember/{APIKey}", jwtauth.Authorized(handlers.AddMember(t))).Methods("PATCH")
-// 	team.HandleFunc("/delself/{APIKey}", jwtauth.Authorized(handlers.DelSelf(t))).Methods("PATCH")
-// 	team.HandleFunc("/delmember/{APIKey}", jwtauth.Authorized(handlers.DelMember(t))).Methods("PATCH")
-// 	team.HandleFunc("/addcmd/{APIKey}", jwtauth.Authorized(handlers.AddTeamCmd(t))).Methods("PATCH")
-// 	team.HandleFunc("/delcmd/{APIKey}", jwtauth.Authorized(handlers.DelTeamCmd(t))).Methods("PATCH")
-// }
 
 func addSearchRoutes(router *mux.Router, s search.Service, l logs.Logger) {
 	search := router.PathPrefix("/search").Subrouter()
