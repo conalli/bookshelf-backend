@@ -17,7 +17,6 @@ import (
 type Testdb struct {
 	Users     map[string]accounts.User
 	Bookmarks []accounts.Bookmark
-	Teams     map[string]accounts.Team
 }
 
 // NewDB returns a new Testdb.
@@ -58,13 +57,7 @@ func (t *Testdb) dataAlreadyExists(name string, coll string) bool {
 			}
 		}
 	}
-	if coll == "teams" {
-		for _, v := range t.Teams {
-			if v.Name == name {
-				return true
-			}
-		}
-	}
+
 	return false
 }
 
@@ -146,7 +139,7 @@ func (t *Testdb) GetAllCmds(ctx context.Context, APIKey string) (map[string]stri
 }
 
 // AddCmd adds a cmd to a user in the test db.
-func (t *Testdb) AddCmd(reqCtx context.Context, body request.AddCmd, APIKey string) (int, errors.APIErr) {
+func (t *Testdb) AddCmd(ctx context.Context, body request.AddCmd, APIKey string) (int, errors.APIErr) {
 	usr := t.findUserByAPIKey(APIKey)
 	if usr == nil {
 		return 0, errors.NewBadRequestError("error: could not find user with value " + APIKey)
@@ -192,7 +185,10 @@ func (t *Testdb) GetBookmarksFolder(ctx context.Context, path, APIKey string) ([
 }
 
 // AddBookmark adds a bookmark to the test db.
-func (t *Testdb) AddBookmark(reqCtx context.Context, requestData request.AddBookmark, APIKey string) (int, errors.APIErr) {
+func (t *Testdb) AddBookmark(ctx context.Context, requestData request.AddBookmark, APIKey string) (int, errors.APIErr) {
+	if _, err := t.GetUserByAPIKey(ctx, APIKey); err != nil {
+		return 0, errors.NewBadRequestError("User does not exist.")
+	}
 	bookmark := accounts.Bookmark{
 		APIKey: APIKey,
 		Name:   requestData.Name,
@@ -204,7 +200,7 @@ func (t *Testdb) AddBookmark(reqCtx context.Context, requestData request.AddBook
 }
 
 // DeleteBookmark removes a bookmark from the test db.
-func (t *Testdb) DeleteBookmark(reqCtx context.Context, requestData request.DeleteBookmark, APIKey string) (int, errors.APIErr) {
+func (t *Testdb) DeleteBookmark(ctx context.Context, requestData request.DeleteBookmark, APIKey string) (int, errors.APIErr) {
 	i := -1
 	for idx := range t.Bookmarks {
 		log.Println(idx, t.Bookmarks[idx], t.Bookmarks[idx].ID == requestData.ID)
@@ -222,7 +218,7 @@ func (t *Testdb) DeleteBookmark(reqCtx context.Context, requestData request.Dele
 }
 
 // Delete removes a user from the test db.
-func (t *Testdb) Delete(reqCtx context.Context, body request.DeleteUser, APIKey string) (int, errors.APIErr) {
+func (t *Testdb) Delete(ctx context.Context, body request.DeleteUser, APIKey string) (int, errors.APIErr) {
 	usr := t.findUserByAPIKey(APIKey)
 	if usr == nil {
 		return 0, errors.NewBadRequestError("error: could not find user with value " + APIKey)

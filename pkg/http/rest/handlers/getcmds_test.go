@@ -17,22 +17,38 @@ func TestGetCmds(t *testing.T) {
 	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db, testutils.NewCache())
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
-	APIKey := db.Users["1"].APIKey
-	res, err := testutils.RequestWithCookie("GET", srv.URL+"/api/user/cmd/"+APIKey, nil, APIKey, testutils.NewLogger())
-	if err != nil {
-		t.Fatalf("Couldn't create request to get cmds with cookie.")
+	tc := []struct {
+		name       string
+		APIKey     string
+		statusCode int
+		res        map[string]string
+	}{
+		{
+			name:       "Default user, correct request.",
+			APIKey:     db.Users["1"].APIKey,
+			statusCode: 200,
+			res:        db.Users["1"].Cmds,
+		},
 	}
-	want := 200
-	if res.StatusCode != want {
-		t.Errorf("Expected get cmd request to give status code %d: got %d", want, res.StatusCode)
-	}
-	defer res.Body.Close()
-	var response map[string]string
-	err = json.NewDecoder(res.Body).Decode(&response)
-	if err != nil {
-		t.Fatalf("Couldn't decode json body upon getting cmds.")
-	}
-	if fmt.Sprint(response) != fmt.Sprint(db.Users["1"].Cmds) {
-		t.Errorf("Expected commands for user %s to be %v: got %v", db.Users["1"].Name, db.Users["1"].Cmds, response)
+	for _, c := range tc {
+		t.Run(c.name, func(t *testing.T) {
+			res, err := testutils.RequestWithCookie("GET", srv.URL+"/api/user/cmd/"+c.APIKey, nil, c.APIKey, testutils.NewLogger())
+			if err != nil {
+				t.Fatalf("Couldn't create request to get cmds with cookie.")
+			}
+			want := 200
+			if res.StatusCode != want {
+				t.Errorf("Expected get cmd request to give status code %d: got %d", want, res.StatusCode)
+			}
+			defer res.Body.Close()
+			var response map[string]string
+			err = json.NewDecoder(res.Body).Decode(&response)
+			if err != nil {
+				t.Fatalf("Couldn't decode json body upon getting cmds.")
+			}
+			if fmt.Sprint(response) != fmt.Sprint(c.res) {
+				t.Errorf("Expected commands to be %v: got %v", c.res, response)
+			}
+		})
 	}
 }

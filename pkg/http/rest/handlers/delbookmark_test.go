@@ -18,29 +18,51 @@ func TestDeleteBookmark(t *testing.T) {
 	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db, testutils.NewCache())
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
-	APIKey := db.Users["1"].APIKey
-	body, err := testutils.MakeRequestBody(request.DeleteBookmark{
-		ID: "c55fdaace3388c2189875fc5",
-	})
-	if err != nil {
-		t.Fatalf("Couldn't create del bookmark request body.")
+	tc := []struct {
+		name       string
+		req        request.DeleteBookmark
+		APIKey     string
+		statusCode int
+		res        handlers.DeleteBookmarkResponse
+	}{
+		{
+			name: "Default bookmark, correct request",
+			req: request.DeleteBookmark{
+				ID: db.Bookmarks[0].ID,
+			},
+			APIKey:     db.Users["1"].APIKey,
+			statusCode: 200,
+			res: handlers.DeleteBookmarkResponse{
+				NumDeleted: 1,
+				Name:       db.Bookmarks[0].Name,
+				Path:       db.Bookmarks[0].Path,
+				URL:        db.Bookmarks[0].URL,
+			},
+		},
 	}
-	res, err := testutils.RequestWithCookie("DELETE", srv.URL+"/api/user/bookmark/"+APIKey, body, APIKey, testutils.NewLogger())
-	if err != nil {
-		t.Fatalf("Couldn't create request to del bookmark with cookie.")
-	}
-	want := 200
-	if res.StatusCode != want {
-		t.Errorf("Expected del bookmark request to give status code %d: got %d", want, res.StatusCode)
-	}
-	defer res.Body.Close()
-	var response handlers.DeleteBookmarkResponse
-	err = json.NewDecoder(res.Body).Decode(&response)
-	if err != nil {
-		t.Fatalf("Couldn't decode json body upon deleting bookmarks.")
-	}
-	t.Logf("%+v", response)
-	if response.NumDeleted != 1 {
-		t.Errorf("Expected %d bookmarks to be deleted: got %d", 1, response.NumDeleted)
+	for _, c := range tc {
+		t.Run(c.name, func(t *testing.T) {
+			body, err := testutils.MakeRequestBody(c.req)
+			if err != nil {
+				t.Fatalf("Couldn't create del bookmark request body.")
+			}
+			res, err := testutils.RequestWithCookie("DELETE", srv.URL+"/api/user/bookmark/"+c.APIKey, body, c.APIKey, testutils.NewLogger())
+			if err != nil {
+				t.Fatalf("Couldn't create request to del bookmark with cookie.")
+			}
+			if res.StatusCode != c.statusCode {
+				t.Errorf("Expected del bookmark request to give status code %d: got %d", c.statusCode, res.StatusCode)
+			}
+			var response handlers.DeleteBookmarkResponse
+			err = json.NewDecoder(res.Body).Decode(&response)
+			if err != nil {
+				t.Fatalf("Couldn't decode json body upon deleting bookmarks.")
+			}
+			t.Logf("%+v", response)
+			if response.NumDeleted != c.res.NumDeleted {
+				t.Errorf("Expected %d bookmarks to be deleted: got %d", c.res.NumDeleted, response.NumDeleted)
+			}
+			res.Body.Close()
+		})
 	}
 }

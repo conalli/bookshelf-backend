@@ -18,29 +18,49 @@ func TestDeleteCmd(t *testing.T) {
 	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db, testutils.NewCache())
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
-	APIKey := db.Users["1"].APIKey
-	body, err := testutils.MakeRequestBody(request.DeleteCmd{
-		ID:  db.Users["1"].ID,
-		Cmd: "bbc",
-	})
-	if err != nil {
-		t.Fatalf("Couldn't create del cmd request body.")
+	tc := []struct {
+		name       string
+		req        request.DeleteCmd
+		APIKey     string
+		statusCode int
+		res        handlers.DeleteCmdResponse
+	}{
+		{
+			name: "Default user, correct request.",
+			req: request.DeleteCmd{
+				ID:  db.Users["1"].ID,
+				Cmd: "bbc",
+			},
+			APIKey:     db.Users["1"].APIKey,
+			statusCode: 200,
+			res: handlers.DeleteCmdResponse{
+				NumDeleted: 1,
+				Cmd:        "bbc",
+			},
+		},
 	}
-	res, err := testutils.RequestWithCookie("PATCH", srv.URL+"/api/user/cmd/"+APIKey, body, APIKey, testutils.NewLogger())
-	if err != nil {
-		t.Fatalf("Couldn't create request to del cmd with cookie.")
-	}
-	want := 200
-	if res.StatusCode != want {
-		t.Errorf("Expected del cmd request to give status code %d: got %d", want, res.StatusCode)
-	}
-	defer res.Body.Close()
-	var response handlers.DeleteCmdResponse
-	err = json.NewDecoder(res.Body).Decode(&response)
-	if err != nil {
-		t.Fatalf("Couldn't decode json body upon deleting cmds.")
-	}
-	if response.NumDeleted != 1 || response.Cmd != "bbc" {
-		t.Errorf("Expected commands for user %s to be %v: got %v", db.Users["1"].Name, db.Users["1"].Cmds, response)
+	for _, c := range tc {
+		t.Run(c.name, func(t *testing.T) {
+			body, err := testutils.MakeRequestBody(c.req)
+			if err != nil {
+				t.Fatalf("Couldn't create del cmd request body.")
+			}
+			res, err := testutils.RequestWithCookie("PATCH", srv.URL+"/api/user/cmd/"+c.APIKey, body, c.APIKey, testutils.NewLogger())
+			if err != nil {
+				t.Fatalf("Couldn't create request to del cmd with cookie.")
+			}
+			if res.StatusCode != c.statusCode {
+				t.Errorf("Expected del cmd request to give status code %d: got %d", c.statusCode, res.StatusCode)
+			}
+			var response handlers.DeleteCmdResponse
+			err = json.NewDecoder(res.Body).Decode(&response)
+			if err != nil {
+				t.Fatalf("Couldn't decode json body upon deleting cmds.")
+			}
+			if response.NumDeleted != c.res.NumDeleted || response.Cmd != c.res.Cmd {
+				t.Errorf("Expected command %s to be deleted: got %s", c.res.Cmd, response.Cmd)
+			}
+			res.Body.Close()
+		})
 	}
 }

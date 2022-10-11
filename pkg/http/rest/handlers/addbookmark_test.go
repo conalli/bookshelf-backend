@@ -10,6 +10,7 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest/handlers"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 )
 
 func TestAddBookmark(t *testing.T) {
@@ -18,30 +19,57 @@ func TestAddBookmark(t *testing.T) {
 	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db, testutils.NewCache())
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
-	APIKey := db.Users["1"].APIKey
-	body, err := testutils.MakeRequestBody(request.AddBookmark{
-		Name: "yt",
-		Path: ",Google,",
-		URL:  "https://www.youtube.com",
-	})
-	if err != nil {
-		t.Fatalf("Couldn't create add cmd request body.")
+	tc := []struct {
+		name       string
+		req        request.AddBookmark
+		APIKey     string
+		statusCode int
+	}{
+		{
+			name: "Default user",
+			req: request.AddBookmark{
+				Name: "yt",
+				Path: ",Google,",
+				URL:  "https://www.youtube.com",
+			},
+			APIKey:     db.Users["1"].APIKey,
+			statusCode: 200,
+		},
+		{
+			name: "User doesn't exist",
+			req: request.AddBookmark{
+				Name: "yt",
+				Path: ",Google,",
+				URL:  "https://www.youtube.com",
+			},
+			APIKey:     uuid.New().String(),
+			statusCode: 400,
+		},
 	}
-	res, err := testutils.RequestWithCookie("POST", srv.URL+"/api/user/bookmark/"+APIKey, body, APIKey, testutils.NewLogger())
-	if err != nil {
-		t.Fatalf("Couldn't create request to add cmd with cookie.")
-	}
-	want := 200
-	if res.StatusCode != want {
-		t.Errorf("Expected add cmd request to give status code %d: got %d", want, res.StatusCode)
-	}
-	defer res.Body.Close()
-	var response handlers.AddBookmarkResponse
-	err = json.NewDecoder(res.Body).Decode(&response)
-	if err != nil {
-		t.Fatalf("Couldn't decode json body upon adding cmds.")
-	}
-	if response.NumAdded != 1 || response.Name != "yt" || response.URL != "https://www.youtube.com" {
-		t.Errorf("Expected commands for user %s to be %v: got %v", db.Users["1"].Name, db.Users["1"].Cmds, response)
+	for _, c := range tc {
+		t.Run(c.name, func(t *testing.T) {
+			body, err := testutils.MakeRequestBody(c.req)
+			if err != nil {
+				t.Fatalf("Couldn't create add cmd request body.")
+			}
+			res, err := testutils.RequestWithCookie("POST", srv.URL+"/api/user/bookmark/"+c.APIKey, body, c.APIKey, testutils.NewLogger())
+			if err != nil {
+				t.Fatalf("Couldn't create request to add cmd with cookie.")
+			}
+			if res.StatusCode != c.statusCode {
+				t.Errorf("Expected add cmd request to give status code %d: got %d", c.statusCode, res.StatusCode)
+			}
+			if res.StatusCode < 400 {
+				var response handlers.AddBookmarkResponse
+				err = json.NewDecoder(res.Body).Decode(&response)
+				if err != nil {
+					t.Fatalf("Couldn't decode json body upon adding cmds.")
+				}
+				if response.NumAdded != 1 {
+					t.Errorf("Expected number of commands added for user with API key %s to be 1: got %d", c.APIKey, response.NumAdded)
+				}
+			}
+			res.Body.Close()
+		})
 	}
 }
