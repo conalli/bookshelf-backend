@@ -22,13 +22,6 @@ type Bookmark struct {
 	URL    string `json:"url" bson:"url"`
 }
 
-// Represents the current authorization roles for team members.
-const (
-	RoleOwner = "OWNER"
-	RoleAdmin = "ADMIN"
-	RoleUser  = "USER"
-)
-
 // GenerateAPIKey generates a random URL-safe string of random length for use as an API key.
 func GenerateAPIKey() (string, error) {
 	key, err := uuid.NewRandom()
