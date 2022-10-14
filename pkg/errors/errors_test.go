@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func TestNewApiError(t *testing.T) {
@@ -92,35 +91,6 @@ func TestNewJWTClaimsError(t *testing.T) {
 	}
 	msg := "Access token invalid -- invalid JWT claims"
 	errMsg := err.Error()
-	if msg != errMsg {
-		t.Errorf("Wanted error with status: %s, got status %s", msg, errMsg)
-	}
-}
-
-func TestParseGetUserError(t *testing.T) {
-	t.Parallel()
-	err := mongo.ErrNoDocuments
-	res := errors.ParseGetUserError("This is a no documents error", err)
-	status := 400
-	errStatus := res.Status()
-	if status != errStatus {
-		t.Errorf("Wanted error with status: %d, got status %d", status, errStatus)
-	}
-	msg := "mongo: no documents in result"
-	errMsg := err.Error()
-	if msg != errMsg {
-		t.Errorf("Wanted error with status: %s, got status %s", msg, errMsg)
-	}
-
-	err = errors.NewInternalServerError()
-	res = errors.ParseGetUserError("This is not a no documents error", err)
-	status = 500
-	errStatus = res.Status()
-	if status != errStatus {
-		t.Errorf("Wanted error with status: %d, got status %d", status, errStatus)
-	}
-	msg = " -- internal server error"
-	errMsg = err.Error()
 	if msg != errMsg {
 		t.Errorf("Wanted error with status: %s, got status %s", msg, errMsg)
 	}

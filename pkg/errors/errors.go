@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var (
@@ -113,14 +111,6 @@ func NewJWTClaimsError(details string) APIError {
 		ErrValue:   ErrInvalidJWTClaims.Error(),
 		ErrDetails: details,
 	}
-}
-
-// ParseGetUserError checks if there are no mongo documents and returns an APIError with given arguments.
-func ParseGetUserError(value string, err error) APIError {
-	if err == mongo.ErrNoDocuments {
-		return NewBadRequestError("error: could not find user with value " + value)
-	}
-	return NewInternalServerError()
 }
 
 // APIErrorResponse encodes the response with an APIErr.

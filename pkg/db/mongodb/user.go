@@ -87,7 +87,12 @@ func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]strin
 	res := m.GetByKey(ctx, collection, "APIKey", APIKey)
 	user, err := m.DecodeUser(res)
 	if err != nil {
-		return nil, errors.ParseGetUserError(APIKey, err)
+		if err == mongo.ErrNoDocuments {
+			m.log.Error("couldn't find user with given APIKey")
+			return nil, errors.NewBadRequestError("could not find user")
+		}
+		m.log.Error("error getting user from db")
+		return nil, errors.NewInternalServerError()
 	}
 	return user.Cmds, nil
 }
