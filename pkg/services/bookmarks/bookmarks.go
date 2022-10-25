@@ -11,6 +11,6 @@ type Bookmark struct {
 	URL    string `json:"url" bson:"url"`
 }
 
-func parseBookmarksHTML(root *html.Node) ([]Bookmark, error) {
+func parseBookmarksHTML(APIKey string, root *html.Node) ([]Bookmark, error) {
 	return nil, nil
 }

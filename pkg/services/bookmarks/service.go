@@ -2,6 +2,7 @@ package bookmarks
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
@@ -13,6 +14,7 @@ type Service interface {
 	GetAllBookmarks(ctx context.Context, APIKey string) ([]Bookmark, errors.APIErr)
 	GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]Bookmark, errors.APIErr)
 	AddBookmark(ctx context.Context, requestData request.AddBookmark, APIKey string) (int, errors.APIErr)
+	AddBookmarksFromFile(ctx context.Context, r *http.Request) (int, errors.APIErr)
 	DeleteBookmark(ctx context.Context, requestData request.DeleteBookmark, APIKey string) (int, errors.APIErr)
 }
 
@@ -69,6 +71,10 @@ func (s *service) AddBookmark(ctx context.Context, requestData request.AddBookma
 	}
 	numUpdated, err := s.db.AddBookmark(reqCtx, requestData, APIKey)
 	return numUpdated, err
+}
+
+func (s *service) AddBookmarksFromFile(ctx context.Context, r *http.Request) (int, errors.APIErr) {
+	return 0, nil
 }
 
 // DeleteBookmark removes a bookmark from an account.
