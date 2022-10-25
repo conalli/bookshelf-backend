@@ -9,6 +9,7 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
+	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
 	"github.com/conalli/bookshelf-backend/pkg/services/search"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
@@ -24,11 +25,12 @@ type Router struct {
 func NewRouter(l logs.Logger, v *validator.Validate, store db.Storage, cache db.Cache) *Router {
 	u := accounts.NewUserService(l, v, store, cache)
 	s := search.NewService(l, v, store, cache)
-
+	b := bookmarks.NewService(l, v, store)
 	r := &Router{l, mux.NewRouter()}
 	api := r.initRouter()
 	addUserRoutes(api, u, l)
 	addSearchRoutes(api, s, l)
+	addBookmarkRoutes(api, b, l)
 
 	return r
 }
@@ -68,14 +70,18 @@ func addUserRoutes(router *mux.Router, u accounts.UserService, l logs.Logger) {
 	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.GetCmds(u, l), l)).Methods("GET")
 	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.AddCmd(u, l), l)).Methods("POST")
 	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.DeleteCmd(u, l), l)).Methods("PATCH")
-	user.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.GetAllBookmarks(u, l), l)).Methods("GET")
-	user.HandleFunc("/bookmark/{path}/{APIKey}", jwtauth.Authorized(handlers.GetBookmarksFolder(u, l), l)).Methods("GET")
-	user.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.AddBookmark(u, l), l)).Methods("POST")
-	// user.HandleFunc("/bookmark/file/{APIKey}", jwtauth.Authorized(handlers.AddBookmarkFile(u, l), l)).Methods("POST")
-	user.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.DeleteBookmark(u, l), l)).Methods("DELETE")
 }
 
 func addSearchRoutes(router *mux.Router, s search.Service, l logs.Logger) {
 	search := router.PathPrefix("/search").Subrouter()
 	search.HandleFunc("/{APIKey}/{args}", handlers.Search(s, l)).Methods("GET")
+}
+
+func addBookmarkRoutes(router *mux.Router, b bookmarks.Service, l logs.Logger) {
+	bookmarks := router.PathPrefix("/bookmark").Subrouter()
+	bookmarks.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.GetAllBookmarks(b, l), l)).Methods("GET")
+	bookmarks.HandleFunc("/bookmark/{path}/{APIKey}", jwtauth.Authorized(handlers.GetBookmarksFolder(b, l), l)).Methods("GET")
+	bookmarks.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.AddBookmark(b, l), l)).Methods("POST")
+	// bookmarks.HandleFunc("/bookmark/file/{APIKey}", jwtauth.Authorized(handlers.AddBookmarkFile(u, l), l)).Methods("POST")
+	bookmarks.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.DeleteBookmark(b, l), l)).Methods("DELETE")
 }

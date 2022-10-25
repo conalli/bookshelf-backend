@@ -11,12 +11,13 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/password"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
+	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
 )
 
 // Testdb represents a testutils.
 type Testdb struct {
 	Users     map[string]accounts.User
-	Bookmarks []accounts.Bookmark
+	Bookmarks []bookmarks.Bookmark
 }
 
 // NewDB returns a new Testdb.
@@ -37,7 +38,7 @@ func (t *Testdb) AddDefaultUsers() *Testdb {
 		},
 	}
 	t.Users = usrs
-	t.Bookmarks = []accounts.Bookmark{
+	t.Bookmarks = []bookmarks.Bookmark{
 		{
 			ID:     "c55fdaace3388c2189875fc5",
 			APIKey: "bd1eb780-0124-11ed-b939-0242ac120002",
@@ -159,8 +160,8 @@ func (t *Testdb) DeleteCmd(ctx context.Context, body request.DeleteCmd, APIKey s
 }
 
 // GetAllBookmarks gets all bookmarks from the test db.
-func (t *Testdb) GetAllBookmarks(ctx context.Context, APIKey string) ([]accounts.Bookmark, errors.APIErr) {
-	books := make([]accounts.Bookmark, 0)
+func (t *Testdb) GetAllBookmarks(ctx context.Context, APIKey string) ([]bookmarks.Bookmark, errors.APIErr) {
+	books := make([]bookmarks.Bookmark, 0)
 	for _, v := range t.Bookmarks {
 		if v.APIKey == APIKey {
 			books = append(books, v)
@@ -170,8 +171,8 @@ func (t *Testdb) GetAllBookmarks(ctx context.Context, APIKey string) ([]accounts
 }
 
 // GetBookmarksFolder gets all bookmarks from the test db.
-func (t *Testdb) GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]accounts.Bookmark, errors.APIErr) {
-	folder := []accounts.Bookmark{}
+func (t *Testdb) GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]bookmarks.Bookmark, errors.APIErr) {
+	folder := []bookmarks.Bookmark{}
 	for _, val := range t.Bookmarks {
 		match, err := regexp.Match(path, []byte(val.Path))
 		if err != nil {
@@ -189,7 +190,7 @@ func (t *Testdb) AddBookmark(ctx context.Context, requestData request.AddBookmar
 	if _, err := t.GetUserByAPIKey(ctx, APIKey); err != nil {
 		return 0, errors.NewBadRequestError("User does not exist.")
 	}
-	bookmark := accounts.Bookmark{
+	bookmark := bookmarks.Bookmark{
 		APIKey: APIKey,
 		Name:   requestData.Name,
 		Path:   requestData.Path,

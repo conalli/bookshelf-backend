@@ -7,7 +7,7 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
-	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
+	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
 	"github.com/gorilla/mux"
 )
 
@@ -20,7 +20,7 @@ type AddBookmarkResponse struct {
 }
 
 // AddBookmark is the handler for the bookmark POST endpoint.
-func AddBookmark(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
+func AddBookmark(b bookmarks.Service, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Info("ADD BOOKMARK endpoint hit")
 		vars := mux.Vars(r)
@@ -31,7 +31,7 @@ func AddBookmark(u accounts.UserService, log logs.Logger) func(w http.ResponseWr
 			errors.APIErrorResponse(w, errRes)
 			return
 		}
-		numUpdated, err := u.AddBookmark(r.Context(), addBookReq, APIKey)
+		numUpdated, err := b.AddBookmark(r.Context(), addBookReq, APIKey)
 		if err != nil {
 			log.Errorf("error returned while trying to add a new bookmark: %v", err)
 			errors.APIErrorResponse(w, err)
