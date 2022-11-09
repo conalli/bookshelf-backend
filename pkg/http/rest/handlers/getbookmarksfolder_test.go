@@ -36,7 +36,7 @@ func TestGetBookmarksFolder(t *testing.T) {
 	for _, c := range tc {
 		t.Run(c.name, func(t *testing.T) {
 			APIKey := db.Users["1"].APIKey
-			res, err := testutils.RequestWithCookie("GET", fmt.Sprintf("%s/api/user/bookmark/%s/%s", srv.URL, c.folder, c.APIKey), nil, APIKey, testutils.NewLogger())
+			res, err := testutils.RequestWithCookie("GET", fmt.Sprintf("%s/api/bookmark/%s/%s", srv.URL, c.folder, c.APIKey), nil, APIKey, testutils.NewLogger())
 			if err != nil {
 				t.Fatalf("Couldn't create request to get bookmarks folder with cookie.")
 			}
