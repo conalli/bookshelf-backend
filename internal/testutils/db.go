@@ -200,6 +200,11 @@ func (t *Testdb) AddBookmark(ctx context.Context, requestData request.AddBookmar
 	return 1, nil
 }
 
+func (t *Testdb) AddManyBookmarks(ctx context.Context, bookmarks []bookmarks.Bookmark) (int, errors.APIErr) {
+	t.Bookmarks = append(t.Bookmarks, bookmarks...)
+	return len(bookmarks), nil
+}
+
 // DeleteBookmark removes a bookmark from the test db.
 func (t *Testdb) DeleteBookmark(ctx context.Context, requestData request.DeleteBookmark, APIKey string) (int, errors.APIErr) {
 	i := -1
