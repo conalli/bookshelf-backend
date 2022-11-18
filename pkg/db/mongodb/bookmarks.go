@@ -90,6 +90,26 @@ func (m *Mongo) AddBookmark(ctx context.Context, requestData request.AddBookmark
 	return 1, nil
 }
 
+func (m *Mongo) AddManyBookmarks(ctx context.Context, bookmarks []bookmarks.Bookmark) (int, errors.APIErr) {
+	m.Initialize()
+	defer m.client.Disconnect(ctx)
+	err := m.client.Connect(ctx)
+	if err != nil {
+		m.log.Error("could not connect to db")
+		return 0, errors.NewInternalServerError()
+	}
+	collection := m.db.Collection(CollectionBookmarks)
+	data := make([]interface{}, len(bookmarks))
+	for i := range bookmarks {
+		data[i] = bookmarks[i]
+	}
+	res, err := collection.InsertMany(ctx, data)
+	if err != nil {
+		return 0, errors.NewInternalServerError()
+	}
+	return len(res.InsertedIDs), nil
+}
+
 // DeleteBookmark removes a bookmark for a given user.
 func (m *Mongo) DeleteBookmark(ctx context.Context, requestData request.DeleteBookmark, APIKey string) (int, errors.APIErr) {
 	m.Initialize()

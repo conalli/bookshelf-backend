@@ -8,13 +8,14 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/go-playground/validator/v10"
+	"golang.org/x/net/html"
 )
 
 type Service interface {
 	GetAllBookmarks(ctx context.Context, APIKey string) ([]Bookmark, errors.APIErr)
 	GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]Bookmark, errors.APIErr)
 	AddBookmark(ctx context.Context, requestData request.AddBookmark, APIKey string) (int, errors.APIErr)
-	AddBookmarksFromFile(ctx context.Context, r *http.Request) (int, errors.APIErr)
+	AddBookmarksFromFile(ctx context.Context, r *http.Request, APIKey string) (int, errors.APIErr)
 	DeleteBookmark(ctx context.Context, requestData request.DeleteBookmark, APIKey string) (int, errors.APIErr)
 }
 
@@ -22,6 +23,7 @@ type Repository interface {
 	GetAllBookmarks(ctx context.Context, APIKey string) ([]Bookmark, errors.APIErr)
 	GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]Bookmark, errors.APIErr)
 	AddBookmark(ctx context.Context, requestData request.AddBookmark, APIKey string) (int, errors.APIErr)
+	AddManyBookmarks(ctx context.Context, bookmarks []Bookmark) (int, errors.APIErr)
 	DeleteBookmark(ctx context.Context, requestData request.DeleteBookmark, APIKey string) (int, errors.APIErr)
 }
 
@@ -73,8 +75,31 @@ func (s *service) AddBookmark(ctx context.Context, requestData request.AddBookma
 	return numUpdated, err
 }
 
-func (s *service) AddBookmarksFromFile(ctx context.Context, r *http.Request) (int, errors.APIErr) {
-	return 0, nil
+func (s *service) AddBookmarksFromFile(ctx context.Context, r *http.Request, APIKey string) (int, errors.APIErr) {
+	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
+	defer cancelFunc()
+	header, ok := r.MultipartForm.File["bookmarks_file"]
+	if !ok {
+		return 0, errors.NewBadRequestError("no bookmark file in request")
+	}
+	if len(header) < 1 {
+		return 0, errors.NewBadRequestError("no bookmark file in request")
+	}
+	file, err := header[0].Open()
+	defer file.Close()
+	if err != nil {
+		return 0, errors.NewInternalServerError()
+	}
+	tokenizer := html.NewTokenizer(file)
+	bookmarks, err := parseBookmarkFileHTML(APIKey, tokenizer)
+	if err != nil {
+		return 0, errors.NewBadRequestError("could not parse bookmark file")
+	}
+	numAdded, apierr := s.db.AddManyBookmarks(reqCtx, bookmarks)
+	if err != nil {
+		return 0, apierr
+	}
+	return numAdded, nil
 }
 
 // DeleteBookmark removes a bookmark from an account.
