@@ -82,6 +82,6 @@ func addBookmarkRoutes(router *mux.Router, b bookmarks.Service, l logs.Logger) {
 	bookmarks.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.GetAllBookmarks(b, l), l)).Methods("GET")
 	bookmarks.HandleFunc("/{path}/{APIKey}", jwtauth.Authorized(handlers.GetBookmarksFolder(b, l), l)).Methods("GET")
 	bookmarks.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.AddBookmark(b, l), l)).Methods("POST")
-	bookmarks.HandleFunc("/bookmark/file/{APIKey}", jwtauth.Authorized(handlers.AddBookmarksFile(b, l), l)).Methods("POST")
+	bookmarks.HandleFunc("/file/{APIKey}", jwtauth.Authorized(handlers.AddBookmarksFile(b, l), l)).Methods("POST")
 	bookmarks.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.DeleteBookmark(b, l), l)).Methods("DELETE")
 }
