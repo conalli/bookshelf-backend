@@ -95,3 +95,21 @@ func TestParseBookmarksHTMLMultipleFolders(t *testing.T) {
 		}
 	}
 }
+
+func TestNonURLHREFsInFile(t *testing.T) {
+	t.Parallel()
+	file, err := os.Open("../../../internal/testdata/bookmarks/firefoxbookmarks.html")
+	defer file.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	tokenizer := html.NewTokenizer(file)
+	APIKey := uuid.New().String()
+	got, err := parseBookmarkFileHTML(APIKey, tokenizer)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if 25 != len(got) {
+		t.Fatalf("want and got not same length, want: %d, got: %d\n", 25, len(got))
+	}
+}
