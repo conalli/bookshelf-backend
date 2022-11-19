@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"log"
+	"net/url"
 
 	"golang.org/x/net/html"
 )
@@ -80,6 +81,9 @@ func parseFolder(bookmarks *[]Bookmark, path, APIKey string, tokenizer *html.Tok
 				}
 			case "a":
 				URL := findURL(attr)
+				if len(URL) == 0 {
+					break
+				}
 				b, err := createBookmark(path, URL, APIKey, tokenizer)
 				if err != nil {
 					return err
@@ -108,6 +112,10 @@ func createBookmark(path, URL, APIKey string, tokenizer *html.Tokenizer) (Bookma
 func findURL(attr []html.Attribute) string {
 	for _, a := range attr {
 		if a.Key == "href" {
+			href, err := url.Parse(a.Val)
+			if err != nil || href.Host == "" || href.Scheme == "" {
+				break
+			}
 			return a.Val
 		}
 	}
