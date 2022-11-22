@@ -78,11 +78,8 @@ func (s *service) AddBookmark(ctx context.Context, requestData request.AddBookma
 func (s *service) AddBookmarksFromFile(ctx context.Context, r *http.Request, APIKey string) (int, errors.APIErr) {
 	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
-	header, ok := r.MultipartForm.File["bookmarks_file"]
-	if !ok {
-		return 0, errors.NewBadRequestError("no bookmark file in request")
-	}
-	if len(header) < 1 {
+	header, ok := r.MultipartForm.File[BookmarksFileKey]
+	if !ok || len(header) < 1 {
 		return 0, errors.NewBadRequestError("no bookmark file in request")
 	}
 	file, err := header[0].Open()
@@ -110,7 +107,7 @@ func (s *service) DeleteBookmark(ctx context.Context, requestData request.Delete
 	validateAPIKeyErr := s.validate.Var(APIKey, "uuid")
 	if validateReqErr != nil || validateAPIKeyErr != nil {
 		s.log.Errorf("Could not validate DELETE BOOKMARK request: %v - %v", validateReqErr, validateAPIKeyErr)
-		return 0, errors.NewBadRequestError("request format incorrect.")
+		return 0, errors.NewBadRequestError("request format incorrect")
 	}
 	numUpdated, err := s.db.DeleteBookmark(reqCtx, requestData, APIKey)
 	return numUpdated, err

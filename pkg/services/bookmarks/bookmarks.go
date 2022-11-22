@@ -3,10 +3,13 @@ package bookmarks
 import (
 	"errors"
 	"io"
-	"log"
 	"net/url"
 
 	"golang.org/x/net/html"
+)
+
+const (
+	BookmarksFileKey string = "bookmarks_file"
 )
 
 // Bookmark represents a web bookmark.
@@ -32,8 +35,7 @@ func parseBookmarkFileHTML(APIKey string, tokenizer *html.Tokenizer) ([]Bookmark
 		if tokenType == html.DoctypeToken {
 			token := tokenizer.Token()
 			if token.Data != "NETSCAPE-Bookmark-file-1" {
-				// TODO: Change error
-				return nil, errors.New("Bookmark file incorrect format")
+				return nil, errors.New("bookmark file incorrect format")
 			}
 		}
 		if tokenType == html.StartTagToken {
@@ -41,13 +43,11 @@ func parseBookmarkFileHTML(APIKey string, tokenizer *html.Tokenizer) ([]Bookmark
 			if token.Data == "dt" {
 				err := parseFolder(&bookmarks, "", APIKey, tokenizer)
 				if err != nil {
-					// TODO: Change error
-					return nil, errors.New("Failed to parse bookmarks")
+					return nil, errors.New("failed to parse bookmarks")
 				}
 			}
 		}
 	}
-	log.Println("parseHTMLBookmarks: ", bookmarks)
 	return bookmarks, nil
 }
 
@@ -103,7 +103,7 @@ func createBookmark(path, URL, APIKey string, tokenizer *html.Tokenizer) (Bookma
 	}
 	tokenType := tokenizer.Next()
 	if tokenType != html.TextToken {
-		return Bookmark{}, errors.New("OMG")
+		return Bookmark{}, errors.New("bookmark does not have description text")
 	}
 	b.Name = html.UnescapeString(tokenizer.Token().Data)
 	return b, nil
