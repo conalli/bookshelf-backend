@@ -105,8 +105,10 @@ func (m *Mongo) AddManyBookmarks(ctx context.Context, bookmarks []bookmarks.Book
 	}
 	res, err := collection.InsertMany(ctx, data)
 	if err != nil {
+		m.log.Errorf("could not insert many bookmarks into db - %v", err)
 		return 0, errors.NewInternalServerError()
 	}
+	m.log.Infof("inserted %d bookmarks into db", len(res.InsertedIDs))
 	return len(res.InsertedIDs), nil
 }
 

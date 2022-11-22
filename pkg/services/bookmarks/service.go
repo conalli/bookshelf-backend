@@ -80,20 +80,24 @@ func (s *service) AddBookmarksFromFile(ctx context.Context, r *http.Request, API
 	defer cancelFunc()
 	header, ok := r.MultipartForm.File[BookmarksFileKey]
 	if !ok || len(header) < 1 {
+		s.log.Error("Could not find bookmarks_file in request")
 		return 0, errors.NewBadRequestError("no bookmark file in request")
 	}
 	file, err := header[0].Open()
 	defer file.Close()
 	if err != nil {
+		s.log.Error("Could not open open bookmarks_file")
 		return 0, errors.NewInternalServerError()
 	}
 	tokenizer := html.NewTokenizer(file)
 	bookmarks, err := parseBookmarkFileHTML(APIKey, tokenizer)
 	if err != nil {
+		s.log.Error("Could not parse bookmarks_file")
 		return 0, errors.NewBadRequestError("could not parse bookmark file")
 	}
 	numAdded, apierr := s.db.AddManyBookmarks(reqCtx, bookmarks)
 	if err != nil {
+		s.log.Error("Could not add bookmarks to db")
 		return 0, apierr
 	}
 	return numAdded, nil
