@@ -9,6 +9,7 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
+	"github.com/conalli/bookshelf-backend/pkg/services/auth"
 	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
 	"github.com/conalli/bookshelf-backend/pkg/services/search"
 	"github.com/go-playground/validator/v10"
@@ -23,11 +24,14 @@ type Router struct {
 
 // NewRouter returns a router with all handlers assigned to it
 func NewRouter(l logs.Logger, v *validator.Validate, store db.Storage, cache db.Cache) *Router {
+	a := auth.NewService(l, v)
 	u := accounts.NewUserService(l, v, store, cache)
 	s := search.NewService(l, v, store, cache)
 	b := bookmarks.NewService(l, v, store)
 	r := &Router{l, mux.NewRouter()}
+
 	api := r.initRouter()
+	addOAuthRoutes(api, a, l)
 	addUserRoutes(api, u, l)
 	addSearchRoutes(api, s, l)
 	addBookmarkRoutes(api, b, l)
@@ -60,6 +64,11 @@ func (r *Router) Handler() http.Handler {
 // HandlerWithCORS provides basic CORS middleware for a router.
 func (r *Router) HandlerWithCORS() http.Handler {
 	return middleware.CORSMiddleware(r.router)
+}
+
+func addOAuthRoutes(router *mux.Router, a auth.Service, l logs.Logger) {
+	auth := router.PathPrefix("/oauth").Subrouter()
+	auth.HandleFunc("/redirect", handlers.OAuthRedirect(a, l)).Methods("GET")
 }
 
 func addUserRoutes(router *mux.Router, u accounts.UserService, l logs.Logger) {
