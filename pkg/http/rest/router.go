@@ -12,6 +12,7 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/services/auth"
 	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
 	"github.com/conalli/bookshelf-backend/pkg/services/search"
+	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 )
@@ -23,8 +24,8 @@ type Router struct {
 }
 
 // NewRouter returns a router with all handlers assigned to it
-func NewRouter(l logs.Logger, v *validator.Validate, store db.Storage, cache db.Cache) *Router {
-	a := auth.NewService(l, v)
+func NewRouter(l logs.Logger, v *validator.Validate, store db.Storage, cache db.Cache, p *oidc.Provider) *Router {
+	a := auth.NewService(l, v, p)
 	u := accounts.NewUserService(l, v, store, cache)
 	s := search.NewService(l, v, store, cache)
 	b := bookmarks.NewService(l, v, store)
@@ -68,6 +69,7 @@ func (r *Router) HandlerWithCORS() http.Handler {
 
 func addOAuthRoutes(router *mux.Router, a auth.Service, l logs.Logger) {
 	auth := router.PathPrefix("/oauth").Subrouter()
+	auth.HandleFunc("", handlers.OAuthRequest(a, l)).Methods("GET")
 	auth.HandleFunc("/redirect", handlers.OAuthRedirect(a, l)).Methods("GET")
 }
 

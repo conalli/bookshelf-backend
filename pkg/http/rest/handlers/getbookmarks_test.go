@@ -14,7 +14,7 @@ import (
 func TestGetBookmarks(t *testing.T) {
 	t.Parallel()
 	db := testutils.NewDB().AddDefaultUsers()
-	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db, testutils.NewCache())
+	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db, testutils.NewCache(), nil)
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 	tc := []struct {
