@@ -11,7 +11,13 @@ import (
 
 func OAuthRequest(a auth.Service, log logs.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		data, err := a.OAuthRequest(r.Context())
+		err := r.ParseForm()
+		if err != nil {
+			log.Error(err)
+			errors.APIErrorResponse(w, errors.NewInternalServerError())
+		}
+		authType := r.FormValue("type")
+		data, err := a.OAuthRequest(r.Context(), authType)
 		if err != nil {
 			log.Error(err)
 			errors.APIErrorResponse(w, errors.NewInternalServerError())

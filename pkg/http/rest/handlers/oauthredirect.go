@@ -16,7 +16,6 @@ func OAuthRedirect(a auth.Service, log logs.Logger) func(w http.ResponseWriter, 
 			errors.APIErrorResponse(w, errors.NewInternalServerError())
 			return
 		}
-		log.Infof("%+v", r.Form)
 		stateCookie, err := r.Cookie("state")
 		if err != nil {
 			log.Error(err)
@@ -29,7 +28,11 @@ func OAuthRedirect(a auth.Service, log logs.Logger) func(w http.ResponseWriter, 
 			errors.APIErrorResponse(w, errors.NewInternalServerError())
 			return
 		}
-		a.OAuthRedirect(r.Context(), r.FormValue("code"), r.FormValue("state"), stateCookie, nonceCookie)
+		_, apierr := a.OAuthRedirect(r.Context(), r.FormValue("code"), r.FormValue("state"), stateCookie, nonceCookie)
+		if apierr != nil {
+			log.Error(err)
+			errors.APIErrorResponse(w, apierr)
+		}
 		w.WriteHeader(http.StatusOK)
 	}
 }

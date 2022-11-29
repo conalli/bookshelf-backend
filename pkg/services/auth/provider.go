@@ -28,3 +28,18 @@ var oidcConfig = &oidc.Config{
 type OAuth2Request struct {
 	State, Nonce, AuthURL string
 }
+
+type GoogleIDTokenClaims struct {
+	Name          string `json:"name"`
+	GivenName     string `json:"given_name"`
+	FamilyName    string `json:"family_name"`
+	PictureURL    string `json:"picture"`
+	Email         string `json:"email"`
+	EmailVerified string `json:"email_verified"`
+	Locale        string `json:"locale"`
+}
+
+type GoogleOIDCTokens struct {
+	OAuth2Token   oauth2.Token
+	IDTokenClaims GoogleIDTokenClaims
+}

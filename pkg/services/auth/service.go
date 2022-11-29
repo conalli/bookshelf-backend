@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
@@ -13,8 +12,8 @@ import (
 )
 
 type Service interface {
-	OAuthRequest(ctx context.Context) (OAuth2Request, error)
-	OAuthRedirect(ctx context.Context, code, state string, stateCookie, nonceCookie *http.Cookie) (string, error)
+	OAuthRequest(ctx context.Context, authType string) (OAuth2Request, error)
+	OAuthRedirect(ctx context.Context, code, state string, stateCookie, nonceCookie *http.Cookie) (*GoogleOIDCTokens, errors.APIErr)
 }
 
 type service struct {
@@ -27,57 +26,43 @@ func NewService(l logs.Logger, v *validator.Validate, p *oidc.Provider) *service
 	return &service{l, v, p}
 }
 
-func (s *service) OAuthRequest(ctx context.Context) (OAuth2Request, error) {
-	state := ""
+func (s *service) OAuthRequest(ctx context.Context, authType string) (OAuth2Request, error) {
+	state := authType + ""
 	nonce := ""
 	url := googleOAuth2Config.AuthCodeURL(state, oidc.Nonce(nonce), oauth2.AccessTypeOffline)
 	return OAuth2Request{State: state, Nonce: nonce, AuthURL: url}, nil
 }
 
-func (s *service) OAuthRedirect(ctx context.Context, code, state string, stateCookie, nonceCookie *http.Cookie) (string, error) {
+func (s *service) OAuthRedirect(ctx context.Context, code, state string, stateCookie, nonceCookie *http.Cookie) (*GoogleOIDCTokens, errors.APIErr) {
 	if state != stateCookie.Value {
-		s.l.Error("INCORRECT STATE FROM REDIRECT")
-		return "", errors.NewBadRequestError("OMG")
+		s.l.Error("state values did not match: %s - %s")
+		return nil, errors.NewBadRequestError("invalid token")
 	}
 	oauth2Token, err := googleOAuth2Config.Exchange(ctx, code)
 	if err != nil {
-		s.l.Error(err)
-		return "", err
+		s.l.Error("could not exchange authorization code for token:", err)
+		return nil, errors.NewInternalServerError()
 	}
 	verifier := s.p.Verifier(oidcConfig)
 	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
 	if !ok {
-		s.l.Error("NO id_token in token")
-		return "", errors.NewInternalServerError()
+		s.l.Error("no id_token in token")
+		return nil, errors.NewInternalServerError()
 	}
 	IDToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {
-		s.l.Error("Could not verify id_token:", err)
-		return "", errors.NewInternalServerError()
+		s.l.Error("could not verify id_token:", err)
+		return nil, errors.NewInternalServerError()
 	}
 	if IDToken.Nonce != nonceCookie.Value {
-		s.l.Error("Nonce did not match", IDToken.Nonce, nonceCookie.Value)
-		return "", errors.NewBadRequestError("nonce did not match")
+		s.l.Errorf("nonces did not match: %s - %s", IDToken.Nonce, nonceCookie.Value)
+		return nil, errors.NewBadRequestError("invalid token")
 	}
-	tokens := struct {
-		OAuth2Token   oauth2.Token
-		IDTokenClaims struct {
-			Email, EmailVerified, FamilyName, GivenName, Locale, Name, Picture string
-		}
-	}{OAuth2Token: *oauth2Token}
-
+	tokens := &GoogleOIDCTokens{OAuth2Token: *oauth2Token}
 	if err = IDToken.Claims(&tokens.IDTokenClaims); err != nil {
-		s.l.Error("Could not parse id_token claims", err)
-		return "", errors.NewInternalServerError()
+		s.l.Error("could not parse id_token claims", err)
+		return nil, errors.NewInternalServerError()
 	}
-	j, err := json.Marshal(tokens)
-	if err != nil {
-		s.l.Error("Error marshaling JSON: ", err)
-		return "", errors.NewInternalServerError()
-	}
-
-	s.l.Infof("IDToken: %+v", tokens)
-	s.l.Infof("JSON: %+v", j)
-
-	return "", nil
+	s.l.Infof("Tokens: %+v", tokens)
+	return tokens, nil
 }
