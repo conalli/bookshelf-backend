@@ -9,7 +9,6 @@ import (
 	"github.com/conalli/bookshelf-backend/internal/testutils"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
-	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/go-playground/validator/v10"
 )
@@ -65,7 +64,7 @@ func TestSignUp(t *testing.T) {
 				if usr.ID != usr.Name+"999" || usr.Name != "signuptest" || usr.Password != "password" {
 					t.Fatalf("Unexpected sign up data")
 				}
-				if jwtauth.FilterCookies(db.Users["1"].APIKey, res.Cookies()) != nil {
+				if request.FilterCookies(db.Users["1"].APIKey, res.Cookies()) != nil {
 					t.Errorf("Expected jwt cookie to be returned upon log in.")
 				}
 			}

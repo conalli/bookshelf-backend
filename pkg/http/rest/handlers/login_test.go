@@ -11,7 +11,6 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest/handlers"
-	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -76,7 +75,7 @@ func TestLogin(t *testing.T) {
 				if response.ID != c.res.ID || response.APIKey != c.res.APIKey {
 					t.Fatalf("Unexpected log in data")
 				}
-				if jwtauth.FilterCookies(c.res.APIKey, res.Cookies()) != nil {
+				if request.FilterCookies(c.res.APIKey, res.Cookies()) != nil {
 					t.Errorf("Expected jwt cookie to be returned upon log in.")
 				}
 			}
