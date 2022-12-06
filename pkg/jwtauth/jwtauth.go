@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
@@ -63,8 +64,8 @@ func Authorized(next http.HandlerFunc, log logs.Logger) http.HandlerFunc {
 			errors.APIErrorResponse(w, errors.NewBadRequestError("no cookies in request"))
 			return
 		}
-		bookshelfCookie := FilterCookies("bookshelfjwt", cookies)
-		refreshCookie := FilterCookies("bookshelfrefresh", cookies)
+		bookshelfCookie := request.FilterCookies("bookshelfjwt", cookies)
+		refreshCookie := request.FilterCookies("bookshelfrefresh", cookies)
 		if bookshelfCookie == nil && refreshCookie == nil {
 			log.Error("did not find bookshelf cookies")
 			errors.APIErrorResponse(w, errors.NewBadRequestError("did not find bookshelf cookies"))
@@ -128,14 +129,4 @@ func Authorized(next http.HandlerFunc, log logs.Logger) http.HandlerFunc {
 		}
 		next(w, r)
 	}
-}
-
-// FilterCookies looks through all cookies and returns one with given name.
-func FilterCookies(name string, cookies []*http.Cookie) *http.Cookie {
-	for _, c := range cookies {
-		if c.Name == name {
-			return c
-		}
-	}
-	return nil
 }
