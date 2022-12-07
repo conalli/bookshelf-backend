@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
-	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
+	"github.com/conalli/bookshelf-backend/pkg/services/auth"
 )
 
 // RequestWithCookie provides a helper for testing handlers that require jwt cookies.
@@ -18,7 +18,7 @@ func RequestWithCookie(method, url string, body io.Reader, APIKey string, log lo
 	if err != nil {
 		return nil, err
 	}
-	jwt, err := jwtauth.NewTokens(APIKey, log)
+	jwt, err := auth.NewTokens(APIKey, log)
 	if err != nil {
 		return nil, err
 	}

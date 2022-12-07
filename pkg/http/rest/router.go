@@ -6,7 +6,6 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/db"
 	"github.com/conalli/bookshelf-backend/pkg/http/middleware"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest/handlers"
-	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/services/auth"
@@ -76,11 +75,11 @@ func addOAuthRoutes(router *mux.Router, a auth.Service, l logs.Logger) {
 func addUserRoutes(router *mux.Router, u accounts.UserService, l logs.Logger) {
 	user := router.PathPrefix("/user").Subrouter()
 	user.HandleFunc("", handlers.SignUp(u, l)).Methods("POST")
-	user.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.DelUser(u, l), l)).Methods("DELETE")
+	user.HandleFunc("/{APIKey}", auth.Authorized(handlers.DelUser(u, l), l)).Methods("DELETE")
 	user.HandleFunc("/login", handlers.LogIn(u, l)).Methods("POST")
-	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.GetCmds(u, l), l)).Methods("GET")
-	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.AddCmd(u, l), l)).Methods("POST")
-	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.DeleteCmd(u, l), l)).Methods("PATCH")
+	user.HandleFunc("/cmd/{APIKey}", auth.Authorized(handlers.GetCmds(u, l), l)).Methods("GET")
+	user.HandleFunc("/cmd/{APIKey}", auth.Authorized(handlers.AddCmd(u, l), l)).Methods("POST")
+	user.HandleFunc("/cmd/{APIKey}", auth.Authorized(handlers.DeleteCmd(u, l), l)).Methods("PATCH")
 }
 
 func addSearchRoutes(router *mux.Router, s search.Service, l logs.Logger) {
@@ -90,9 +89,9 @@ func addSearchRoutes(router *mux.Router, s search.Service, l logs.Logger) {
 
 func addBookmarkRoutes(router *mux.Router, b bookmarks.Service, l logs.Logger) {
 	bookmarks := router.PathPrefix("/bookmark").Subrouter()
-	bookmarks.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.GetAllBookmarks(b, l), l)).Methods("GET")
-	bookmarks.HandleFunc("/{path}/{APIKey}", jwtauth.Authorized(handlers.GetBookmarksFolder(b, l), l)).Methods("GET")
-	bookmarks.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.AddBookmark(b, l), l)).Methods("POST")
-	bookmarks.HandleFunc("/file/{APIKey}", jwtauth.Authorized(handlers.AddBookmarksFile(b, l), l)).Methods("POST")
-	bookmarks.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.DeleteBookmark(b, l), l)).Methods("DELETE")
+	bookmarks.HandleFunc("/{APIKey}", auth.Authorized(handlers.GetAllBookmarks(b, l), l)).Methods("GET")
+	bookmarks.HandleFunc("/{path}/{APIKey}", auth.Authorized(handlers.GetBookmarksFolder(b, l), l)).Methods("GET")
+	bookmarks.HandleFunc("/{APIKey}", auth.Authorized(handlers.AddBookmark(b, l), l)).Methods("POST")
+	bookmarks.HandleFunc("/file/{APIKey}", auth.Authorized(handlers.AddBookmarksFile(b, l), l)).Methods("POST")
+	bookmarks.HandleFunc("/{APIKey}", auth.Authorized(handlers.DeleteBookmark(b, l), l)).Methods("DELETE")
 }

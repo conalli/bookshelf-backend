@@ -7,9 +7,9 @@ import (
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
-	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
+	"github.com/conalli/bookshelf-backend/pkg/services/auth"
 )
 
 // LogInResponse represents the data returned upon successfully logging in.
@@ -34,7 +34,7 @@ func LogIn(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, 
 			errors.APIErrorResponse(w, err)
 			return
 		}
-		tokens, err := jwtauth.NewTokens(currUser.APIKey, log)
+		tokens, err := auth.NewTokens(currUser.APIKey, log)
 		if err != nil {
 			log.Errorf("error returned while trying to create a new token: %v", err)
 			errors.APIErrorResponse(w, err)

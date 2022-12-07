@@ -9,24 +9,29 @@ import (
 )
 
 var (
-	clientID     = os.Getenv("GOOGLE_OAUTH2_CLIENT_ID")
-	clientSecret = os.Getenv("GOOGLE_OAUTH2_CLIENT_SECRET")
+	googleClientID     = os.Getenv("GOOGLE_OAUTH2_CLIENT_ID")
+	googleClientSecret = os.Getenv("GOOGLE_OAUTH2_CLIENT_SECRET")
 )
 
 var googleOAuth2Config = oauth2.Config{
-	ClientID:     clientID,
-	ClientSecret: clientSecret,
+	ClientID:     googleClientID,
+	ClientSecret: googleClientSecret,
 	Endpoint:     endpoints.Google,
 	RedirectURL:  "http://localhost:8080/api/oauth/redirect",
 	Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
 }
 
-var oidcConfig = &oidc.Config{
-	ClientID: clientID,
+var googleOIDCConfig = &oidc.Config{
+	ClientID: googleClientID,
 }
 
-type OAuth2Request struct {
+type OIDCRequest struct {
 	State, Nonce, AuthURL string
+}
+
+type GoogleOIDCTokens struct {
+	OAuth2Token   oauth2.Token
+	IDTokenClaims GoogleIDTokenClaims
 }
 
 type GoogleIDTokenClaims struct {
@@ -37,9 +42,4 @@ type GoogleIDTokenClaims struct {
 	Email         string `json:"email"`
 	EmailVerified string `json:"email_verified"`
 	Locale        string `json:"locale"`
-}
-
-type GoogleOIDCTokens struct {
-	OAuth2Token   oauth2.Token
-	IDTokenClaims GoogleIDTokenClaims
 }

@@ -7,9 +7,9 @@ import (
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
-	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
+	"github.com/conalli/bookshelf-backend/pkg/services/auth"
 )
 
 // SignUp is the handler for the signup endpoint. Checks db for username and if
@@ -29,7 +29,7 @@ func SignUp(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter,
 			return
 		}
 		log.Infof("successfully created a new user: %+v", newUser)
-		tokens, err := jwtauth.NewTokens(newUser.APIKey, log)
+		tokens, err := auth.NewTokens(newUser.APIKey, log)
 		if err != nil {
 			log.Errorf("error returned while trying to create a new token: %v", err)
 			errors.APIErrorResponse(w, err)

@@ -12,7 +12,7 @@ import (
 )
 
 type Service interface {
-	OAuthRequest(ctx context.Context, authType string) (OAuth2Request, error)
+	OAuthRequest(ctx context.Context, authType string) (OIDCRequest, error)
 	OAuthRedirect(ctx context.Context, code, state string, stateCookie, nonceCookie *http.Cookie) (*GoogleOIDCTokens, errors.APIErr)
 }
 
@@ -26,11 +26,11 @@ func NewService(l logs.Logger, v *validator.Validate, p *oidc.Provider) *service
 	return &service{l, v, p}
 }
 
-func (s *service) OAuthRequest(ctx context.Context, authType string) (OAuth2Request, error) {
+func (s *service) OAuthRequest(ctx context.Context, authType string) (OIDCRequest, error) {
 	state := authType + ""
 	nonce := ""
 	url := googleOAuth2Config.AuthCodeURL(state, oidc.Nonce(nonce), oauth2.AccessTypeOffline)
-	return OAuth2Request{State: state, Nonce: nonce, AuthURL: url}, nil
+	return OIDCRequest{State: state, Nonce: nonce, AuthURL: url}, nil
 }
 
 func (s *service) OAuthRedirect(ctx context.Context, code, state string, stateCookie, nonceCookie *http.Cookie) (*GoogleOIDCTokens, errors.APIErr) {
@@ -43,7 +43,7 @@ func (s *service) OAuthRedirect(ctx context.Context, code, state string, stateCo
 		s.l.Error("could not exchange authorization code for token:", err)
 		return nil, errors.NewInternalServerError()
 	}
-	verifier := s.p.Verifier(oidcConfig)
+	verifier := s.p.Verifier(googleOIDCConfig)
 	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
 	if !ok {
 		s.l.Error("no id_token in token")
