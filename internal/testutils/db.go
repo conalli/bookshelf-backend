@@ -11,7 +11,9 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/password"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
+	"github.com/conalli/bookshelf-backend/pkg/services/auth"
 	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
+	"github.com/google/uuid"
 )
 
 // Testdb represents a testutils.
@@ -32,6 +34,7 @@ func (t *Testdb) AddDefaultUsers() *Testdb {
 		"1": {
 			ID:       "c55fdaace3388c2189875fc5",
 			Name:     "user1",
+			Email:    "default_user@bookshelftest.com",
 			Password: pw,
 			APIKey:   "bd1eb780-0124-11ed-b939-0242ac120002",
 			Cmds:     map[string]string{"bbc": "https://www.bbc.co.uk"},
@@ -50,16 +53,13 @@ func (t *Testdb) AddDefaultUsers() *Testdb {
 	return t
 }
 
-func (t *Testdb) dataAlreadyExists(name string, coll string) bool {
-	if coll == "users" {
-		for _, v := range t.Users {
-			if v.Name == name {
-				return true
-			}
+func (t *Testdb) UserAlreadyExists(ctx context.Context, email string) (bool, error) {
+	for _, v := range t.Users {
+		if v.Email == email {
+			return true, nil
 		}
 	}
-
-	return false
+	return false, nil
 }
 
 func (t *Testdb) findUserByAPIKey(APIKey string) *accounts.User {
@@ -72,18 +72,18 @@ func (t *Testdb) findUserByAPIKey(APIKey string) *accounts.User {
 }
 
 // NewUser creates a new user in the testdb.
-func (t *Testdb) NewUser(ctx context.Context, body request.SignUp) (accounts.User, errors.APIErr) {
-	found := t.dataAlreadyExists(body.Name, "users")
+func (t *Testdb) NewUser(ctx context.Context, body request.SignUp) (accounts.User, error) {
+	found, _ := t.UserAlreadyExists(context.Background(), body.Email)
 	if found {
-		return accounts.User{}, errors.NewBadRequestError("error creating new user; user with name " + body.Name + " already exists")
+		return accounts.User{}, errors.ErrBadRequest
 	}
 	key, err := accounts.GenerateAPIKey()
 	if err != nil {
-		return accounts.User{}, errors.NewInternalServerError()
+		return accounts.User{}, errors.ErrInternalServerError
 	}
 	usr := accounts.User{
-		ID:       body.Name + "999",
-		Name:     body.Name,
+		ID:       uuid.NewString(),
+		Email:    body.Email,
 		Password: body.Password,
 		APIKey:   key,
 		Cmds: map[string]string{
@@ -95,17 +95,18 @@ func (t *Testdb) NewUser(ctx context.Context, body request.SignUp) (accounts.Use
 	return usr, nil
 }
 
-// GetUserByName gets a user by their name in the test db.
-func (t *Testdb) GetUserByName(ctx context.Context, body request.LogIn) (accounts.User, error) {
+func (t *Testdb) NewOAuthUser(ctx context.Context, IDToken auth.GoogleIDTokenClaims) (accounts.User, error) {
+	return accounts.User{}, nil
+}
+
+// GetUserByEmail gets a user by their name in the test db.
+func (t *Testdb) GetUserByEmail(ctx context.Context, email string) (accounts.User, error) {
 	for _, v := range t.Users {
-		if v.Name == body.Name {
-			if v.Password == body.Password {
-				return accounts.User{}, errors.NewAPIError(403, errors.ErrWrongCredentials.Error(), "error: name or password incorrect")
-			}
+		if v.Email == email {
 			return v, nil
 		}
 	}
-	return accounts.User{}, errors.NewAPIError(403, errors.ErrWrongCredentials.Error(), "error: name or password incorrect")
+	return accounts.User{}, errors.ErrBadRequest
 }
 
 // GetUserByAPIKey gets a user by their APIKey in the test db.

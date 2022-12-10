@@ -8,43 +8,85 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/password"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
+	"github.com/conalli/bookshelf-backend/pkg/services/auth"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// NewUser is a func.
-func (m *Mongo) NewUser(ctx context.Context, requestData request.SignUp) (accounts.User, errors.APIErr) {
+// NewUser creates a new user in the db.
+func (m *Mongo) NewUser(ctx context.Context, requestData request.SignUp) (accounts.User, error) {
 	m.Initialize()
 	defer m.client.Disconnect(ctx)
 	err := m.client.Connect(ctx)
 	if err != nil {
 		m.log.Errorf("could not connect to db, %+v", err)
-		return accounts.User{}, errors.NewInternalServerError()
+		return accounts.User{}, errors.ErrInternalServerError
 	}
 	collection := m.db.Collection(CollectionUsers)
-	userExists := m.DataAlreadyExists(ctx, collection, "name", requestData.Name)
+	userExists := m.DataAlreadyExists(ctx, collection, "email", requestData.Email)
 	if userExists {
-		m.log.Error("user already exists")
-		return accounts.User{}, errors.NewBadRequestError(fmt.Sprintf("error creating new user; user with name %v already exists", requestData.Name))
+		m.log.Errorf("error creating new user; user with email %v already exists", requestData.Email)
+		return accounts.User{}, errors.ErrBadRequest
 	}
+	APIKey, err := accounts.GenerateAPIKey()
+	if err != nil {
+		m.log.Error("could not generate uuid")
+		return accounts.User{}, errors.ErrInternalServerError
+	}
+	hashedPassword, err := password.HashPassword(requestData.Password)
+	if err != nil {
+		m.log.Error("could not hash password")
+		return accounts.User{}, errors.ErrInternalServerError
+	}
+	signUpData := accounts.User{
+		Email:    requestData.Email,
+		Password: hashedPassword,
+		APIKey:   APIKey,
+		Cmds:     map[string]string{},
+		Teams:    map[string]string{},
+	}
+	result, err := collection.InsertOne(ctx, signUpData)
+	if err != nil {
+		m.log.Error("could not create new user")
+		return accounts.User{}, errors.ErrInternalServerError
+	}
+	userOID, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		m.log.Error("error getting objectID from newly inserted user")
+		return accounts.User{}, errors.ErrInternalServerError
+	}
+	signUpData.ID = userOID.Hex()
+	return signUpData, nil
+}
+
+// NewOAuthUser makes a new user based on a Google ID token.
+func (m *Mongo) NewOAuthUser(ctx context.Context, IDToken auth.GoogleIDTokenClaims) (accounts.User, error) {
+	m.Initialize()
+	defer m.client.Disconnect(ctx)
+	err := m.client.Connect(ctx)
+	if err != nil {
+		m.log.Errorf("could not connect to db, %+v", err)
+		return accounts.User{}, errors.ErrInternalServerError
+	}
+	collection := m.db.Collection(CollectionUsers)
 	APIKey, err := accounts.GenerateAPIKey()
 	if err != nil {
 		m.log.Error("could not generate uuid")
 		return accounts.User{}, errors.NewInternalServerError()
 	}
-	hashedPassword, err := password.HashPassword(requestData.Password)
-	if err != nil {
-		m.log.Error("could not hash password")
-		return accounts.User{}, errors.NewInternalServerError()
-	}
 	signUpData := accounts.User{
-		Name:     requestData.Name,
-		Password: hashedPassword,
-		APIKey:   APIKey,
-		Cmds:     map[string]string{},
-		Teams:    map[string]string{},
+		APIKey:        APIKey,
+		Name:          IDToken.Name,
+		GivenName:     IDToken.GivenName,
+		FamilyName:    IDToken.FamilyName,
+		PictureURL:    IDToken.PictureURL,
+		Email:         IDToken.Email,
+		EmailVerified: IDToken.EmailVerified,
+		Locale:        IDToken.Locale,
+		Cmds:          map[string]string{},
+		Teams:         map[string]string{},
 	}
 	result, err := collection.InsertOne(ctx, signUpData)
 	if err != nil {
@@ -60,8 +102,93 @@ func (m *Mongo) NewUser(ctx context.Context, requestData request.SignUp) (accoun
 	return signUpData, nil
 }
 
-// GetUserByName checks the users credentials returns the user if password is correct.
-func (m *Mongo) GetUserByName(ctx context.Context, requestData request.LogIn) (accounts.User, error) {
+// Delete attempts to delete a user from the db, returning the number of deleted users.
+// TODO: remove user from all users teams.
+func (m *Mongo) Delete(ctx context.Context, requestData request.DeleteUser, APIKey string) (int, errors.APIErr) {
+	m.Initialize()
+	defer m.client.Disconnect(ctx)
+	err := m.client.Connect(ctx)
+	if err != nil {
+		m.log.Error("could not connect to db")
+		return 0, errors.NewInternalServerError()
+	}
+	collection := m.db.Collection(CollectionUsers)
+	res, err := m.GetByID(ctx, collection, requestData.ID)
+	if err != nil {
+		m.log.Errorf("could not find user to delete:  %v", err)
+		return 0, errors.NewBadRequestError("could not find user to delete")
+	}
+	userData, err := m.DecodeUser(res)
+	if err != nil {
+		m.log.Errorf("could not decode user: %v", err)
+		return 0, errors.NewBadRequestError("could not find user to delete")
+	}
+	ok := password.CheckHashedPassword(userData.Password, requestData.Password)
+	if !ok {
+		m.log.Errorf("could not delete user - password incorrect: %v", err)
+		return 0, errors.NewWrongCredentialsError("password incorrect")
+	}
+	result, err := m.deleteUserFromDB(ctx, collection, requestData.ID)
+	if err != nil {
+		m.log.Errorf("could not delete user: %v", err)
+		return 0, errors.NewInternalServerError()
+	}
+	if result.DeletedCount == 0 {
+		m.log.Error("no users deleted")
+		return 0, errors.NewBadRequestError("error: could not remove cmd")
+	}
+	return int(result.DeletedCount), nil
+}
+
+// deleteUserFromDB takes a given userID and removes the user from the database.
+func (m *Mongo) deleteUserFromDB(ctx context.Context, collection *mongo.Collection, userID string) (*mongo.DeleteResult, error) {
+	opts := options.Delete().SetCollation(&options.Collation{
+		Locale:    "en_US",
+		Strength:  1,
+		CaseLevel: false,
+	})
+	id, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		m.log.Error("could not get ObjectID from hex")
+		return nil, err
+	}
+	filter := bson.D{primitive.E{Key: "_id", Value: id}}
+	result, err := collection.DeleteOne(ctx, filter, opts)
+	if err != nil {
+		m.log.Errorf("could not delete user: %v", err)
+		return nil, err
+	}
+	return result, nil
+}
+
+// UserAlreadyExists checks the db for a user with given email and returns whether they already exist or not.
+func (m *Mongo) UserAlreadyExists(ctx context.Context, email string) (bool, error) {
+	m.Initialize()
+	defer m.client.Disconnect(ctx)
+	err := m.client.Connect(ctx)
+	if err != nil {
+		m.log.Error("couldn't connect to db")
+		return false, errors.ErrInternalServerError
+	}
+	collection := m.db.Collection(CollectionUsers)
+	return m.DataAlreadyExists(ctx, collection, "email", email), nil
+}
+
+// GetUserByAPIKey retrieves a user from the db based on their APIKey.
+func (m *Mongo) GetUserByAPIKey(ctx context.Context, APIKey string) (accounts.User, error) {
+	m.Initialize()
+	err := m.client.Connect(ctx)
+	if err != nil {
+		m.log.Error("could not connect to db")
+	}
+	defer m.client.Disconnect(ctx)
+	collection := m.db.Collection(CollectionUsers)
+	res := m.GetByKey(ctx, collection, "APIKey", APIKey)
+	return m.DecodeUser(res)
+}
+
+// GetUserByEmail checks the users credentials returns the user if password is correct.
+func (m *Mongo) GetUserByEmail(ctx context.Context, email string) (accounts.User, error) {
 	m.Initialize()
 	defer m.client.Disconnect(ctx)
 	err := m.client.Connect(ctx)
@@ -70,7 +197,7 @@ func (m *Mongo) GetUserByName(ctx context.Context, requestData request.LogIn) (a
 		return accounts.User{}, errors.NewInternalServerError()
 	}
 	collection := m.db.Collection(CollectionUsers)
-	res := m.GetByKey(ctx, collection, "name", requestData.Name)
+	res := m.GetByKey(ctx, collection, "email", email)
 	return m.DecodeUser(res)
 }
 
@@ -173,76 +300,4 @@ func (m *Mongo) removeUserCmd(ctx context.Context, collection *mongo.Collection,
 		return nil, err
 	}
 	return result, nil
-}
-
-// Delete attempts to delete a user from the db, returning the number of deleted users.
-// TODO: remove user from all users teams.
-func (m *Mongo) Delete(ctx context.Context, requestData request.DeleteUser, APIKey string) (int, errors.APIErr) {
-	m.Initialize()
-	defer m.client.Disconnect(ctx)
-	err := m.client.Connect(ctx)
-	if err != nil {
-		m.log.Error("could not connect to db")
-		return 0, errors.NewInternalServerError()
-	}
-	collection := m.db.Collection(CollectionUsers)
-	res, err := m.GetByID(ctx, collection, requestData.ID)
-	if err != nil {
-		m.log.Errorf("could not find user to delete:  %v", err)
-		return 0, errors.NewBadRequestError("could not find user to delete")
-	}
-	userData, err := m.DecodeUser(res)
-	if err != nil {
-		m.log.Errorf("could not decode user: %v", err)
-		return 0, errors.NewBadRequestError("could not find user to delete")
-	}
-	ok := password.CheckHashedPassword(userData.Password, requestData.Password)
-	if !ok {
-		m.log.Errorf("could not delete user - password incorrect: %v", err)
-		return 0, errors.NewWrongCredentialsError("password incorrect")
-	}
-	result, err := m.deleteUserFromDB(ctx, collection, requestData.ID)
-	if err != nil {
-		m.log.Errorf("could not delete user: %v", err)
-		return 0, errors.NewInternalServerError()
-	}
-	if result.DeletedCount == 0 {
-		m.log.Error("no users deleted")
-		return 0, errors.NewBadRequestError("error: could not remove cmd")
-	}
-	return int(result.DeletedCount), nil
-}
-
-// deleteUserFromDB takes a given userID and removes the user from the database.
-func (m *Mongo) deleteUserFromDB(ctx context.Context, collection *mongo.Collection, userID string) (*mongo.DeleteResult, error) {
-	opts := options.Delete().SetCollation(&options.Collation{
-		Locale:    "en_US",
-		Strength:  1,
-		CaseLevel: false,
-	})
-	id, err := primitive.ObjectIDFromHex(userID)
-	if err != nil {
-		m.log.Error("could not get ObjectID from hex")
-		return nil, err
-	}
-	filter := bson.D{primitive.E{Key: "_id", Value: id}}
-	result, err := collection.DeleteOne(ctx, filter, opts)
-	if err != nil {
-		m.log.Errorf("could not delete user: %v", err)
-		return nil, err
-	}
-	return result, nil
-}
-
-// GetUserByAPIKey retrieves a user from the db based on their APIKey.
-func (m *Mongo) GetUserByAPIKey(ctx context.Context, APIKey string) (accounts.User, error) {
-	m.Initialize()
-	err := m.client.Connect(ctx)
-	if err != nil {
-		m.log.Error("could not connect to db")
-	}
-	defer m.client.Disconnect(ctx)
-	collection := m.db.Collection(CollectionUsers)
-	res := m.GetByKey(ctx, collection, "APIKey", APIKey)
-	return m.DecodeUser(res)
 }
