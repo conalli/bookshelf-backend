@@ -16,8 +16,10 @@ func OAuthRequest(a auth.Service, log logs.Logger) http.HandlerFunc {
 			log.Error(err)
 			errors.APIErrorResponse(w, errors.NewInternalServerError())
 		}
-		authType := r.FormValue("type")
-		data, err := a.OAuthRequest(r.Context(), authType)
+		queryParams := r.URL.Query()
+		authProvider := queryParams.Get("provider")
+		authType := queryParams.Get("type")
+		data, err := a.OAuthRequest(r.Context(), authProvider, authType)
 		if err != nil {
 			log.Error(err)
 			errors.APIErrorResponse(w, errors.NewInternalServerError())

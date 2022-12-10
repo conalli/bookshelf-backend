@@ -1,38 +1,66 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/auth"
+	"github.com/gorilla/mux"
 )
 
 func OAuthRedirect(a auth.Service, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		route := mux.Vars(r)
+		authProvider, ok := route["authProvider"]
+		authType, ok2 := route["authType"]
+		if !(ok && ok2) {
+			log.Error("no authType returned from redirect")
+			errors.APIErrorResponse(w, errors.NewBadRequestError("invalid request url"))
+			return
+		}
 		err := r.ParseForm()
 		if err != nil {
 			log.Error(err)
 			errors.APIErrorResponse(w, errors.NewInternalServerError())
 			return
 		}
-		stateCookie, err := r.Cookie("state")
-		if err != nil {
-			log.Error(err)
-			errors.APIErrorResponse(w, errors.NewInternalServerError())
-			return
-		}
-		nonceCookie, err := r.Cookie("nonce")
-		if err != nil {
-			log.Error(err)
-			errors.APIErrorResponse(w, errors.NewInternalServerError())
-			return
-		}
-		_, apierr := a.OAuthRedirect(r.Context(), r.FormValue("code"), r.FormValue("state"), stateCookie, nonceCookie)
+
+		user, apierr := a.OAuthRedirect(r.Context(), authProvider, authType, r.FormValue("code"), r.FormValue("state"), r.Cookies())
 		if apierr != nil {
-			log.Error(err)
+			log.Errorf("error returned while trying to create a new oauth user: %v", err)
 			errors.APIErrorResponse(w, apierr)
+			return
 		}
+		log.Infof("successfully created a new user: %+v", user)
+		tokens, err := auth.NewTokens(user.APIKey, log)
+		if err != nil {
+			log.Errorf("error returned while trying to create a new token: %v", err)
+			errors.APIErrorResponse(w, apierr)
+			return
+		}
+		accessToken := http.Cookie{
+			Name:     "bookshelfjwt",
+			Value:    tokens["access_token"],
+			Expires:  time.Now().Add(15 * time.Minute),
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteNoneMode,
+		}
+		refreshToken := http.Cookie{
+			Name:     "bookshelfrefresh",
+			Value:    tokens["refresh_token"],
+			Expires:  time.Now().Add(24 * time.Hour),
+			Secure:   true,
+			SameSite: http.SameSiteNoneMode,
+		}
+		log.Info("successfully returned token as cookie")
+		http.SetCookie(w, &accessToken)
+		http.SetCookie(w, &refreshToken)
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(user)
 	}
 }
