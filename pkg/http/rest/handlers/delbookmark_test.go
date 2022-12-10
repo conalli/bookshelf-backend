@@ -58,7 +58,6 @@ func TestDeleteBookmark(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Couldn't decode json body upon deleting bookmarks.")
 			}
-			t.Logf("%+v", response)
 			if response.NumDeleted != c.res.NumDeleted {
 				t.Errorf("Expected %d bookmarks to be deleted: got %d", c.res.NumDeleted, response.NumDeleted)
 			}

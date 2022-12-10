@@ -27,7 +27,7 @@ func TestSignUp(t *testing.T) {
 		{
 			name: "Correct request",
 			req: request.SignUp{
-				Name:     "signuptest",
+				Email:    "correct_request@bookshelftest.com",
 				Password: "password",
 			},
 			statusCode: 200,
@@ -35,7 +35,7 @@ func TestSignUp(t *testing.T) {
 		{
 			name: "User Already exists",
 			req: request.SignUp{
-				Name:     "user1",
+				Email:    "default_user@bookshelftest.com",
 				Password: "password",
 			},
 			statusCode: 400,
@@ -47,7 +47,7 @@ func TestSignUp(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Couldn't marshal json body to sign up.")
 			}
-			res, err := http.Post(srv.URL+"/api/user", "application/json", body)
+			res, err := http.Post(srv.URL+"/api/auth/signup", "application/json", body)
 			if err != nil {
 				t.Fatalf("Couldn't make post request.")
 			}
@@ -59,10 +59,6 @@ func TestSignUp(t *testing.T) {
 				err = json.NewDecoder(res.Body).Decode(&usr)
 				if err != nil {
 					t.Fatalf("Couldn't decode json body upon sign up.")
-				}
-				// Change password hashing logic
-				if usr.ID != usr.Name+"999" || usr.Name != "signuptest" || usr.Password != "password" {
-					t.Fatalf("Unexpected sign up data")
 				}
 				if request.FilterCookies(db.Users["1"].APIKey, res.Cookies()) != nil {
 					t.Errorf("Expected jwt cookie to be returned upon log in.")

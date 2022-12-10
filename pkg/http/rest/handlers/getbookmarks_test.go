@@ -24,7 +24,7 @@ func TestGetBookmarks(t *testing.T) {
 		res        []bookmarks.Bookmark
 	}{
 		{
-			name:       "Default user, correct req",
+			name:       "Default user, correct request",
 			APIKey:     db.Users["1"].APIKey,
 			statusCode: 200,
 			res:        []bookmarks.Bookmark{db.Bookmarks[0]},

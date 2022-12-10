@@ -24,14 +24,14 @@ type Router struct {
 
 // NewRouter returns a router with all handlers assigned to it
 func NewRouter(l logs.Logger, v *validator.Validate, store db.Storage, cache db.Cache, p *oidc.Provider) *Router {
-	a := auth.NewService(l, v, p)
+	a := auth.NewService(l, v, p, store)
 	u := accounts.NewUserService(l, v, store, cache)
 	s := search.NewService(l, v, store, cache)
 	b := bookmarks.NewService(l, v, store)
 	r := &Router{l, mux.NewRouter()}
 
 	api := r.initRouter()
-	addOAuthRoutes(api, a, l)
+	addAuthRoutes(api, a, l)
 	addUserRoutes(api, u, l)
 	addSearchRoutes(api, s, l)
 	addBookmarkRoutes(api, b, l)
@@ -50,7 +50,7 @@ func (r *Router) Walk() *Router {
 	r.router.Walk(func(route *mux.Route, _ *mux.Router, _ []*mux.Route) error {
 		tpl, err1 := route.GetPathTemplate()
 		met, err2 := route.GetMethods()
-		r.log.Infof("Path:", tpl, "Err:", err1, "Methods:", met, "Err:", err2)
+		r.log.Info("Path:", tpl, "Err:", err1, "Methods:", met, "Err:", err2)
 		return nil
 	})
 	return r
@@ -66,17 +66,17 @@ func (r *Router) HandlerWithCORS() http.Handler {
 	return middleware.CORSMiddleware(r.router)
 }
 
-func addOAuthRoutes(router *mux.Router, a auth.Service, l logs.Logger) {
-	auth := router.PathPrefix("/oauth").Subrouter()
-	auth.HandleFunc("", handlers.OAuthRequest(a, l)).Methods("GET")
-	auth.HandleFunc("/redirect", handlers.OAuthRedirect(a, l)).Methods("GET")
+func addAuthRoutes(router *mux.Router, a auth.Service, l logs.Logger) {
+	auth := router.PathPrefix("/auth").Subrouter()
+	auth.HandleFunc("/signup", handlers.SignUp(a, l)).Methods("POST")
+	auth.HandleFunc("/login", handlers.LogIn(a, l)).Methods("POST")
+	auth.HandleFunc("/oauth", handlers.OAuthRequest(a, l)).Methods("GET")
+	auth.HandleFunc("/redirect/{authProvider}/{authType}", handlers.OAuthRedirect(a, l)).Methods("GET")
 }
 
 func addUserRoutes(router *mux.Router, u accounts.UserService, l logs.Logger) {
 	user := router.PathPrefix("/user").Subrouter()
-	user.HandleFunc("", handlers.SignUp(u, l)).Methods("POST")
 	user.HandleFunc("/{APIKey}", auth.Authorized(handlers.DelUser(u, l), l)).Methods("DELETE")
-	user.HandleFunc("/login", handlers.LogIn(u, l)).Methods("POST")
 	user.HandleFunc("/cmd/{APIKey}", auth.Authorized(handlers.GetCmds(u, l), l)).Methods("GET")
 	user.HandleFunc("/cmd/{APIKey}", auth.Authorized(handlers.AddCmd(u, l), l)).Methods("POST")
 	user.HandleFunc("/cmd/{APIKey}", auth.Authorized(handlers.DeleteCmd(u, l), l)).Methods("PATCH")

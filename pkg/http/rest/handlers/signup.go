@@ -8,13 +8,12 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
-	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/services/auth"
 )
 
 // SignUp is the handler for the signup endpoint. Checks db for username and if
 // unique adds new user with given credentials.
-func SignUp(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
+func SignUp(a auth.Service, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Info("Sign Up endpoint hit")
 		newUserReq, parseErr := request.DecodeJSONRequest[request.SignUp](r.Body)
@@ -22,7 +21,7 @@ func SignUp(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter,
 			errRes := errors.NewBadRequestError("could not parse request body")
 			errors.APIErrorResponse(w, errRes)
 		}
-		newUser, err := u.NewUser(r.Context(), newUserReq)
+		newUser, err := a.SignUp(r.Context(), newUserReq)
 		if err != nil {
 			log.Errorf("error returned while trying to create a new user: %v", err)
 			errors.APIErrorResponse(w, err)
@@ -55,7 +54,6 @@ func SignUp(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter,
 		http.SetCookie(w, &refreshToken)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		res := newUser
-		json.NewEncoder(w).Encode(res)
+		json.NewEncoder(w).Encode(newUser)
 	}
 }

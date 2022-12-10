@@ -10,7 +10,7 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
-	"github.com/conalli/bookshelf-backend/pkg/http/rest/handlers"
+	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -24,16 +24,16 @@ func TestLogin(t *testing.T) {
 		name       string
 		req        request.LogIn
 		statusCode int
-		res        handlers.LogInResponse
+		res        accounts.User
 	}{
 		{
 			name: "Default user",
 			req: request.LogIn{
-				Name:     "user1",
+				Email:    "default_user@bookshelftest.com",
 				Password: "password",
 			},
 			statusCode: 200,
-			res: handlers.LogInResponse{
+			res: accounts.User{
 				ID:     db.Users["1"].ID,
 				APIKey: db.Users["1"].APIKey,
 			},
@@ -41,7 +41,7 @@ func TestLogin(t *testing.T) {
 		{
 			name: "Incorrect user",
 			req: request.LogIn{
-				Name:     "incorrect_user",
+				Email:    "incorrect_user@bookshelftest.com",
 				Password: "password",
 			},
 			statusCode: 401,
@@ -53,12 +53,12 @@ func TestLogin(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Couldn't marshal json body to log in.")
 			}
-			res, err := http.Post(srv.URL+"/api/user/login", "application/json", body)
+			res, err := http.Post(srv.URL+"/api/auth/login", "application/json", body)
 			if err != nil {
 				t.Fatalf("Couldn't make post request.")
 			}
 			if res.StatusCode != c.statusCode {
-				t.Errorf("Expected sign up request %v to give status code %d: got %d", c.req, c.statusCode, res.StatusCode)
+				t.Errorf("Expected login request %v to give status code %d: got %d", c.req, c.statusCode, res.StatusCode)
 			}
 			if res.StatusCode >= 400 {
 				var response errors.ResError
@@ -67,7 +67,7 @@ func TestLogin(t *testing.T) {
 					t.Fatalf("Couldn't decode json body upon sign up.")
 				}
 			} else {
-				var response handlers.LogInResponse
+				var response accounts.User
 				err = json.NewDecoder(res.Body).Decode(&response)
 				if err != nil {
 					t.Fatalf("Couldn't decode json body upon sign up.")
