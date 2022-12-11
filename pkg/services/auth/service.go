@@ -7,7 +7,6 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
-	"github.com/conalli/bookshelf-backend/pkg/password"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/go-playground/validator/v10"
@@ -76,7 +75,7 @@ func (s *service) LogIn(ctx context.Context, requestData request.LogIn) (account
 		return accounts.User{}, errors.NewBadRequestError("request format incorrect.")
 	}
 	user, err := s.db.GetUserByEmail(reqCtx, requestData.Email)
-	if err != nil || !password.CheckHashedPassword(user.Password, requestData.Password) {
+	if err != nil || !CheckHashedPassword(user.Password, requestData.Password) {
 		s.log.Errorf("could not login: %+v", err)
 		return accounts.User{}, errors.NewAPIError(http.StatusUnauthorized, errors.ErrWrongCredentials.Error(), "error: name or password incorrect")
 	}

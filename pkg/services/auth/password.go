@@ -1,10 +1,10 @@
-package password
+package auth
 
 import "golang.org/x/crypto/bcrypt"
 
 // HashPassword takes a password and returns the hashed version of it.
 func HashPassword(password string) (string, error) {
-	hashed, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(hashed), err
 }
 

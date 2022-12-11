@@ -9,7 +9,6 @@ import (
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
-	"github.com/conalli/bookshelf-backend/pkg/password"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/services/auth"
 	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
@@ -29,7 +28,7 @@ func NewDB() *Testdb {
 
 // AddDefaultUsers adds users to an empty testutils.
 func (t *Testdb) AddDefaultUsers() *Testdb {
-	pw, _ := password.HashPassword("password")
+	pw, _ := auth.HashPassword("password")
 	usrs := map[string]accounts.User{
 		"1": {
 			ID:       "c55fdaace3388c2189875fc5",

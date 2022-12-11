@@ -6,7 +6,6 @@ import (
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
-	"github.com/conalli/bookshelf-backend/pkg/password"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/services/auth"
 	"go.mongodb.org/mongo-driver/bson"
@@ -35,7 +34,7 @@ func (m *Mongo) NewUser(ctx context.Context, requestData request.SignUp) (accoun
 		m.log.Error("could not generate uuid")
 		return accounts.User{}, errors.ErrInternalServerError
 	}
-	hashedPassword, err := password.HashPassword(requestData.Password)
+	hashedPassword, err := auth.HashPassword(requestData.Password)
 	if err != nil {
 		m.log.Error("could not hash password")
 		return accounts.User{}, errors.ErrInternalServerError
@@ -123,7 +122,7 @@ func (m *Mongo) Delete(ctx context.Context, requestData request.DeleteUser, APIK
 		m.log.Errorf("could not decode user: %v", err)
 		return 0, errors.NewBadRequestError("could not find user to delete")
 	}
-	ok := password.CheckHashedPassword(userData.Password, requestData.Password)
+	ok := auth.CheckHashedPassword(userData.Password, requestData.Password)
 	if !ok {
 		m.log.Errorf("could not delete user - password incorrect: %v", err)
 		return 0, errors.NewWrongCredentialsError("password incorrect")
