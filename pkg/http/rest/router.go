@@ -31,6 +31,7 @@ func NewRouter(l logs.Logger, v *validator.Validate, store db.Storage, cache db.
 	r := &Router{l, mux.NewRouter()}
 
 	api := r.initRouter()
+	r.addRouterMiddleware(l)
 	addAuthRoutes(api, a, l)
 	addUserRoutes(api, u, l)
 	addSearchRoutes(api, s, l)
@@ -41,8 +42,13 @@ func NewRouter(l logs.Logger, v *validator.Validate, store db.Storage, cache db.
 
 func (r *Router) initRouter() *mux.Router {
 	api := r.router.PathPrefix("/api").Subrouter()
-	api.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) { w.Write([]byte("Hello")) }).Methods("GET")
+	api.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) }).Methods("GET")
 	return api
+}
+
+func (r *Router) addRouterMiddleware(l logs.Logger) {
+	logmw := middleware.RouteLogger(l)
+	r.router.Use(logmw)
 }
 
 // Walk prints all the routes of the current router.
@@ -63,7 +69,7 @@ func (r *Router) Handler() http.Handler {
 
 // HandlerWithCORS provides basic CORS middleware for a router.
 func (r *Router) HandlerWithCORS() http.Handler {
-	return middleware.CORSMiddleware(r.router)
+	return middleware.CORS(r.router)
 }
 
 func addAuthRoutes(router *mux.Router, a auth.Service, l logs.Logger) {
