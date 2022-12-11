@@ -75,7 +75,7 @@ func TestLogin(t *testing.T) {
 				if response.ID != c.res.ID || response.APIKey != c.res.APIKey {
 					t.Fatalf("Unexpected log in data")
 				}
-				if request.FilterCookies(c.res.APIKey, res.Cookies()) != nil {
+				if request.FilterCookies(res.Cookies(), c.res.APIKey) != nil {
 					t.Errorf("Expected jwt cookie to be returned upon log in.")
 				}
 			}

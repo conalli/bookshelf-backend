@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
@@ -35,30 +34,17 @@ func OAuthRedirect(a auth.Service, log logs.Logger) func(w http.ResponseWriter, 
 			return
 		}
 		log.Infof("successfully created a new user: %+v", user)
-		tokens, err := auth.NewTokens(user.APIKey, log)
+		tokens, err := auth.NewTokens(log, user.APIKey)
 		if err != nil {
 			log.Errorf("error returned while trying to create a new token: %v", err)
-			errors.APIErrorResponse(w, apierr)
+			errors.APIErrorResponse(w, errors.NewInternalServerError())
 			return
 		}
-		accessToken := http.Cookie{
-			Name:     "bookshelfjwt",
-			Value:    tokens["access_token"],
-			Expires:  time.Now().Add(15 * time.Minute),
-			HttpOnly: true,
-			Secure:   true,
-			SameSite: http.SameSiteNoneMode,
-		}
-		refreshToken := http.Cookie{
-			Name:     "bookshelfrefresh",
-			Value:    tokens["refresh_token"],
-			Expires:  time.Now().Add(24 * time.Hour),
-			Secure:   true,
-			SameSite: http.SameSiteNoneMode,
-		}
+		cookies := tokens.NewTokenCookies(log)
 		log.Info("successfully returned token as cookie")
-		http.SetCookie(w, &accessToken)
-		http.SetCookie(w, &refreshToken)
+		for _, cookie := range cookies {
+			http.SetCookie(w, cookie)
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(user)
