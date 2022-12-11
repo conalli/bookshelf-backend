@@ -99,7 +99,7 @@ func (s *service) OAuthRequest(ctx context.Context, authProvider, authType strin
 }
 
 func (s *service) OAuthRedirect(ctx context.Context, authProvider, authType, code, state string, cookies []*http.Cookie) (accounts.User, errors.APIErr) {
-	stateCookie := request.FilterCookies("state", cookies)
+	stateCookie := request.FilterCookies(cookies, state)
 	if stateCookie == nil {
 		s.log.Error("no cookies in request")
 		return accounts.User{}, errors.NewBadRequestError("no cookies in auth request")
@@ -122,7 +122,7 @@ func (s *service) OAuthRedirect(ctx context.Context, authProvider, authType, cod
 }
 
 func (s *service) GoogleOAuthRedirect(ctx context.Context, authType, code string, cookies []*http.Cookie) (accounts.User, errors.APIErr) {
-	nonceCookie := request.FilterCookies("nonce", cookies)
+	nonceCookie := request.FilterCookies(cookies, "nonce")
 	oauth2Token, err := newGoogleOAuth2Config(authType).Exchange(ctx, code)
 	if err != nil {
 		s.log.Error("could not exchange authorization code for token:", err)

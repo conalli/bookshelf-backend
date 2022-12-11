@@ -23,20 +23,20 @@ func TestNewToken(t *testing.T) {
 
 	for _, n := range tn {
 		t.Run(n, func(t *testing.T) {
-			tkn, err := auth.NewTokens(n, testutils.NewLogger())
+			tkns, err := auth.NewTokens(testutils.NewLogger(), n)
 			if err != nil {
 				t.Fatalf("couldn't make a new token with name: %s", n)
 			}
-			token, e := jwt.ParseWithClaims(tkn["access_token"], &auth.CustomClaims{}, func(t *jwt.Token) (interface{}, error) { return signingKey, nil })
+			token, e := jwt.ParseWithClaims(tkns.AccessToken(), &auth.JWTCustomClaims{}, func(t *jwt.Token) (interface{}, error) { return signingKey, nil })
 			if e != nil {
 				t.Fatalf("couldn't parse token: %+v", e)
 			}
-			claimToken, ok := token.Claims.(*auth.CustomClaims)
+			claimToken, ok := token.Claims.(*auth.JWTCustomClaims)
 			if !ok {
 				t.Fatal("invalid custom claims")
 			}
-			if claimToken.Name != n {
-				t.Fatalf("token.Name: %s not equal to name: %s", claimToken.Name, n)
+			if claimToken.Subject != n {
+				t.Fatalf("token.Name: %s not equal to name: %s", claimToken.Subject, n)
 			}
 		})
 	}

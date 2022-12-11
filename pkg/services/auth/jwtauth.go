@@ -6,127 +6,129 @@ import (
 	"time"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
-	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/gorilla/mux"
+	"github.com/google/uuid"
+)
+
+const (
+	BookshelfTokenCode    string = "bookshelf_token_code"
+	BookshelfAccessToken  string = "bookshelf_access_token"
+	BookshelfRefreshToken string = "bookshelf_refresh_token"
 )
 
 var signingKey = []byte(os.Getenv("SIGNING_SECRET"))
 
 // CustomClaims represents the claims made in the JWT.
-type CustomClaims struct {
-	Name string
+type JWTCustomClaims struct {
+	Code string
 	jwt.RegisteredClaims
+}
+
+type bookshelfTokens struct {
+	code, accessToken, refreshToken string
+}
+
+func (b *bookshelfTokens) Code() string {
+	return b.code
+}
+
+func (b *bookshelfTokens) AccessToken() string {
+	return b.accessToken
 }
 
 // NewTokens creates a new token based on the CustomClaims and returns the token
 // as a string signed with the secret.
-func NewTokens(name string, log logs.Logger) (map[string]string, errors.APIErr) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, CustomClaims{
-		Name: name,
+func NewTokens(log logs.Logger, id string) (*bookshelfTokens, error) {
+	jwtid, err := uuid.NewRandom()
+	if err != nil {
+		log.Error("could not generate uuid for jwt")
+		return nil, errors.ErrInternalServerError
+	}
+	code := jwtid.String()
+	codeHash, err := HashPassword(code)
+	if err != nil {
+		log.Error("could not hash jwt code")
+		return nil, errors.ErrInternalServerError
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, JWTCustomClaims{
+		Code: codeHash,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    "http://bookshelf-backend.jp",
-			Subject:   name,
+			Issuer:    "https://localhost:8080/api",
+			Subject:   id,
 		},
 	})
 	refresh := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		NotBefore: jwt.NewNumericDate(time.Now()),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
-		Issuer:    "http://bookshelf-backend.jp",
-		Subject:   name,
+		Issuer:    "https://localhost:8080/api",
+		Subject:   id,
 	})
-	tkn, tknErr := token.SignedString(signingKey)
+	access, tknErr := token.SignedString(signingKey)
 	ref, refErr := refresh.SignedString(signingKey)
 	if tknErr != nil || refErr != nil {
 		log.Errorf("error when trying to sign tokens %+v", token)
-		return nil, errors.NewInternalServerError()
+		return nil, errors.ErrInternalServerError
 	}
-	tkns := map[string]string{
-		"access_token":  tkn,
-		"refresh_token": ref,
-	}
-	return tkns, nil
+	tokens := &bookshelfTokens{code, access, ref}
+	return tokens, nil
 }
 
-// Authorized reads the JWT from the incoming request and returns whether the user is authorized or not.
-func Authorized(next http.HandlerFunc, log logs.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		name := vars["APIKey"]
-		cookies := r.Cookies()
-		if len(cookies) < 1 {
-			log.Error("no cookies in request")
-			errors.APIErrorResponse(w, errors.NewBadRequestError("no cookies in request"))
-			return
-		}
-		bookshelfCookie := request.FilterCookies("bookshelfjwt", cookies)
-		refreshCookie := request.FilterCookies("bookshelfrefresh", cookies)
-		if bookshelfCookie == nil && refreshCookie == nil {
-			log.Error("did not find bookshelf cookies")
-			errors.APIErrorResponse(w, errors.NewBadRequestError("did not find bookshelf cookies"))
-			return
-		}
-		if bookshelfCookie != nil {
-			token, err := jwt.ParseWithClaims(bookshelfCookie.Value, &CustomClaims{}, func(t *jwt.Token) (interface{}, error) { return signingKey, nil })
-			tkn, ok := token.Claims.(*CustomClaims)
-			if !ok || err != nil {
-				log.Error("failed to convert token to CustomClaims")
-				errors.APIErrorResponse(w, errors.NewJWTClaimsError("failed to convert token to CustomClaims"))
-				return
-			}
-			if err = tkn.Valid(); err != nil || len(name) == 0 || tkn.Name != name || tkn.Subject != name {
-				log.Error("token not valid")
-				errors.APIErrorResponse(w, errors.NewJWTTokenError("error: token not valid"))
-				return
-			}
-		} else {
-			refresh, err := jwt.ParseWithClaims(refreshCookie.Value, &jwt.RegisteredClaims{}, func(t *jwt.Token) (interface{}, error) { return signingKey, nil })
-			if err != nil {
-				log.Errorf("failed to parse refresh token with claims: %+v\n", err)
-				errors.APIErrorResponse(w, errors.NewJWTClaimsError("failed to parse with claims"))
-				return
-			}
-			ref, ok := refresh.Claims.(*jwt.RegisteredClaims)
-			if !ok {
-				log.Error("failed to convert refresh token")
-				errors.APIErrorResponse(w, errors.NewJWTClaimsError("failed to convert token"))
-				return
-			}
-			if err = ref.Valid(); err != nil || len(name) == 0 || ref.Subject != name {
-				log.Error("refresh token not valid")
-				errors.APIErrorResponse(w, errors.NewJWTTokenError("token not valid"))
-				return
-			}
-			tokens, err := NewTokens(name, log)
-			if err != nil {
-				log.Errorf("could not create new bookshelf cookies: %v", err)
-				errors.APIErrorResponse(w, errors.NewInternalServerError())
-				return
-			}
-			accessToken := http.Cookie{
-				Name:     "bookshelfjwt",
-				Value:    tokens["access_token"],
-				Expires:  time.Now().Add(15 * time.Minute),
-				HttpOnly: true,
-				Secure:   true,
-				SameSite: http.SameSiteNoneMode,
-			}
-			refreshToken := http.Cookie{
-				Name:     "bookshelfrefresh",
-				Value:    tokens["refresh_token"],
-				Expires:  time.Now().Add(24 * time.Hour),
-				Secure:   true,
-				SameSite: http.SameSiteNoneMode,
-			}
-			log.Info("successfully returned tokens as cookies")
-			http.SetCookie(w, &accessToken)
-			http.SetCookie(w, &refreshToken)
-		}
-		next(w, r)
+func (t *bookshelfTokens) NewTokenCookies(log logs.Logger) []*http.Cookie {
+	now := time.Now()
+	accessExpires := now.Add(15 * time.Minute)
+	refreshExpires := now.Add(24 * time.Hour)
+	path := "/api"
+	secure := true
+	httpOnly := true
+	sameSite := http.SameSiteNoneMode
+
+	codeCookie := &http.Cookie{
+		Name:     BookshelfTokenCode,
+		Value:    t.code,
+		Path:     path,
+		Expires:  accessExpires,
+		Secure:   secure,
+		HttpOnly: httpOnly,
+		SameSite: sameSite,
 	}
+
+	accessCookie := &http.Cookie{
+		Name:     BookshelfAccessToken,
+		Value:    t.accessToken,
+		Path:     path,
+		Expires:  accessExpires,
+		Secure:   secure,
+		HttpOnly: httpOnly,
+		SameSite: sameSite,
+	}
+
+	refreshCookie := &http.Cookie{
+		Name:     BookshelfRefreshToken,
+		Value:    t.refreshToken,
+		Path:     path,
+		Expires:  refreshExpires,
+		Secure:   secure,
+		HttpOnly: httpOnly,
+		SameSite: sameSite,
+	}
+	return []*http.Cookie{codeCookie, refreshCookie, accessCookie}
+}
+
+func ParseAccessToken(log logs.Logger, accessToken, code string) (*JWTCustomClaims, error) {
+	token, err := jwt.ParseWithClaims(accessToken, &JWTCustomClaims{}, func(t *jwt.Token) (interface{}, error) { return signingKey, nil })
+	tkn, ok := token.Claims.(*JWTCustomClaims)
+	if !ok || err != nil {
+		log.Error("failed to convert token to JWTCustomClaims")
+		return nil, errors.ErrInvalidJWTToken
+	}
+	if err = tkn.Valid(); err != nil || CheckHashedPassword(tkn.Code, code) {
+		log.Error("token not valid: %v", err)
+		return nil, errors.ErrInvalidJWTClaims
+	}
+	return tkn, nil
 }
