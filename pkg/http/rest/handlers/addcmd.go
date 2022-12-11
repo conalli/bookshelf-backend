@@ -22,7 +22,6 @@ type AddCmdResponse struct {
 // authorized sets new cmd.
 func AddCmd(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Info("ADD CMD endpoint hit")
 		vars := mux.Vars(r)
 		APIKey := vars["APIKey"]
 		setCmdReq, parseErr := request.DecodeJSONRequest[request.AddCmd](r.Body)

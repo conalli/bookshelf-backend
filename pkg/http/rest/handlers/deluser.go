@@ -21,7 +21,6 @@ type DelUserResponse struct {
 // authorized deletes user.
 func DelUser(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Info("DELETE USER endpoint hit")
 		vars := mux.Vars(r)
 		APIKey := vars["APIKey"]
 		delAccReq, parseErr := request.DecodeJSONRequest[request.DeleteUser](r.Body)

@@ -14,7 +14,6 @@ import (
 // unique adds new user with given credentials.
 func SignUp(a auth.Service, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Info("Sign Up endpoint hit")
 		newUserReq, parseErr := request.DecodeJSONRequest[request.SignUp](r.Body)
 		if parseErr != nil {
 			errRes := errors.NewBadRequestError("could not parse request body")

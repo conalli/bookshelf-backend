@@ -13,7 +13,6 @@ import (
 // AddBookmarksFile attempts to add bookmarks to user from a given HTML file.
 func AddBookmarksFile(b bookmarks.Service, log logs.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Info("ADD BOOKMARK FILE endpoint hit")
 		vars := mux.Vars(r)
 		APIKey := vars["APIKey"]
 		err := r.ParseMultipartForm(200_000)

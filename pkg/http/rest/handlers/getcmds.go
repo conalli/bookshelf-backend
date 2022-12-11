@@ -14,7 +14,6 @@ import (
 // authorized returns all users cmds.
 func GetCmds(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Info("GET CMDS endpoint hit")
 		vars := mux.Vars(r)
 		APIKey := vars["APIKey"]
 		cmds, err := u.GetAllCmds(r.Context(), APIKey)

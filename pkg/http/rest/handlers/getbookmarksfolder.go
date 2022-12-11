@@ -14,7 +14,6 @@ import (
 // authorized returns all users bookmarks.
 func GetBookmarksFolder(b bookmarks.Service, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Info("GET BOOKMARKS endpoint hit")
 		vars := mux.Vars(r)
 		path := vars["path"]
 		APIKey := vars["APIKey"]

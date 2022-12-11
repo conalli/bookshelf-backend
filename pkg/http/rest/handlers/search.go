@@ -12,7 +12,6 @@ import (
 // associated with the cmd or to a google search of the cmd if no url can be found.
 func Search(s search.Service, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Info("Search endpoint hit")
 		vars := mux.Vars(r)
 		APIKey := vars["APIKey"]
 		args := vars["args"]

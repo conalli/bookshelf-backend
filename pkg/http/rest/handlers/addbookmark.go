@@ -22,7 +22,6 @@ type AddBookmarkResponse struct {
 // AddBookmark is the handler for the bookmark POST endpoint.
 func AddBookmark(b bookmarks.Service, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Info("ADD BOOKMARK endpoint hit")
 		vars := mux.Vars(r)
 		APIKey := vars["APIKey"]
 		addBookReq, parseErr := request.DecodeJSONRequest[request.AddBookmark](r.Body)
