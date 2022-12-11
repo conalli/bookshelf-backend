@@ -42,9 +42,7 @@ func OAuthRedirect(a auth.Service, log logs.Logger) func(w http.ResponseWriter, 
 		}
 		cookies := tokens.NewTokenCookies(log)
 		log.Info("successfully returned token as cookie")
-		for _, cookie := range cookies {
-			http.SetCookie(w, cookie)
-		}
+		auth.AddCookiesToResponse(w, cookies)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(user)

@@ -81,10 +81,9 @@ func NewTokens(log logs.Logger, id string) (*bookshelfTokens, error) {
 func (t *bookshelfTokens) NewTokenCookies(log logs.Logger) []*http.Cookie {
 	now := time.Now()
 	accessExpires := now.Add(15 * time.Minute)
-	refreshExpires := now.Add(24 * time.Hour)
-	path := "/api"
+	path := "/"
 	secure := true
-	httpOnly := true
+	httpOnly := false
 	sameSite := http.SameSiteNoneMode
 
 	codeCookie := &http.Cookie{
@@ -107,16 +106,13 @@ func (t *bookshelfTokens) NewTokenCookies(log logs.Logger) []*http.Cookie {
 		SameSite: sameSite,
 	}
 
-	refreshCookie := &http.Cookie{
-		Name:     BookshelfRefreshToken,
-		Value:    t.refreshToken,
-		Path:     path,
-		Expires:  refreshExpires,
-		Secure:   secure,
-		HttpOnly: httpOnly,
-		SameSite: sameSite,
+	return []*http.Cookie{codeCookie, accessCookie}
+}
+
+func AddCookiesToResponse(w http.ResponseWriter, cookies []*http.Cookie) {
+	for _, cookie := range cookies {
+		http.SetCookie(w, cookie)
 	}
-	return []*http.Cookie{codeCookie, refreshCookie, accessCookie}
 }
 
 func ParseAccessToken(log logs.Logger, accessToken, code string) (*JWTCustomClaims, error) {
