@@ -31,12 +31,12 @@ func NewRouter(l logs.Logger, v *validator.Validate, store db.Storage, cache db.
 	r := &Router{l, mux.NewRouter()}
 
 	api := r.initRouter()
-	r.addRouterMiddleware(l)
 	addAuthRoutes(api, a, l)
 	addUserRoutes(api, u, l)
 	addSearchRoutes(api, s, l)
 	addBookmarkRoutes(api, b, l)
 
+	r.router.Use(middleware.RouteLogger(l))
 	return r
 }
 
@@ -44,11 +44,6 @@ func (r *Router) initRouter() *mux.Router {
 	api := r.router.PathPrefix("/api").Subrouter()
 	api.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) }).Methods("GET")
 	return api
-}
-
-func (r *Router) addRouterMiddleware(l logs.Logger) {
-	logmw := middleware.RouteLogger(l)
-	r.router.Use(logmw)
 }
 
 // Walk prints all the routes of the current router.
@@ -82,10 +77,11 @@ func addAuthRoutes(router *mux.Router, a auth.Service, l logs.Logger) {
 
 func addUserRoutes(router *mux.Router, u accounts.UserService, l logs.Logger) {
 	user := router.PathPrefix("/user").Subrouter()
-	user.HandleFunc("/{APIKey}", auth.Authorized(handlers.DelUser(u, l), l)).Methods("DELETE")
-	user.HandleFunc("/cmd/{APIKey}", auth.Authorized(handlers.GetCmds(u, l), l)).Methods("GET")
-	user.HandleFunc("/cmd/{APIKey}", auth.Authorized(handlers.AddCmd(u, l), l)).Methods("POST")
-	user.HandleFunc("/cmd/{APIKey}", auth.Authorized(handlers.DeleteCmd(u, l), l)).Methods("PATCH")
+	user.Use(middleware.Authorized(l))
+	user.HandleFunc("/{APIKey}", handlers.DelUser(u, l)).Methods("DELETE")
+	user.HandleFunc("/cmd/{APIKey}", handlers.GetCmds(u, l)).Methods("GET")
+	user.HandleFunc("/cmd/{APIKey}", handlers.AddCmd(u, l)).Methods("POST")
+	user.HandleFunc("/cmd/{APIKey}", handlers.DeleteCmd(u, l)).Methods("PATCH")
 }
 
 func addSearchRoutes(router *mux.Router, s search.Service, l logs.Logger) {
@@ -95,9 +91,10 @@ func addSearchRoutes(router *mux.Router, s search.Service, l logs.Logger) {
 
 func addBookmarkRoutes(router *mux.Router, b bookmarks.Service, l logs.Logger) {
 	bookmarks := router.PathPrefix("/bookmark").Subrouter()
-	bookmarks.HandleFunc("/{APIKey}", auth.Authorized(handlers.GetAllBookmarks(b, l), l)).Methods("GET")
-	bookmarks.HandleFunc("/{path}/{APIKey}", auth.Authorized(handlers.GetBookmarksFolder(b, l), l)).Methods("GET")
-	bookmarks.HandleFunc("/{APIKey}", auth.Authorized(handlers.AddBookmark(b, l), l)).Methods("POST")
-	bookmarks.HandleFunc("/file/{APIKey}", auth.Authorized(handlers.AddBookmarksFile(b, l), l)).Methods("POST")
-	bookmarks.HandleFunc("/{APIKey}", auth.Authorized(handlers.DeleteBookmark(b, l), l)).Methods("DELETE")
+	bookmarks.Use(middleware.Authorized(l))
+	bookmarks.HandleFunc("/{APIKey}", handlers.GetAllBookmarks(b, l)).Methods("GET")
+	bookmarks.HandleFunc("/{path}/{APIKey}", handlers.GetBookmarksFolder(b, l)).Methods("GET")
+	bookmarks.HandleFunc("/{APIKey}", handlers.AddBookmark(b, l)).Methods("POST")
+	bookmarks.HandleFunc("/file/{APIKey}", handlers.AddBookmarksFile(b, l)).Methods("POST")
+	bookmarks.HandleFunc("/{APIKey}", handlers.DeleteBookmark(b, l)).Methods("DELETE")
 }
