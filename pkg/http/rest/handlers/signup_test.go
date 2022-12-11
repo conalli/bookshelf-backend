@@ -60,7 +60,7 @@ func TestSignUp(t *testing.T) {
 				if err != nil {
 					t.Fatalf("Couldn't decode json body upon sign up.")
 				}
-				if request.FilterCookies(db.Users["1"].APIKey, res.Cookies()) != nil {
+				if request.FilterCookies(res.Cookies(), db.Users["1"].APIKey) != nil {
 					t.Errorf("Expected jwt cookie to be returned upon log in.")
 				}
 			}
