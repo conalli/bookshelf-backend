@@ -5,16 +5,20 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
-	"github.com/gorilla/mux"
 )
 
 // AddBookmarksFile attempts to add bookmarks to user from a given HTML file.
 func AddBookmarksFile(b bookmarks.Service, log logs.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		APIKey := vars["APIKey"]
+		APIKey, ok := request.GetAPIKeyFromContext(r)
+		if len(APIKey) < 1 || !ok {
+			log.Error("could not get APIKey from context")
+			errors.APIErrorResponse(w, errors.NewInternalServerError())
+			return
+		}
 		err := r.ParseMultipartForm(200_000)
 		if err != nil {
 			log.Errorf("Could not parse multipart form: %v", err)

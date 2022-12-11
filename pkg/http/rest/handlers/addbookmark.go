@@ -8,7 +8,6 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
-	"github.com/gorilla/mux"
 )
 
 // AddBookmarkResponse represents a successful response from the /user/bookmark POST endpoint.
@@ -22,8 +21,12 @@ type AddBookmarkResponse struct {
 // AddBookmark is the handler for the bookmark POST endpoint.
 func AddBookmark(b bookmarks.Service, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		APIKey := vars["APIKey"]
+		APIKey, ok := request.GetAPIKeyFromContext(r)
+		if len(APIKey) < 1 || !ok {
+			log.Error("could not get APIKey from context")
+			errors.APIErrorResponse(w, errors.NewInternalServerError())
+			return
+		}
 		addBookReq, parseErr := request.DecodeJSONRequest[request.AddBookmark](r.Body)
 		if parseErr != nil {
 			errRes := errors.NewBadRequestError("could not parse request body")

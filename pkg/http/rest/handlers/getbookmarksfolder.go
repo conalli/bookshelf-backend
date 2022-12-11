@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
 	"github.com/gorilla/mux"
@@ -16,7 +17,12 @@ func GetBookmarksFolder(b bookmarks.Service, log logs.Logger) func(w http.Respon
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		path := vars["path"]
-		APIKey := vars["APIKey"]
+		APIKey, ok := request.GetAPIKeyFromContext(r)
+		if len(APIKey) < 1 || !ok {
+			log.Error("could not get APIKey from context")
+			errors.APIErrorResponse(w, errors.NewInternalServerError())
+			return
+		}
 		books, err := b.GetBookmarksFolder(r.Context(), path, APIKey)
 		if err != nil {
 			log.Errorf("error returned while trying to get cmds: %v", err)

@@ -8,7 +8,6 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
-	"github.com/gorilla/mux"
 )
 
 // DeleteCmdResponse represents the data returned upon successfully deleting a cmd.
@@ -21,8 +20,12 @@ type DeleteCmdResponse struct {
 // authorized deletes given cmd.
 func DeleteCmd(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		APIKey := vars["APIKey"]
+		APIKey, ok := request.GetAPIKeyFromContext(r)
+		if len(APIKey) < 1 || !ok {
+			log.Error("could not get APIKey from context")
+			errors.APIErrorResponse(w, errors.NewInternalServerError())
+			return
+		}
 		delCmdReq, parseErr := request.DecodeJSONRequest[request.DeleteCmd](r.Body)
 		if parseErr != nil {
 			errRes := errors.NewBadRequestError("could not parse request body")

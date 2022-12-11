@@ -8,7 +8,6 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
-	"github.com/gorilla/mux"
 )
 
 // AddCmdResponse represents the data returned upon successfully adding a cmd.
@@ -22,8 +21,12 @@ type AddCmdResponse struct {
 // authorized sets new cmd.
 func AddCmd(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		APIKey := vars["APIKey"]
+		APIKey, ok := request.GetAPIKeyFromContext(r)
+		if len(APIKey) < 1 || !ok {
+			log.Error("could not get APIKey from context")
+			errors.APIErrorResponse(w, errors.NewInternalServerError())
+			return
+		}
 		setCmdReq, parseErr := request.DecodeJSONRequest[request.AddCmd](r.Body)
 		if parseErr != nil {
 			errRes := errors.NewBadRequestError("could not parse request body")

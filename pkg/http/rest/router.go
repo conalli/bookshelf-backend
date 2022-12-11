@@ -73,28 +73,29 @@ func addAuthRoutes(router *mux.Router, a auth.Service, l logs.Logger) {
 	auth.HandleFunc("/login", handlers.LogIn(a, l)).Methods("POST")
 	auth.HandleFunc("/oauth", handlers.OAuthRequest(a, l)).Methods("GET")
 	auth.HandleFunc("/redirect/{authProvider}/{authType}", handlers.OAuthRedirect(a, l)).Methods("GET")
+	auth.HandleFunc("/refresh", handlers.Refresh(a, l)).Methods("POST")
 }
 
 func addUserRoutes(router *mux.Router, u accounts.UserService, l logs.Logger) {
 	user := router.PathPrefix("/user").Subrouter()
 	user.Use(middleware.Authorized(l))
-	user.HandleFunc("/{APIKey}", handlers.DelUser(u, l)).Methods("DELETE")
-	user.HandleFunc("/cmd/{APIKey}", handlers.GetCmds(u, l)).Methods("GET")
-	user.HandleFunc("/cmd/{APIKey}", handlers.AddCmd(u, l)).Methods("POST")
-	user.HandleFunc("/cmd/{APIKey}", handlers.DeleteCmd(u, l)).Methods("PATCH")
+	user.HandleFunc("", handlers.DelUser(u, l)).Methods("DELETE")
+	user.HandleFunc("/cmd", handlers.GetCmds(u, l)).Methods("GET")
+	user.HandleFunc("/cmd", handlers.AddCmd(u, l)).Methods("POST")
+	user.HandleFunc("/cmd", handlers.DeleteCmd(u, l)).Methods("PATCH")
 }
 
 func addSearchRoutes(router *mux.Router, s search.Service, l logs.Logger) {
 	search := router.PathPrefix("/search").Subrouter()
-	search.HandleFunc("/{APIKey}/{args}", handlers.Search(s, l)).Methods("GET")
+	search.HandleFunc("/{args}", handlers.Search(s, l)).Methods("GET")
 }
 
 func addBookmarkRoutes(router *mux.Router, b bookmarks.Service, l logs.Logger) {
 	bookmarks := router.PathPrefix("/bookmark").Subrouter()
 	bookmarks.Use(middleware.Authorized(l))
-	bookmarks.HandleFunc("/{APIKey}", handlers.GetAllBookmarks(b, l)).Methods("GET")
-	bookmarks.HandleFunc("/{path}/{APIKey}", handlers.GetBookmarksFolder(b, l)).Methods("GET")
-	bookmarks.HandleFunc("/{APIKey}", handlers.AddBookmark(b, l)).Methods("POST")
-	bookmarks.HandleFunc("/file/{APIKey}", handlers.AddBookmarksFile(b, l)).Methods("POST")
-	bookmarks.HandleFunc("/{APIKey}", handlers.DeleteBookmark(b, l)).Methods("DELETE")
+	bookmarks.HandleFunc("", handlers.GetAllBookmarks(b, l)).Methods("GET")
+	bookmarks.HandleFunc("", handlers.AddBookmark(b, l)).Methods("POST")
+	bookmarks.HandleFunc("", handlers.DeleteBookmark(b, l)).Methods("DELETE")
+	bookmarks.HandleFunc("/{path}", handlers.GetBookmarksFolder(b, l)).Methods("GET")
+	bookmarks.HandleFunc("/file", handlers.AddBookmarksFile(b, l)).Methods("POST")
 }
