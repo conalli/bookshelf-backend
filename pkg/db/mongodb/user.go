@@ -182,7 +182,7 @@ func (m *Mongo) GetUserByAPIKey(ctx context.Context, APIKey string) (accounts.Us
 	}
 	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
-	res := m.GetByKey(ctx, collection, "APIKey", APIKey)
+	res := m.GetByKey(ctx, collection, "api_key", APIKey)
 	return m.DecodeUser(res)
 }
 
@@ -210,7 +210,7 @@ func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]strin
 		return nil, errors.NewInternalServerError()
 	}
 	collection := m.db.Collection(CollectionUsers)
-	res := m.GetByKey(ctx, collection, "APIKey", APIKey)
+	res := m.GetByKey(ctx, collection, "api_key", APIKey)
 	user, err := m.DecodeUser(res)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {

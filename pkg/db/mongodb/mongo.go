@@ -21,6 +21,7 @@ const (
 	CollectionUsers     = "users"
 	CollectionTeams     = "teams"
 	CollectionBookmarks = "bookmarks"
+	CollectionTokens    = "tokens"
 )
 
 // Mongo represents a Mongodb client and database.
@@ -142,6 +143,8 @@ func (m *Mongo) DecodeUser(res *mongo.SingleResult) (accounts.User, error) {
 	var user accounts.User
 	err := res.Decode(&user)
 	if err != nil {
+		// TODO: check for errNoDocuments
+		m.log.Errorf("could not decode mongo single result into user: %v", err)
 		return accounts.User{}, err
 	}
 	return user, nil

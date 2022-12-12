@@ -20,7 +20,7 @@ func (m *Mongo) GetAllBookmarks(ctx context.Context, APIKey string) ([]bookmarks
 		return nil, errors.NewInternalServerError()
 	}
 	collection := m.db.Collection(CollectionBookmarks)
-	filter := bson.D{primitive.E{Key: "APIKey", Value: APIKey}}
+	filter := bson.D{primitive.E{Key: "api_key", Value: APIKey}}
 	cursor, err := collection.Find(ctx, filter)
 	if err != nil {
 		m.log.Errorf("could not find all bookmarks by APIKey: %v", err)
@@ -46,7 +46,7 @@ func (m *Mongo) GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]
 	}
 	collection := m.db.Collection(CollectionBookmarks)
 	filter := bson.D{
-		primitive.E{Key: "APIKey", Value: APIKey},
+		primitive.E{Key: "api_key", Value: APIKey},
 		primitive.E{Key: "path", Value: bson.D{
 			primitive.E{Key: "$regex", Value: primitive.Regex{Pattern: path, Options: "i"}},
 		},
