@@ -20,7 +20,6 @@ func GetCmds(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter
 			errors.APIErrorResponse(w, errors.NewInternalServerError())
 			return
 		}
-		log.Info(APIKey)
 		cmds, err := u.GetAllCmds(r.Context(), APIKey)
 		if err != nil {
 			log.Errorf("error returned while trying to get cmds: %v", err)

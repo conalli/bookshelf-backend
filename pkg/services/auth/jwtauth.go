@@ -39,7 +39,7 @@ func (b *bookshelfTokens) AccessToken() string {
 
 // NewTokens creates a new token based on the CustomClaims and returns the token
 // as a string signed with the secret.
-func NewTokens(log logs.Logger, id string) (*bookshelfTokens, error) {
+func NewTokens(log logs.Logger, APIKey string) (*bookshelfTokens, error) {
 	jwtid, err := uuid.NewRandom()
 	if err != nil {
 		log.Error("could not generate uuid for jwt")
@@ -58,15 +58,18 @@ func NewTokens(log logs.Logger, id string) (*bookshelfTokens, error) {
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    "https://localhost:8080/api",
-			Subject:   id,
+			Subject:   APIKey,
 		},
 	})
-	refresh := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-		NotBefore: jwt.NewNumericDate(time.Now()),
-		IssuedAt:  jwt.NewNumericDate(time.Now()),
-		Issuer:    "https://localhost:8080/api",
-		Subject:   id,
+	refresh := jwt.NewWithClaims(jwt.SigningMethodHS256, JWTCustomClaims{
+		Code: codeHash,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer:    "https://localhost:8080/api",
+			Subject:   APIKey,
+		},
 	})
 	access, tknErr := token.SignedString(signingKey)
 	ref, refErr := refresh.SignedString(signingKey)
@@ -80,9 +83,10 @@ func NewTokens(log logs.Logger, id string) (*bookshelfTokens, error) {
 
 func (t *bookshelfTokens) NewTokenCookies(log logs.Logger) []*http.Cookie {
 	now := time.Now()
+	codeExpires := now.Add(24 * time.Hour)
 	accessExpires := now.Add(15 * time.Minute)
 	path := "/"
-	secure := true
+	secure := false
 	httpOnly := false
 	sameSite := http.SameSiteNoneMode
 
@@ -90,7 +94,7 @@ func (t *bookshelfTokens) NewTokenCookies(log logs.Logger) []*http.Cookie {
 		Name:     BookshelfTokenCode,
 		Value:    t.code,
 		Path:     path,
-		Expires:  accessExpires,
+		Expires:  codeExpires,
 		Secure:   secure,
 		HttpOnly: httpOnly,
 		SameSite: sameSite,
@@ -115,15 +119,15 @@ func AddCookiesToResponse(w http.ResponseWriter, cookies []*http.Cookie) {
 	}
 }
 
-func ParseAccessToken(log logs.Logger, accessToken, code string) (*JWTCustomClaims, error) {
-	token, err := jwt.ParseWithClaims(accessToken, &JWTCustomClaims{}, func(t *jwt.Token) (interface{}, error) { return signingKey, nil })
-	tkn, ok := token.Claims.(*JWTCustomClaims)
+func ParseJWT(log logs.Logger, token, code string) (*JWTCustomClaims, error) {
+	parsedToken, err := jwt.ParseWithClaims(token, &JWTCustomClaims{}, func(t *jwt.Token) (interface{}, error) { return signingKey, nil })
+	tkn, ok := parsedToken.Claims.(*JWTCustomClaims)
 	if !ok || err != nil {
 		log.Error("failed to convert token to JWTCustomClaims")
 		return nil, errors.ErrInvalidJWTToken
 	}
-	if err = tkn.Valid(); err != nil || CheckHashedPassword(tkn.Code, code) {
-		log.Error("token not valid: %v", err)
+	if err = tkn.Valid(); err != nil || !CheckHashedPassword(tkn.Code, code) {
+		log.Errorf("token not valid: error - %v check - %t", err, CheckHashedPassword(tkn.Code, code))
 		return nil, errors.ErrInvalidJWTClaims
 	}
 	return tkn, nil

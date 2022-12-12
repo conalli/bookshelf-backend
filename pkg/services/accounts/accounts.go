@@ -7,7 +7,7 @@ import (
 // User represents the db fields associated each user.
 type User struct {
 	ID            string            `json:"id" bson:"_id,omitempty"`
-	APIKey        string            `json:"api_key" bson:"api_Key"`
+	APIKey        string            `json:"api_key" bson:"api_key"`
 	Name          string            `json:"name" bson:"name"`
 	Password      string            `json:"-" bson:"password,omitempty"`
 	GivenName     string            `json:"given_name" bson:"given_name"`

@@ -19,16 +19,10 @@ func SignUp(a auth.Service, log logs.Logger) func(w http.ResponseWriter, r *http
 			errRes := errors.NewBadRequestError("could not parse request body")
 			errors.APIErrorResponse(w, errRes)
 		}
-		user, apierr := a.SignUp(r.Context(), newUserReq)
+		tokens, user, apierr := a.SignUp(r.Context(), newUserReq)
 		if apierr != nil {
 			log.Errorf("error returned while trying to create a new user: %v", apierr)
 			errors.APIErrorResponse(w, apierr)
-			return
-		}
-		tokens, err := auth.NewTokens(log, user.APIKey)
-		if err != nil {
-			log.Errorf("error returned while trying to create a new token: %v", err)
-			errors.APIErrorResponse(w, errors.NewInternalServerError())
 			return
 		}
 		cookies := tokens.NewTokenCookies(log)
