@@ -42,22 +42,23 @@ func Authorized(log logs.Logger) mux.MiddlewareFunc {
 				errors.APIErrorResponse(w, errors.NewBadRequestError("no cookies in request"))
 				return
 			}
-			bookshelfCookies, err := request.FindCookies(cookies, auth.BookshelfTokenCode, auth.BookshelfAccessToken, auth.BookshelfRefreshToken)
+			bookshelfCookies, err := request.FindCookies(cookies, auth.BookshelfTokenCode, auth.BookshelfAccessToken)
 			if err != nil {
 				log.Errorf("could not find bookshelf cookies: %v", err)
 				errors.APIErrorResponse(w, errors.NewBadRequestError("could not find bookshelf cookies"))
 				return
 			}
-			log.Info(bookshelfCookies)
-			code := bookshelfCookies[auth.BookshelfAccessToken].Value
 			accessToken := bookshelfCookies[auth.BookshelfAccessToken].Value
-			jwt, err := auth.ParseAccessToken(log, accessToken, code)
+			code := bookshelfCookies[auth.BookshelfTokenCode].Value
+			parsedToken, err := auth.ParseJWT(log, accessToken, code)
 			if err != nil {
-				log.Error("could not parse access token: %v", err)
+				log.Errorf("could not parse access token: %v", err)
 				errors.APIErrorResponse(w, errors.NewJWTTokenError(err.Error()))
 			}
-			r.WithContext(context.WithValue(r.Context(), request.JWTAPIKey, jwt.Subject))
-			next.ServeHTTP(w, r)
+
+			req := r.WithContext(context.WithValue(r.Context(), request.JWTAPIKey, parsedToken.RegisteredClaims.Subject))
+			log.Info(parsedToken.RegisteredClaims.Subject)
+			next.ServeHTTP(w, req)
 		})
 	}
 }
