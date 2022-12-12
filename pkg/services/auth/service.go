@@ -28,7 +28,7 @@ type Service interface {
 	LogIn(context.Context, request.LogIn) (*bookshelfTokens, accounts.User, errors.APIErr)
 	OAuthRequest(ctx context.Context, authProvider, authType string) (OIDCRequest, errors.APIErr)
 	OAuthRedirect(ctx context.Context, authProvider, authType, code, state string, cookies []*http.Cookie) (*bookshelfTokens, accounts.User, errors.APIErr)
-	RefreshTokens(ctx context.Context, APIKey, code string) (*bookshelfTokens, errors.APIErr)
+	RefreshTokens(ctx context.Context, accessToken, code string) (*bookshelfTokens, errors.APIErr)
 }
 
 type service struct {
@@ -211,7 +211,13 @@ func (s *service) GoogleOAuthRedirect(ctx context.Context, authType, code string
 	return user, nil
 }
 
-func (s *service) RefreshTokens(ctx context.Context, APIKey, code string) (*bookshelfTokens, errors.APIErr) {
+func (s *service) RefreshTokens(ctx context.Context, accessToken, code string) (*bookshelfTokens, errors.APIErr) {
+	tkn, err := ParseJWT(s.log, accessToken, code)
+	if err != nil {
+		s.log.Error("could not parse jwt from cookie")
+		return nil, errors.NewJWTTokenError("could not parse token")
+	}
+	APIKey := tkn.Subject
 	token, err := s.db.GetRefreshTokenByAPIKey(ctx, APIKey)
 	if err != nil {
 		s.log.Error("could not get refresh token from db")

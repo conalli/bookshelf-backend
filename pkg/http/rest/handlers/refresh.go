@@ -11,19 +11,16 @@ import (
 
 func Refresh(a auth.Service, log logs.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		APIKey, ok := request.GetAPIKeyFromContext(r)
-		if len(APIKey) < 1 || !ok {
-			log.Error("could not get APIKey from context")
-			errors.APIErrorResponse(w, errors.NewInternalServerError())
-			return
-		}
-		code := request.FilterCookies(r.Cookies(), auth.BookshelfTokenCode)
-		if code == nil {
-			log.Error("no code cookie in request")
+		codeCookie := request.FilterCookies(r.Cookies(), auth.BookshelfTokenCode)
+		accessCookie := request.FilterCookies(r.Cookies(), auth.BookshelfAccessToken)
+		if codeCookie == nil || accessCookie == nil {
+			log.Error("incorrect cookies in request")
 			errors.APIErrorResponse(w, errors.NewBadRequestError("incorrect information in request"))
 			return
 		}
-		tokens, apierr := a.RefreshTokens(r.Context(), APIKey, code.Value)
+		access := accessCookie.Value
+		code := codeCookie.Value
+		tokens, apierr := a.RefreshTokens(r.Context(), access, code)
 		if apierr != nil {
 			log.Error("could not refresh tokens")
 			errors.APIErrorResponse(w, apierr)
@@ -31,7 +28,11 @@ func Refresh(a auth.Service, log logs.Logger) http.HandlerFunc {
 		}
 		cookies := tokens.NewTokenCookies(log)
 		log.Info("successfully returned token as cookie")
+		log.Info("1", r.Cookies())
 		auth.AddCookiesToResponse(w, cookies)
+		log.Info("2", r.Cookies())
+		log.Info("3", cookies)
+		log.Info("4", w.Header())
 		w.WriteHeader(http.StatusOK)
 	}
 }
