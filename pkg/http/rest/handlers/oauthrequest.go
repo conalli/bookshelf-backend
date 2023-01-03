@@ -30,6 +30,7 @@ func OAuthRequest(a auth.Service, log logs.Logger) http.HandlerFunc {
 			Value:    data.State,
 			MaxAge:   120,
 			HttpOnly: true,
+			Secure:   true,
 			Path:     "/api",
 			Expires:  time.Now().Add(2 * time.Minute),
 		}
@@ -38,6 +39,7 @@ func OAuthRequest(a auth.Service, log logs.Logger) http.HandlerFunc {
 			Value:    data.Nonce,
 			MaxAge:   120,
 			HttpOnly: true,
+			Secure:   true,
 			Path:     "/api",
 			Expires:  time.Now().Add(2 * time.Minute),
 		}

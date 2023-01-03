@@ -122,7 +122,7 @@ func (s *service) OAuthRequest(ctx context.Context, authProvider, authType strin
 }
 
 func (s *service) OAuthRedirect(ctx context.Context, authProvider, authType, code, state string, cookies []*http.Cookie) (*bookshelfTokens, accounts.User, errors.APIErr) {
-	stateCookie := request.FilterCookies(cookies, state)
+	stateCookie := request.FilterCookies(cookies, "state")
 	if stateCookie == nil {
 		s.log.Error("no cookies in request")
 		return nil, accounts.User{}, errors.NewBadRequestError("no cookies in auth request")

@@ -86,7 +86,7 @@ func (t *bookshelfTokens) NewTokenCookies(log logs.Logger) []*http.Cookie {
 	codeExpires := now.Add(24 * time.Hour)
 	accessExpires := now.Add(15 * time.Minute)
 	path := "/"
-	secure := false
+	secure := true
 	httpOnly := false
 	sameSite := http.SameSiteNoneMode
 
