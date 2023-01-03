@@ -11,6 +11,7 @@ import (
 
 // UserRepository provides access to the user storage.
 type UserRepository interface {
+	GetUserByAPIKey(ctx context.Context, APIKey string) (User, error)
 	GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.APIErr)
 	AddCmd(reqCtx context.Context, requestData request.AddCmd, APIKey string) (int, errors.APIErr)
 	DeleteCmd(ctx context.Context, requestData request.DeleteCmd, APIKey string) (int, errors.APIErr)
@@ -24,6 +25,7 @@ type UserCache interface {
 
 // UserService provides the user operations.
 type UserService interface {
+	UserInfo(ctx context.Context, APIKey string) (User, errors.APIErr)
 	GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.APIErr)
 	AddCmd(reqCtx context.Context, requestData request.AddCmd, APIKey string) (int, errors.APIErr)
 	DeleteCmd(ctx context.Context, requestData request.DeleteCmd, APIKey string) (int, errors.APIErr)
@@ -40,6 +42,22 @@ type userService struct {
 // NewUserService creates a search service with the necessary dependencies.
 func NewUserService(l logs.Logger, v *validator.Validate, r UserRepository, c UserCache) UserService {
 	return &userService{l, v, r, c}
+}
+
+func (s *userService) UserInfo(ctx context.Context, APIKey string) (User, errors.APIErr) {
+	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
+	defer cancelFunc()
+	validateErr := s.validate.Var(APIKey, "uuid")
+	if validateErr != nil {
+		s.log.Errorf("Could not validate GET ALL CMDS request: %v", validateErr)
+		return User{}, errors.NewBadRequestError("request format incorrect.")
+	}
+	user, err := s.db.GetUserByAPIKey(reqCtx, APIKey)
+	if err != nil {
+		s.log.Error("could not get user by APIKey: %v", err)
+		return User{}, errors.NewInternalServerError()
+	}
+	return user, nil
 }
 
 // GetAllCmds calls the GetAllCmds method and returns all the users commands.

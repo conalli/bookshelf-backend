@@ -79,6 +79,7 @@ func addAuthRoutes(router *mux.Router, a auth.Service, l logs.Logger) {
 func addUserRoutes(router *mux.Router, u accounts.UserService, l logs.Logger) {
 	user := router.PathPrefix("/user").Subrouter()
 	user.Use(middleware.Authorized(l))
+	user.HandleFunc("", handlers.GetUser(u, l)).Methods("GET")
 	user.HandleFunc("", handlers.DelUser(u, l)).Methods("DELETE")
 	user.HandleFunc("/cmd", handlers.GetCmds(u, l)).Methods("GET")
 	user.HandleFunc("/cmd", handlers.AddCmd(u, l)).Methods("POST")
