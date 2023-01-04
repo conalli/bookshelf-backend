@@ -15,7 +15,7 @@ const (
 // Bookmark represents a web bookmark.
 type Bookmark struct {
 	ID     string `json:"id" bson:"_id,omitempty"`
-	APIKey string `json:"APIKey" bson:"APIKey"`
+	APIKey string `json:"api_key" bson:"api_key"`
 	Path   string `json:"path" bson:"path"`
 	Name   string `json:"name" bson:"name"`
 	URL    string `json:"url" bson:"url"`
