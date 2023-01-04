@@ -16,6 +16,7 @@ type User struct {
 	Email         string            `json:"email" bson:"email"`
 	EmailVerified bool              `json:"email_verified" bson:"email_verified"`
 	Locale        string            `json:"locale" bson:"locale"`
+	Provider      string            `json:"provider" bson:"provider"`
 	Cmds          map[string]string `json:"cmds,omitempty" bson:"cmds"`
 	Teams         map[string]string `json:"teams,omitempty" bson:"teams"`
 }

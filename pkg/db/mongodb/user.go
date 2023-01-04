@@ -43,6 +43,7 @@ func (m *Mongo) NewUser(ctx context.Context, requestData request.SignUp) (accoun
 		Email:    requestData.Email,
 		Password: hashedPassword,
 		APIKey:   APIKey,
+		Provider: "bookshelf",
 		Cmds:     map[string]string{},
 		Teams:    map[string]string{},
 	}
@@ -84,6 +85,7 @@ func (m *Mongo) NewOAuthUser(ctx context.Context, IDToken auth.GoogleIDTokenClai
 		Email:         IDToken.Email,
 		EmailVerified: IDToken.EmailVerified,
 		Locale:        IDToken.Locale,
+		Provider:      "google",
 		Cmds:          map[string]string{},
 		Teams:         map[string]string{},
 	}
