@@ -1,7 +1,6 @@
 package handlers_test
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,7 +8,7 @@ import (
 	"github.com/conalli/bookshelf-backend/internal/testutils"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
-	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
+	"github.com/conalli/bookshelf-backend/pkg/services/auth"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -30,7 +29,7 @@ func TestSignUp(t *testing.T) {
 				Email:    "correct_request@bookshelftest.com",
 				Password: "password",
 			},
-			statusCode: 200,
+			statusCode: 404,
 		},
 		{
 			name: "User Already exists",
@@ -54,15 +53,14 @@ func TestSignUp(t *testing.T) {
 			if res.StatusCode != c.statusCode {
 				t.Errorf("Expected sign up request %v to give status code %d: got %d", c.req, c.statusCode, res.StatusCode)
 			}
-			if res.StatusCode < 400 {
-				var usr accounts.User
-				err = json.NewDecoder(res.Body).Decode(&usr)
-				if err != nil {
-					t.Fatalf("Couldn't decode json body upon sign up.")
+			if res.StatusCode == 404 && res.Request.Header.Get("Referer") != srv.URL+"/api/auth/signup" {
+				if request.FilterCookies(res.Cookies(), auth.BookshelfAccessToken) != nil {
+					t.Errorf("Expected access token cookie to be returned upon log in.")
 				}
-				if request.FilterCookies(res.Cookies(), db.Users["1"].APIKey) != nil {
-					t.Errorf("Expected jwt cookie to be returned upon log in.")
+				if request.FilterCookies(res.Cookies(), auth.BookshelfTokenCode) != nil {
+					t.Errorf("Expected code token cookie to be returned upon log in.")
 				}
+				t.Errorf("Expected redirect upon successful login")
 			}
 			res.Body.Close()
 		})

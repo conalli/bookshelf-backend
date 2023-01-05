@@ -1,8 +1,6 @@
 package handlers_test
 
 import (
-	"fmt"
-	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -19,7 +17,7 @@ func TestSearch(t *testing.T) {
 	defer srv.Close()
 	for _, usr := range db.Users {
 		for k, v := range usr.Cmds {
-			res, err := http.Get(fmt.Sprintf("%s/api/search/%s/%s", srv.URL, usr.APIKey, k))
+			res, err := testutils.RequestWithCookie("GET", srv.URL+"/api/search/"+k, nil, usr.APIKey, testutils.NewLogger())
 			if err != nil {
 				t.Fatalf("Could not create Search request - %v", err)
 			}

@@ -32,7 +32,7 @@ func TestGetBookmarks(t *testing.T) {
 	}
 	for _, c := range tc {
 		t.Run(c.name, func(t *testing.T) {
-			res, err := testutils.RequestWithCookie("GET", srv.URL+"/api/bookmark/"+c.APIKey, nil, c.APIKey, testutils.NewLogger())
+			res, err := testutils.RequestWithCookie("GET", srv.URL+"/api/bookmark", nil, c.APIKey, testutils.NewLogger())
 			if err != nil {
 				t.Fatalf("Couldn't create request to get bookmarks with cookie.")
 			}

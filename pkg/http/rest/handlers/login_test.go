@@ -11,6 +11,7 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
+	"github.com/conalli/bookshelf-backend/pkg/services/auth"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -32,7 +33,7 @@ func TestLogin(t *testing.T) {
 				Email:    "default_user@bookshelftest.com",
 				Password: "password",
 			},
-			statusCode: 200,
+			statusCode: 404,
 			res: accounts.User{
 				ID:     db.Users["1"].ID,
 				APIKey: db.Users["1"].APIKey,
@@ -60,23 +61,20 @@ func TestLogin(t *testing.T) {
 			if res.StatusCode != c.statusCode {
 				t.Errorf("Expected login request %v to give status code %d: got %d", c.req, c.statusCode, res.StatusCode)
 			}
-			if res.StatusCode >= 400 {
+			if res.StatusCode == 404 && res.Request.Header.Get("Referer") != srv.URL+"/api/auth/login" {
+				if request.FilterCookies(res.Cookies(), auth.BookshelfAccessToken) != nil {
+					t.Errorf("Expected access token cookie to be returned upon log in.")
+				}
+				if request.FilterCookies(res.Cookies(), auth.BookshelfTokenCode) != nil {
+					t.Errorf("Expected code token cookie to be returned upon log in.")
+				}
+				t.Errorf("Expected redirect upon successful login")
+			}
+			if res.StatusCode >= 400 && res.StatusCode != 404 {
 				var response errors.ResError
 				err = json.NewDecoder(res.Body).Decode(&response)
 				if err != nil {
 					t.Fatalf("Couldn't decode json body upon sign up.")
-				}
-			} else {
-				var response accounts.User
-				err = json.NewDecoder(res.Body).Decode(&response)
-				if err != nil {
-					t.Fatalf("Couldn't decode json body upon sign up.")
-				}
-				if response.ID != c.res.ID || response.APIKey != c.res.APIKey {
-					t.Fatalf("Unexpected log in data")
-				}
-				if request.FilterCookies(res.Cookies(), c.res.APIKey) != nil {
-					t.Errorf("Expected jwt cookie to be returned upon log in.")
 				}
 			}
 			res.Body.Close()
