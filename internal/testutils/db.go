@@ -71,14 +71,14 @@ func (t *Testdb) findUserByAPIKey(APIKey string) *accounts.User {
 }
 
 // NewUser creates a new user in the testdb.
-func (t *Testdb) NewUser(ctx context.Context, body request.SignUp) (accounts.User, error) {
+func (t *Testdb) NewUser(ctx context.Context, body request.SignUp) (string, error) {
 	found, _ := t.UserAlreadyExists(context.Background(), body.Email)
 	if found {
-		return accounts.User{}, errors.ErrBadRequest
+		return "", errors.ErrBadRequest
 	}
 	key, err := accounts.GenerateAPIKey()
 	if err != nil {
-		return accounts.User{}, errors.ErrInternalServerError
+		return "", errors.ErrInternalServerError
 	}
 	usr := accounts.User{
 		ID:       uuid.NewString(),
@@ -91,11 +91,11 @@ func (t *Testdb) NewUser(ctx context.Context, body request.SignUp) (accounts.Use
 		Teams: map[string]string{},
 	}
 	t.Users[usr.ID] = usr
-	return usr, nil
+	return usr.APIKey, nil
 }
 
-func (t *Testdb) NewOAuthUser(ctx context.Context, IDToken auth.GoogleIDTokenClaims) (accounts.User, error) {
-	return accounts.User{}, nil
+func (t *Testdb) NewOAuthUser(ctx context.Context, IDToken auth.GoogleIDTokenClaims) (string, error) {
+	return "", nil
 }
 
 // GetUserByEmail gets a user by their name in the test db.

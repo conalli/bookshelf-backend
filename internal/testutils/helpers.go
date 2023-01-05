@@ -25,10 +25,8 @@ func RequestWithCookie(method, url string, body io.Reader, APIKey string, log lo
 	cookies := tokens.NewTokenCookies(log)
 	code := request.FilterCookies(cookies, auth.BookshelfTokenCode)
 	access := request.FilterCookies(cookies, auth.BookshelfAccessToken)
-	refresh := request.FilterCookies(cookies, auth.BookshelfRefreshToken)
 	req.AddCookie(code)
 	req.AddCookie(access)
-	req.AddCookie(refresh)
 	return client.Do(req)
 }
 

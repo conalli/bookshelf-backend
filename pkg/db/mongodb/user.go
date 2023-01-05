@@ -15,29 +15,24 @@ import (
 )
 
 // NewUser creates a new user in the db.
-func (m *Mongo) NewUser(ctx context.Context, requestData request.SignUp) (accounts.User, error) {
+func (m *Mongo) NewUser(ctx context.Context, requestData request.SignUp) (string, error) {
 	m.Initialize()
 	defer m.client.Disconnect(ctx)
 	err := m.client.Connect(ctx)
 	if err != nil {
 		m.log.Errorf("could not connect to db, %+v", err)
-		return accounts.User{}, errors.ErrInternalServerError
+		return "", errors.ErrInternalServerError
 	}
 	collection := m.db.Collection(CollectionUsers)
-	userExists := m.DataAlreadyExists(ctx, collection, "email", requestData.Email)
-	if userExists {
-		m.log.Errorf("error creating new user; user with email %v already exists", requestData.Email)
-		return accounts.User{}, errors.ErrBadRequest
-	}
 	APIKey, err := accounts.GenerateAPIKey()
 	if err != nil {
 		m.log.Error("could not generate uuid")
-		return accounts.User{}, errors.ErrInternalServerError
+		return "", errors.ErrInternalServerError
 	}
 	hashedPassword, err := auth.HashPassword(requestData.Password)
 	if err != nil {
 		m.log.Error("could not hash password")
-		return accounts.User{}, errors.ErrInternalServerError
+		return "", errors.ErrInternalServerError
 	}
 	signUpData := accounts.User{
 		Email:    requestData.Email,
@@ -50,31 +45,30 @@ func (m *Mongo) NewUser(ctx context.Context, requestData request.SignUp) (accoun
 	result, err := collection.InsertOne(ctx, signUpData)
 	if err != nil {
 		m.log.Error("could not create new user")
-		return accounts.User{}, errors.ErrInternalServerError
+		return "", errors.ErrInternalServerError
 	}
-	userOID, ok := result.InsertedID.(primitive.ObjectID)
+	_, ok := result.InsertedID.(primitive.ObjectID)
 	if !ok {
 		m.log.Error("error getting objectID from newly inserted user")
-		return accounts.User{}, errors.ErrInternalServerError
+		return "", errors.ErrInternalServerError
 	}
-	signUpData.ID = userOID.Hex()
-	return signUpData, nil
+	return APIKey, nil
 }
 
 // NewOAuthUser makes a new user based on a Google ID token.
-func (m *Mongo) NewOAuthUser(ctx context.Context, IDToken auth.GoogleIDTokenClaims) (accounts.User, error) {
+func (m *Mongo) NewOAuthUser(ctx context.Context, IDToken auth.GoogleIDTokenClaims) (string, error) {
 	m.Initialize()
 	defer m.client.Disconnect(ctx)
 	err := m.client.Connect(ctx)
 	if err != nil {
 		m.log.Errorf("could not connect to db, %+v", err)
-		return accounts.User{}, errors.ErrInternalServerError
+		return "", errors.ErrInternalServerError
 	}
 	collection := m.db.Collection(CollectionUsers)
 	APIKey, err := accounts.GenerateAPIKey()
 	if err != nil {
 		m.log.Error("could not generate uuid")
-		return accounts.User{}, errors.NewInternalServerError()
+		return "", errors.NewInternalServerError()
 	}
 	signUpData := accounts.User{
 		APIKey:        APIKey,
@@ -92,15 +86,14 @@ func (m *Mongo) NewOAuthUser(ctx context.Context, IDToken auth.GoogleIDTokenClai
 	result, err := collection.InsertOne(ctx, signUpData)
 	if err != nil {
 		m.log.Error("could not create new user")
-		return accounts.User{}, errors.NewInternalServerError()
+		return "", errors.NewInternalServerError()
 	}
-	userOID, ok := result.InsertedID.(primitive.ObjectID)
+	_, ok := result.InsertedID.(primitive.ObjectID)
 	if !ok {
 		m.log.Error("error getting objectID from newly inserted user")
-		return accounts.User{}, errors.NewInternalServerError()
+		return "", errors.NewInternalServerError()
 	}
-	signUpData.ID = userOID.Hex()
-	return signUpData, nil
+	return APIKey, nil
 }
 
 // Delete attempts to delete a user from the db, returning the number of deleted users.

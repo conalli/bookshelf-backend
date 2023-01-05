@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
+	"os"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
@@ -19,7 +19,7 @@ func LogIn(a auth.Service, log logs.Logger) func(w http.ResponseWriter, r *http.
 			errRes := errors.NewBadRequestError("could not parse request body")
 			errors.APIErrorResponse(w, errRes)
 		}
-		tokens, user, apierr := a.LogIn(r.Context(), logInReq)
+		tokens, apierr := a.LogIn(r.Context(), logInReq)
 		if apierr != nil {
 			log.Errorf("error returned while trying to get check credentials: %v", apierr)
 			errors.APIErrorResponse(w, apierr)
@@ -28,8 +28,6 @@ func LogIn(a auth.Service, log logs.Logger) func(w http.ResponseWriter, r *http.
 		cookies := tokens.NewTokenCookies(log)
 		log.Info("successfully returned token as cookie")
 		auth.AddCookiesToResponse(w, cookies)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(user)
+		http.Redirect(w, r, os.Getenv("ALLOWED_URL_DASHBOARD"), http.StatusFound)
 	}
 }
