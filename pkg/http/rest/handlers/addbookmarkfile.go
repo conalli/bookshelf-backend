@@ -19,10 +19,17 @@ func AddBookmarksFile(b bookmarks.Service, log logs.Logger) http.HandlerFunc {
 			errors.APIErrorResponse(w, errors.NewInternalServerError())
 			return
 		}
+		if r.ContentLength > bookmarks.BookmarksFileMaxSize {
+			log.Errorf("bookmarks file too large: %d, max: %d", r.ContentLength, bookmarks.BookmarksFileMaxSize)
+			apierr := errors.NewAPIError(http.StatusExpectationFailed, "request too large", "bookmarks file too large")
+			errors.APIErrorResponse(w, apierr)
+			return
+		}
+		r.Body = http.MaxBytesReader(w, r.Body, bookmarks.BookmarksFileMaxSize)
 		err := r.ParseMultipartForm(200_000)
 		if err != nil {
 			log.Errorf("Could not parse multipart form: %v", err)
-			w.WriteHeader(404)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		num, apierr := b.AddBookmarksFromFile(r.Context(), r, APIKey)

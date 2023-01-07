@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	BookmarksFileKey string = "bookmarks_file"
+	BookmarksFileKey     string = "bookmarks_file"
+	BookmarksFileMaxSize int64  = 204800
 )
 
 // Bookmark represents a web bookmark.
