@@ -15,7 +15,7 @@ import (
 )
 
 // NewUser creates a new user in the db.
-func (m *Mongo) NewUser(ctx context.Context, requestData request.SignUp) (string, error) {
+func (m *Mongo) NewUser(ctx context.Context, userData accounts.User) (string, error) {
 	m.Initialize()
 	defer m.client.Disconnect(ctx)
 	err := m.client.Connect(ctx)
@@ -24,76 +24,17 @@ func (m *Mongo) NewUser(ctx context.Context, requestData request.SignUp) (string
 		return "", errors.ErrInternalServerError
 	}
 	collection := m.db.Collection(CollectionUsers)
-	APIKey, err := accounts.GenerateAPIKey()
-	if err != nil {
-		m.log.Error("could not generate uuid")
-		return "", errors.ErrInternalServerError
-	}
-	hashedPassword, err := auth.HashPassword(requestData.Password)
-	if err != nil {
-		m.log.Error("could not hash password")
-		return "", errors.ErrInternalServerError
-	}
-	signUpData := accounts.User{
-		Email:    requestData.Email,
-		Password: hashedPassword,
-		APIKey:   APIKey,
-		Provider: "bookshelf",
-		Cmds:     map[string]string{},
-		Teams:    map[string]string{},
-	}
-	result, err := collection.InsertOne(ctx, signUpData)
+	result, err := collection.InsertOne(ctx, userData)
 	if err != nil {
 		m.log.Error("could not create new user")
 		return "", errors.ErrInternalServerError
 	}
-	_, ok := result.InsertedID.(primitive.ObjectID)
+	userOID, ok := result.InsertedID.(primitive.ObjectID)
 	if !ok {
 		m.log.Error("error getting objectID from newly inserted user")
 		return "", errors.ErrInternalServerError
 	}
-	return APIKey, nil
-}
-
-// NewOAuthUser makes a new user based on a Google ID token.
-func (m *Mongo) NewOAuthUser(ctx context.Context, IDToken auth.GoogleIDTokenClaims) (string, error) {
-	m.Initialize()
-	defer m.client.Disconnect(ctx)
-	err := m.client.Connect(ctx)
-	if err != nil {
-		m.log.Errorf("could not connect to db, %+v", err)
-		return "", errors.ErrInternalServerError
-	}
-	collection := m.db.Collection(CollectionUsers)
-	APIKey, err := accounts.GenerateAPIKey()
-	if err != nil {
-		m.log.Error("could not generate uuid")
-		return "", errors.NewInternalServerError()
-	}
-	signUpData := accounts.User{
-		APIKey:        APIKey,
-		Name:          IDToken.Name,
-		GivenName:     IDToken.GivenName,
-		FamilyName:    IDToken.FamilyName,
-		PictureURL:    IDToken.PictureURL,
-		Email:         IDToken.Email,
-		EmailVerified: IDToken.EmailVerified,
-		Locale:        IDToken.Locale,
-		Provider:      "google",
-		Cmds:          map[string]string{},
-		Teams:         map[string]string{},
-	}
-	result, err := collection.InsertOne(ctx, signUpData)
-	if err != nil {
-		m.log.Error("could not create new user")
-		return "", errors.NewInternalServerError()
-	}
-	_, ok := result.InsertedID.(primitive.ObjectID)
-	if !ok {
-		m.log.Error("error getting objectID from newly inserted user")
-		return "", errors.NewInternalServerError()
-	}
-	return APIKey, nil
+	return userOID.Hex(), nil
 }
 
 // Delete attempts to delete a user from the db, returning the number of deleted users.

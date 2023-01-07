@@ -2,12 +2,16 @@ package testutils
 
 import (
 	"bytes"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
+	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/services/auth"
 )
 
@@ -37,4 +41,28 @@ func MakeRequestBody[T request.APIRequest](data T) (*bytes.Buffer, error) {
 		return nil, err
 	}
 	return bytes.NewBuffer(body), nil
+}
+
+func randomID(length int) (string, error) {
+	bytes := make([]byte, length)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
+}
+
+func IsSameUser(u1 accounts.User, u2 accounts.User) bool {
+	id := u1.ID == u2.ID
+	key := u1.APIKey == u2.APIKey
+	name := u1.Name == u2.Name
+	giv := u1.GivenName == u2.GivenName
+	fam := u1.FamilyName == u2.FamilyName
+	pic := u1.PictureURL == u2.PictureURL
+	email := u1.Email == u2.Email
+	verif := u1.EmailVerified == u2.EmailVerified
+	loc := u1.Locale == u2.Locale
+	prov := u1.Provider == u2.Provider
+	cmd := fmt.Sprint(u1.Cmds) == fmt.Sprint(u2.Cmds)
+	team := fmt.Sprint(u1.Teams) == fmt.Sprint(u2.Teams)
+	return id && key && name && giv && fam && pic && email && verif && loc && prov && cmd && team
 }

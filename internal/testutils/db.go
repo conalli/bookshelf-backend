@@ -12,7 +12,6 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/services/auth"
 	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
-	"github.com/google/uuid"
 )
 
 // Testdb represents a testutils.
@@ -71,31 +70,12 @@ func (t *Testdb) findUserByAPIKey(APIKey string) *accounts.User {
 }
 
 // NewUser creates a new user in the testdb.
-func (t *Testdb) NewUser(ctx context.Context, body request.SignUp) (string, error) {
-	found, _ := t.UserAlreadyExists(context.Background(), body.Email)
-	if found {
-		return "", errors.ErrBadRequest
-	}
-	key, err := accounts.GenerateAPIKey()
-	if err != nil {
-		return "", errors.ErrInternalServerError
-	}
-	usr := accounts.User{
-		ID:       uuid.NewString(),
-		Email:    body.Email,
-		Password: body.Password,
-		APIKey:   key,
-		Cmds: map[string]string{
-			"yt": "www.youtube.com",
-		},
-		Teams: map[string]string{},
-	}
-	t.Users[usr.ID] = usr
-	return usr.APIKey, nil
-}
-
-func (t *Testdb) NewOAuthUser(ctx context.Context, IDToken auth.GoogleIDTokenClaims) (string, error) {
-	return "", nil
+func (t *Testdb) NewUser(ctx context.Context, user accounts.User) (string, error) {
+	id := len(t.Users) + 1
+	userID, _ := randomID(24)
+	user.ID = userID
+	t.Users[fmt.Sprint(id)] = user
+	return user.ID, nil
 }
 
 // GetUserByEmail gets a user by their name in the test db.

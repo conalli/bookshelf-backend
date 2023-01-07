@@ -98,6 +98,7 @@ func (t *bookshelfTokens) NewTokenCookies(log logs.Logger) []*http.Cookie {
 		Secure:   secure,
 		HttpOnly: httpOnly,
 		SameSite: sameSite,
+		MaxAge:   24 * 60 * 60,
 	}
 
 	accessCookie := &http.Cookie{
@@ -108,6 +109,7 @@ func (t *bookshelfTokens) NewTokenCookies(log logs.Logger) []*http.Cookie {
 		Secure:   secure,
 		HttpOnly: httpOnly,
 		SameSite: sameSite,
+		MaxAge:   15 * 60,
 	}
 
 	return []*http.Cookie{codeCookie, accessCookie}
@@ -117,6 +119,37 @@ func AddCookiesToResponse(w http.ResponseWriter, cookies []*http.Cookie) {
 	for _, cookie := range cookies {
 		http.SetCookie(w, cookie)
 	}
+}
+
+func RemoveBookshelfCookies(w http.ResponseWriter) {
+	path := "/"
+	expires := time.Now().Add(-100 * time.Hour)
+	secure := true
+	httpOnly := false
+	sameSite := http.SameSiteStrictMode
+	maxAge := -1
+	codeCookie := &http.Cookie{
+		Name:     BookshelfTokenCode,
+		Value:    "",
+		Path:     path,
+		Expires:  expires,
+		Secure:   secure,
+		HttpOnly: httpOnly,
+		SameSite: sameSite,
+		MaxAge:   maxAge,
+	}
+	accessCookie := &http.Cookie{
+		Name:     BookshelfAccessToken,
+		Value:    "",
+		Path:     path,
+		Expires:  expires,
+		Secure:   secure,
+		HttpOnly: httpOnly,
+		SameSite: sameSite,
+		MaxAge:   maxAge,
+	}
+	http.SetCookie(w, codeCookie)
+	http.SetCookie(w, accessCookie)
 }
 
 func ParseJWT(log logs.Logger, token, code string) (*JWTCustomClaims, error) {

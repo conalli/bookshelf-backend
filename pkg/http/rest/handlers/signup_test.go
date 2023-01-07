@@ -29,7 +29,7 @@ func TestSignUp(t *testing.T) {
 				Email:    "correct_request@bookshelftest.com",
 				Password: "password",
 			},
-			statusCode: 404,
+			statusCode: 200,
 		},
 		{
 			name: "User Already exists",
@@ -53,14 +53,13 @@ func TestSignUp(t *testing.T) {
 			if res.StatusCode != c.statusCode {
 				t.Errorf("Expected sign up request %v to give status code %d: got %d", c.req, c.statusCode, res.StatusCode)
 			}
-			if res.StatusCode == 404 && res.Request.Header.Get("Referer") != srv.URL+"/api/auth/signup" {
-				if request.FilterCookies(res.Cookies(), auth.BookshelfAccessToken) != nil {
+			if res.StatusCode == 200 {
+				if request.FilterCookies(res.Cookies(), auth.BookshelfAccessToken) == nil {
 					t.Errorf("Expected access token cookie to be returned upon log in.")
 				}
-				if request.FilterCookies(res.Cookies(), auth.BookshelfTokenCode) != nil {
+				if request.FilterCookies(res.Cookies(), auth.BookshelfTokenCode) == nil {
 					t.Errorf("Expected code token cookie to be returned upon log in.")
 				}
-				t.Errorf("Expected redirect upon successful login")
 			}
 			res.Body.Close()
 		})

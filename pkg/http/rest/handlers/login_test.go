@@ -26,6 +26,7 @@ func TestLogin(t *testing.T) {
 		req        request.LogIn
 		statusCode int
 		res        accounts.User
+		err        errors.ResError
 	}{
 		{
 			name: "Default user",
@@ -33,11 +34,8 @@ func TestLogin(t *testing.T) {
 				Email:    "default_user@bookshelftest.com",
 				Password: "password",
 			},
-			statusCode: 404,
-			res: accounts.User{
-				ID:     db.Users["1"].ID,
-				APIKey: db.Users["1"].APIKey,
-			},
+			statusCode: 200,
+			res:        db.Users["1"],
 		},
 		{
 			name: "Incorrect user",
@@ -46,6 +44,10 @@ func TestLogin(t *testing.T) {
 				Password: "password",
 			},
 			statusCode: 401,
+			err: errors.ResError{
+				Status: 401,
+				Error:  "error: name or password incorrect -- " + errors.ErrWrongCredentials.Error(),
+			},
 		},
 	}
 	for _, c := range tc {
@@ -58,26 +60,39 @@ func TestLogin(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Couldn't make post request.")
 			}
+			defer res.Body.Close()
 			if res.StatusCode != c.statusCode {
 				t.Errorf("Expected login request %v to give status code %d: got %d", c.req, c.statusCode, res.StatusCode)
 			}
-			if res.StatusCode == 404 && res.Request.Header.Get("Referer") != srv.URL+"/api/auth/login" {
-				if request.FilterCookies(res.Cookies(), auth.BookshelfAccessToken) != nil {
+			if res.StatusCode == 200 {
+				if request.FilterCookies(res.Cookies(), auth.BookshelfAccessToken) == nil {
 					t.Errorf("Expected access token cookie to be returned upon log in.")
 				}
-				if request.FilterCookies(res.Cookies(), auth.BookshelfTokenCode) != nil {
+				if request.FilterCookies(res.Cookies(), auth.BookshelfTokenCode) == nil {
 					t.Errorf("Expected code token cookie to be returned upon log in.")
 				}
-				t.Errorf("Expected redirect upon successful login")
-			}
-			if res.StatusCode >= 400 && res.StatusCode != 404 {
-				var response errors.ResError
+				var response accounts.User
 				err = json.NewDecoder(res.Body).Decode(&response)
+				if err != nil {
+					t.Fatalf("Couldn't decode json body upon getting cmds.")
+				}
+				if !testutils.IsSameUser(response, c.res) {
+					t.Errorf("Expected user to be %v: got %v", c.res, response)
+				}
+			}
+			if res.StatusCode >= 400 {
+				var errorResponse errors.ResError
+				err = json.NewDecoder(res.Body).Decode(&errorResponse)
 				if err != nil {
 					t.Fatalf("Couldn't decode json body upon sign up.")
 				}
+				if errorResponse.Status != c.err.Status {
+					t.Errorf("expected error json to return status code: %d, got: %d", c.err.Status, errorResponse.Status)
+				}
+				if errorResponse.Error != c.err.Error {
+					t.Errorf("expected error json to return error message: %s, got: %s", c.err.Error, errorResponse.Error)
+				}
 			}
-			res.Body.Close()
 		})
 	}
 }

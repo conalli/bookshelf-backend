@@ -29,19 +29,21 @@ func OAuthRequest(a auth.Service, log logs.Logger) http.HandlerFunc {
 			Name:     "state",
 			Value:    data.State,
 			MaxAge:   120,
-			HttpOnly: true,
+			HttpOnly: false,
 			Secure:   true,
 			Path:     "/api",
 			Expires:  time.Now().Add(2 * time.Minute),
+			SameSite: http.SameSiteNoneMode,
 		}
 		nonceCookie := &http.Cookie{
 			Name:     "nonce",
 			Value:    data.Nonce,
 			MaxAge:   120,
-			HttpOnly: true,
+			HttpOnly: false,
 			Secure:   true,
 			Path:     "/api",
 			Expires:  time.Now().Add(2 * time.Minute),
+			SameSite: http.SameSiteNoneMode,
 		}
 		http.SetCookie(w, stateCookie)
 		http.SetCookie(w, nonceCookie)

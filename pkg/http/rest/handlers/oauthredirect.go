@@ -28,13 +28,13 @@ func OAuthRedirect(a auth.Service, log logs.Logger) func(w http.ResponseWriter, 
 		}
 		tokens, apierr := a.OAuthRedirect(r.Context(), authProvider, authType, r.FormValue("code"), r.FormValue("state"), r.Cookies())
 		if apierr != nil {
-			log.Errorf("error returned while trying to create a new oauth user: %v", apierr)
+			log.Errorf("error returned while trying to %s a new oauth user: %v", authType, apierr)
 			errors.APIErrorResponse(w, apierr)
 			return
 		}
 		cookies := tokens.NewTokenCookies(log)
 		log.Info("successfully returned token as cookie")
 		auth.AddCookiesToResponse(w, cookies)
-		http.Redirect(w, r, os.Getenv("ALLOWED_URL_DASHBOARD"), http.StatusFound)
+		http.Redirect(w, r, os.Getenv("ALLOWED_URL_DASHBOARD"), http.StatusTemporaryRedirect)
 	}
 }
