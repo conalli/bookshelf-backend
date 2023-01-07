@@ -3,6 +3,7 @@ package bookmarks
 import (
 	"errors"
 	"io"
+	"mime/multipart"
 	"net/url"
 
 	"golang.org/x/net/html"
@@ -14,51 +15,66 @@ const (
 
 // Bookmark represents a web bookmark.
 type Bookmark struct {
-	ID     string `json:"id" bson:"_id,omitempty"`
-	APIKey string `json:"api_key" bson:"api_key"`
-	Path   string `json:"path" bson:"path"`
-	Name   string `json:"name" bson:"name"`
-	URL    string `json:"url" bson:"url"`
+	ID       string `json:"id" bson:"_id,omitempty"`
+	APIKey   string `json:"api_key" bson:"api_key"`
+	Path     string `json:"path" bson:"path"`
+	Name     string `json:"name" bson:"name"`
+	URL      string `json:"url" bson:"url"`
+	IsFolder bool   `json:"is_folder" bson:"is_folder"`
 }
 
-func parseBookmarkFileHTML(APIKey string, tokenizer *html.Tokenizer) ([]Bookmark, error) {
-	bookmarks := []Bookmark{}
+type HTMLBookmarkParser struct {
+	tokenizer *html.Tokenizer
+	APIKey    string
+	bookmarks []Bookmark
+}
+
+func NewHTMLBookmarkParser(file multipart.File, APIKey string) *HTMLBookmarkParser {
+	tokenizer := html.NewTokenizer(file)
+	return &HTMLBookmarkParser{
+		tokenizer: tokenizer,
+		APIKey:    APIKey,
+		bookmarks: []Bookmark{},
+	}
+}
+
+func (h *HTMLBookmarkParser) parseBookmarkFileHTML() ([]Bookmark, error) {
 	for {
-		tokenType := tokenizer.Next()
+		tokenType := h.tokenizer.Next()
 		if tokenType == html.ErrorToken {
-			err := tokenizer.Err()
+			err := h.tokenizer.Err()
 			if err == io.EOF {
 				break
 			}
 			return nil, err
 		}
 		if tokenType == html.DoctypeToken {
-			token := tokenizer.Token()
+			token := h.tokenizer.Token()
 			if token.Data != "NETSCAPE-Bookmark-file-1" {
 				return nil, errors.New("bookmark file incorrect format")
 			}
 		}
 		if tokenType == html.StartTagToken {
-			token := tokenizer.Token()
+			token := h.tokenizer.Token()
 			if token.Data == "dt" {
-				err := parseFolder(&bookmarks, "", APIKey, tokenizer)
+				err := h.parseFolder("")
 				if err != nil {
 					return nil, errors.New("failed to parse bookmarks")
 				}
 			}
 		}
 	}
-	return bookmarks, nil
+	return h.bookmarks, nil
 }
 
-func parseFolder(bookmarks *[]Bookmark, path, APIKey string, tokenizer *html.Tokenizer) error {
+func (h *HTMLBookmarkParser) parseFolder(path string) error {
 	for {
-		tokenType := tokenizer.Next()
-		token := tokenizer.Token()
+		tokenType := h.tokenizer.Next()
+		token := h.tokenizer.Token()
 		data := token.Data
 		attr := token.Attr
 		if tokenType == html.ErrorToken {
-			err := tokenizer.Err()
+			err := h.tokenizer.Err()
 			if err == io.EOF {
 				break
 			}
@@ -70,42 +86,62 @@ func parseFolder(bookmarks *[]Bookmark, path, APIKey string, tokenizer *html.Tok
 		if tokenType == html.StartTagToken {
 			switch data {
 			case "h3":
-				nextTokenType := tokenizer.Next()
-				if nextTokenType == html.TextToken {
-					newPath := path
-					if len(newPath) == 0 {
-						newPath += ","
-					}
-					newPath += tokenizer.Token().Data + ","
-					parseFolder(bookmarks, newPath, APIKey, tokenizer)
+				f, err := h.createFolder(path)
+				if err != nil {
+					return err
 				}
+				h.bookmarks = append(h.bookmarks, f)
+				newPath := path
+				if len(newPath) == 0 {
+					newPath += ","
+				}
+				newPath += f.Name + ","
+				h.parseFolder(newPath)
 			case "a":
 				URL := findURL(attr)
 				if len(URL) == 0 {
 					break
 				}
-				b, err := createBookmark(path, URL, APIKey, tokenizer)
+				b, err := h.createBookmark(path, URL)
 				if err != nil {
 					return err
 				}
-				*bookmarks = append(*bookmarks, b)
+				h.bookmarks = append(h.bookmarks, b)
 			}
 		}
 	}
 	return nil
 }
 
-func createBookmark(path, URL, APIKey string, tokenizer *html.Tokenizer) (Bookmark, error) {
+func (h *HTMLBookmarkParser) createFolder(path string) (Bookmark, error) {
 	b := Bookmark{
-		APIKey: APIKey,
-		Path:   path,
-		URL:    URL,
+		APIKey:   h.APIKey,
+		Path:     path,
+		URL:      "",
+		Name:     "",
+		IsFolder: true,
 	}
-	tokenType := tokenizer.Next()
+	tokenType := h.tokenizer.Next()
+	if tokenType != html.TextToken {
+		return Bookmark{}, errors.New("bookmark folder does not have name text")
+	}
+	b.Name = html.UnescapeString(h.tokenizer.Token().Data)
+	return b, nil
+}
+
+func (h *HTMLBookmarkParser) createBookmark(path string, URL string) (Bookmark, error) {
+	b := Bookmark{
+		APIKey:   h.APIKey,
+		Path:     path,
+		URL:      URL,
+		Name:     "",
+		IsFolder: false,
+	}
+	tokenType := h.tokenizer.Next()
 	if tokenType != html.TextToken {
 		return Bookmark{}, errors.New("bookmark does not have description text")
 	}
-	b.Name = html.UnescapeString(tokenizer.Token().Data)
+	b.Name = html.UnescapeString(h.tokenizer.Token().Data)
 	return b, nil
 }
 

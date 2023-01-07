@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
-	"golang.org/x/net/html"
 )
 
 func TestParseBookmarksHTMLSingleFolder(t *testing.T) {
@@ -16,13 +15,13 @@ func TestParseBookmarksHTMLSingleFolder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tokenizer := html.NewTokenizer(file)
 	APIKey := uuid.New().String()
-	got, err := parseBookmarkFileHTML(APIKey, tokenizer)
+	got, err := NewHTMLBookmarkParser(file, APIKey).parseBookmarkFileHTML()
 	if err != nil {
 		t.Fatal(err)
 	}
 	want := []Bookmark{
+		{APIKey: APIKey, Name: "Favourites", IsFolder: true},
 		{APIKey: APIKey, Name: "Apple", Path: ",Favourites,", URL: "https://www.apple.com/jp/"},
 		{APIKey: APIKey, Name: "iCloud", Path: ",Favourites,", URL: "https://www.icloud.com/"},
 		{APIKey: APIKey, Name: "Google", Path: ",Favourites,", URL: "https://www.google.co.jp/?client=safari&channel=iphone_bm"},
@@ -34,6 +33,9 @@ func TestParseBookmarksHTMLSingleFolder(t *testing.T) {
 		{APIKey: APIKey, Name: "Facebook", Path: ",Favourites,", URL: "https://www.facebook.com/"},
 		{APIKey: APIKey, Name: "Wikipedia", Path: ",Favourites,", URL: "http://en.wikipedia.org/wiki/Main_Page"},
 		{APIKey: APIKey, Name: "Yahoo!", Path: ",Favourites,", URL: "http://www.yahoo.com/"},
+		{APIKey: APIKey, Name: "Bookmarks Menu", IsFolder: true},
+		{APIKey: APIKey, Name: "Tab Group Favourites", IsFolder: true},
+		{APIKey: APIKey, Name: "Reading List", IsFolder: true},
 	}
 	if len(want) != len(got) {
 		t.Fatalf("want and got not same length, want: %d, got: %d\n", len(want), len(got))
@@ -52,13 +54,13 @@ func TestParseBookmarksHTMLMultipleFolders(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tokenizer := html.NewTokenizer(file)
 	APIKey := uuid.New().String()
-	got, err := parseBookmarkFileHTML(APIKey, tokenizer)
+	got, err := NewHTMLBookmarkParser(file, APIKey).parseBookmarkFileHTML()
 	if err != nil {
 		t.Fatal(err)
 	}
 	want := []Bookmark{
+		{APIKey: APIKey, Name: "Favourites", IsFolder: true},
 		{APIKey: APIKey, Name: "Apple", Path: ",Favourites,", URL: "https://www.apple.com/jp/"},
 		{APIKey: APIKey, Name: "iCloud", Path: ",Favourites,", URL: "https://www.icloud.com/"},
 		{APIKey: APIKey, Name: "Google", Path: ",Favourites,", URL: "https://www.google.co.jp/?client=safari&channel=iphone_bm"},
@@ -70,6 +72,7 @@ func TestParseBookmarksHTMLMultipleFolders(t *testing.T) {
 		{APIKey: APIKey, Name: "Facebook", Path: ",Favourites,", URL: "https://www.facebook.com/"},
 		{APIKey: APIKey, Name: "Wikipedia", Path: ",Favourites,", URL: "http://en.wikipedia.org/wiki/Main_Page"},
 		{APIKey: APIKey, Name: "Yahoo!", Path: ",Favourites,", URL: "http://www.yahoo.com/"},
+		{APIKey: APIKey, Name: "News", Path: ",Favourites,", IsFolder: true},
 		{APIKey: APIKey, Name: "AllThingsD", Path: ",Favourites,News,", URL: "http://allthingsd.com/"},
 		{APIKey: APIKey, Name: "BBC", Path: ",Favourites,News,", URL: "http://www.bbc.co.uk/"},
 		{APIKey: APIKey, Name: "CNN", Path: ",Favourites,News,", URL: "http://www.cnn.com/"},
@@ -77,6 +80,7 @@ func TestParseBookmarksHTMLMultipleFolders(t *testing.T) {
 		{APIKey: APIKey, Name: "NPR", Path: ",Favourites,News,", URL: "http://www.npr.org/"},
 		{APIKey: APIKey, Name: "USA Today", Path: ",Favourites,News,", URL: "http://www.usatoday.com/"},
 		{APIKey: APIKey, Name: "The Wall Street Journal", Path: ",Favourites,News,", URL: "http://online.wsj.com/home-page"},
+		{APIKey: APIKey, Name: "Popular", Path: ",Favourites,", IsFolder: true},
 		{APIKey: APIKey, Name: "Amazon", Path: ",Favourites,Popular,", URL: "http://www.amazon.com/"},
 		{APIKey: APIKey, Name: "Disney", Path: ",Favourites,Popular,", URL: "http://disney.go.com/"},
 		{APIKey: APIKey, Name: "eBay", Path: ",Favourites,Popular,", URL: "http://www.ebay.com/"},
@@ -85,6 +89,9 @@ func TestParseBookmarksHTMLMultipleFolders(t *testing.T) {
 		{APIKey: APIKey, Name: "The Weather Channel", Path: ",Favourites,Popular,", URL: "http://www.weather.com/"},
 		{APIKey: APIKey, Name: "Yelp", Path: ",Favourites,Popular,", URL: "http://www.yelp.com/"},
 		{APIKey: APIKey, Name: "Amazon.co.uk: Low Prices in Electronics, Books, Sports Equipment & more", Path: ",Favourites,Popular,", URL: "http://www.amazon.co.uk/"},
+		{APIKey: APIKey, Name: "Bookmarks Menu", IsFolder: true},
+		{APIKey: APIKey, Name: "Tab Group Favourites", IsFolder: true},
+		{APIKey: APIKey, Name: "Reading List", IsFolder: true},
 	}
 	if len(want) != len(got) {
 		t.Fatalf("want and got not same length, want: %d, got: %d\n", len(want), len(got))
@@ -103,13 +110,12 @@ func TestNonURLHREFsInFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tokenizer := html.NewTokenizer(file)
 	APIKey := uuid.New().String()
-	got, err := parseBookmarkFileHTML(APIKey, tokenizer)
+	got, err := NewHTMLBookmarkParser(file, APIKey).parseBookmarkFileHTML()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if 25 != len(got) {
-		t.Fatalf("want and got not same length, want: %d, got: %d\n", 25, len(got))
+	if 29 != len(got) {
+		t.Fatalf("want and got not same length, want: %d, got: %d\n", 29, len(got))
 	}
 }

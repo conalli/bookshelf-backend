@@ -87,7 +87,7 @@ func (t *bookshelfTokens) NewTokenCookies(log logs.Logger) []*http.Cookie {
 	accessExpires := now.Add(15 * time.Minute)
 	path := "/"
 	secure := true
-	httpOnly := false
+	httpOnly := true
 	sameSite := http.SameSiteNoneMode
 
 	codeCookie := &http.Cookie{
@@ -125,7 +125,7 @@ func RemoveBookshelfCookies(w http.ResponseWriter) {
 	path := "/"
 	expires := time.Now().Add(-100 * time.Hour)
 	secure := true
-	httpOnly := false
+	httpOnly := true
 	sameSite := http.SameSiteStrictMode
 	maxAge := -1
 	codeCookie := &http.Cookie{

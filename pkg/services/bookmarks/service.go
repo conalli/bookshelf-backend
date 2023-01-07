@@ -8,7 +8,6 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/go-playground/validator/v10"
-	"golang.org/x/net/html"
 )
 
 type Service interface {
@@ -79,7 +78,7 @@ func (s *service) AddBookmarksFromFile(ctx context.Context, r *http.Request, API
 	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	header, ok := r.MultipartForm.File[BookmarksFileKey]
-	if !ok || len(header) < 1 {
+	if !ok || len(header) != 1 {
 		s.log.Error("Could not find bookmarks_file in request")
 		return 0, errors.NewBadRequestError("no bookmark file in request")
 	}
@@ -89,8 +88,7 @@ func (s *service) AddBookmarksFromFile(ctx context.Context, r *http.Request, API
 		s.log.Error("Could not open open bookmarks_file")
 		return 0, errors.NewInternalServerError()
 	}
-	tokenizer := html.NewTokenizer(file)
-	bookmarks, err := parseBookmarkFileHTML(APIKey, tokenizer)
+	bookmarks, err := NewHTMLBookmarkParser(file, APIKey).parseBookmarkFileHTML()
 	if err != nil {
 		s.log.Error("Could not parse bookmarks_file")
 		return 0, errors.NewBadRequestError("could not parse bookmark file")
