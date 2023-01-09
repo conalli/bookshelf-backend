@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/conalli/bookshelf-backend/pkg/errors"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
@@ -26,6 +27,8 @@ func Search(s search.Service, log logs.Logger) func(w http.ResponseWriter, r *ht
 		url, err := s.Search(r.Context(), APIKey, args)
 		if err != nil {
 			log.Errorf("could not find cmd: %v", err)
+			errURL := os.Getenv("ALLOWED_URL_BASE") + "/webcli/error"
+			http.Redirect(w, r, errURL, http.StatusSeeOther)
 		}
 		http.Redirect(w, r, url, http.StatusSeeOther)
 	}

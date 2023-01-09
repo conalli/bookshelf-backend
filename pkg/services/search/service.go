@@ -75,15 +75,16 @@ func (s *service) evaluateArgs(ctx context.Context, APIKey string, args []string
 		}
 		if *ls.b {
 			s.log.Info("webcli: list bookmarks")
-			return fmt.Sprintf("%s/webcli/bookmark?APIKey=%s", os.Getenv("ALLOWED_URL_BASE"), APIKey), nil
+			return fmt.Sprintf("%s/webcli/bookmark", os.Getenv("ALLOWED_URL_BASE")), nil
+		}
+		if *ls.bf != "" {
+			s.log.Infof("FLAG: %s", *ls.bf)
+			s.log.Info("webcli: list bookmark folder")
+			return fmt.Sprintf("%s/webcli/bookmark?folder=%s", os.Getenv("ALLOWED_URL_BASE"), *ls.bf), nil
 		}
 		if *ls.c {
 			s.log.Info("webcli: list commands")
-			return fmt.Sprintf("%s/webcli/command?APIKey=%s", os.Getenv("ALLOWED_URL_BASE"), APIKey), nil
-		}
-		if ls.bf != nil {
-			s.log.Info("webcli: list bookmark folder")
-			return fmt.Sprintf("%s/webcli/bookmark?APIKey=%s&folder=%s", os.Getenv("ALLOWED_URL_BASE"), APIKey, *ls.bf), nil
+			return fmt.Sprintf("%s/webcli/command", os.Getenv("ALLOWED_URL_BASE")), nil
 		}
 	case "touch", "add":
 		touch := NewTouchFlagset()
