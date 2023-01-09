@@ -27,12 +27,7 @@ func Refresh(a auth.Service, log logs.Logger) http.HandlerFunc {
 			return
 		}
 		cookies := tokens.NewTokenCookies(log)
-		log.Info("successfully returned token as cookie")
-		log.Info("1", r.Cookies())
 		auth.AddCookiesToResponse(w, cookies)
-		log.Info("2", r.Cookies())
-		log.Info("3", cookies)
-		log.Info("4", w.Header())
 		w.WriteHeader(http.StatusOK)
 	}
 }

@@ -12,7 +12,8 @@ import (
 
 // AddBookmarkResponse represents a successful response from the /user/bookmark POST endpoint.
 type AddBookmarkResponse struct {
-	NumAdded int    `json:"numAdded"`
+	ID       string `json:"id"`
+	NumAdded int    `json:"num_added"`
 	Name     string `json:"name,omitempty"`
 	Path     string `json:"path"`
 	URL      string `json:"url"`

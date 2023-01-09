@@ -12,7 +12,7 @@ import (
 
 // AddCmdResponse represents the data returned upon successfully adding a cmd.
 type AddCmdResponse struct {
-	NumAdded int    `json:"numAdded"`
+	NumAdded int    `json:"num_added"`
 	Cmd      string `json:"cmd"`
 	URL      string `json:"url"`
 }

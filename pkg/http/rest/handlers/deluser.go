@@ -13,7 +13,7 @@ import (
 // DelUserResponse represents the data returned upon successfully deleting a user.
 type DelUserResponse struct {
 	Name       string `json:"name"`
-	NumDeleted int    `json:"numDeleted"`
+	NumDeleted int    `json:"num_deleted"`
 }
 
 // DelUser is the handler for the delacc endpoint. Checks credentials and if

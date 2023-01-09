@@ -41,7 +41,9 @@ func AddBookmarksFile(b bookmarks.Service, log logs.Logger) http.HandlerFunc {
 		log.Info(num)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		res := struct{ NumAdded int }{
+		res := struct {
+			NumAdded int `json:"num_added"`
+		}{
 			NumAdded: num,
 		}
 		json.NewEncoder(w).Encode(res)

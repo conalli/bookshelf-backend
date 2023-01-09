@@ -12,7 +12,7 @@ import (
 
 // DeleteCmdResponse represents the data returned upon successfully deleting a cmd.
 type DeleteCmdResponse struct {
-	NumDeleted int    `json:"numDeleted"`
+	NumDeleted int    `json:"num_deleted"`
 	Cmd        string `json:"cmd"`
 }
 
