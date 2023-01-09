@@ -11,8 +11,8 @@ import (
 )
 
 type Service interface {
-	GetAllBookmarks(ctx context.Context, APIKey string) ([]Bookmark, errors.APIErr)
-	GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]Bookmark, errors.APIErr)
+	GetAllBookmarks(ctx context.Context, APIKey string) (*Folder, errors.APIErr)
+	GetBookmarksFolder(ctx context.Context, path, APIKey string) (*Folder, errors.APIErr)
 	AddBookmark(ctx context.Context, requestData request.AddBookmark, APIKey string) (int, errors.APIErr)
 	AddBookmarksFromFile(ctx context.Context, r *http.Request, APIKey string) (int, errors.APIErr)
 	DeleteBookmark(ctx context.Context, requestData request.DeleteBookmark, APIKey string) (int, errors.APIErr)
@@ -36,7 +36,7 @@ func NewService(l logs.Logger, v *validator.Validate, db Repository) *service {
 	return &service{l, v, db}
 }
 
-func (s *service) GetAllBookmarks(ctx context.Context, APIKey string) ([]Bookmark, errors.APIErr) {
+func (s *service) GetAllBookmarks(ctx context.Context, APIKey string) (*Folder, errors.APIErr) {
 	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	validateErr := s.validate.Var(APIKey, "uuid")
@@ -45,10 +45,11 @@ func (s *service) GetAllBookmarks(ctx context.Context, APIKey string) ([]Bookmar
 		return nil, errors.NewBadRequestError("request format incorrect.")
 	}
 	books, err := s.db.GetAllBookmarks(reqCtx, APIKey)
-	return books, err
+	folder := organizeBookmarks(books, "", BookmarksBasePath, BookmarksBasePath, BookmarksBasePath)
+	return folder, err
 }
 
-func (s *service) GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]Bookmark, errors.APIErr) {
+func (s *service) GetBookmarksFolder(ctx context.Context, path, APIKey string) (*Folder, errors.APIErr) {
 	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	validateErr := s.validate.Var(APIKey, "uuid")
@@ -57,7 +58,8 @@ func (s *service) GetBookmarksFolder(ctx context.Context, path, APIKey string) (
 		return nil, errors.NewBadRequestError("request format incorrect.")
 	}
 	books, err := s.db.GetBookmarksFolder(reqCtx, path, APIKey)
-	return books, err
+	folder := organizeBookmarks(books, "", BookmarksBasePath, BookmarksBasePath, BookmarksBasePath)
+	return folder, err
 }
 
 // AddBookmark adds a bookmark for an account.

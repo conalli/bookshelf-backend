@@ -12,6 +12,7 @@ import (
 const (
 	BookmarksFileKey     string = "bookmarks_file"
 	BookmarksFileMaxSize int64  = 204800
+	BookmarksBasePath    string = ""
 )
 
 // Bookmark represents a web bookmark.
@@ -58,7 +59,7 @@ func (h *HTMLBookmarkParser) parseBookmarkFileHTML() ([]Bookmark, error) {
 		if tokenType == html.StartTagToken {
 			token := h.tokenizer.Token()
 			if token.Data == "dt" {
-				err := h.parseFolder("")
+				err := h.parseFolder(BookmarksBasePath)
 				if err != nil {
 					return nil, errors.New("failed to parse bookmarks")
 				}
@@ -92,11 +93,7 @@ func (h *HTMLBookmarkParser) parseFolder(path string) error {
 					return err
 				}
 				h.bookmarks = append(h.bookmarks, f)
-				newPath := path
-				if len(newPath) == 0 {
-					newPath += ","
-				}
-				newPath += f.Name + ","
+				newPath := updatePath(path, f.Name)
 				h.parseFolder(newPath)
 			case "a":
 				URL := findURL(attr)
@@ -144,6 +141,15 @@ func (h *HTMLBookmarkParser) createBookmark(path string, URL string) (Bookmark, 
 	}
 	b.Name = html.UnescapeString(h.tokenizer.Token().Data)
 	return b, nil
+}
+
+func updatePath(currentPath, pathName string) string {
+	newPath := currentPath
+	if len(newPath) == 0 {
+		newPath += ","
+	}
+	newPath += pathName + ","
+	return newPath
 }
 
 func findURL(attr []html.Attribute) string {
