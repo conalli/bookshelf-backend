@@ -20,7 +20,10 @@ type UserRepository interface {
 
 // UserCache provides access to the cache.
 type UserCache interface {
-	DeleteCmds(ctx context.Context, APIKey string) bool
+	GetUser(ctx context.Context, userKey string) (User, error)
+	GetAllCmds(ctx context.Context, cacheKey string) (map[string]string, error)
+	AddCmds(ctx context.Context, cacheKey string, cmds map[string]string) (int64, error)
+	DeleteCmds(ctx context.Context, cacheKey string) (int64, error)
 }
 
 // UserService provides the user operations.

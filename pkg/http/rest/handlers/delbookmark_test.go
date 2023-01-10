@@ -28,15 +28,15 @@ func TestDeleteBookmark(t *testing.T) {
 		{
 			name: "Default bookmark, correct request",
 			req: request.DeleteBookmark{
-				ID: db.Bookmarks[0].ID,
+				ID: db.Bookmarks[1].ID,
 			},
 			APIKey:     db.Users["1"].APIKey,
 			statusCode: 200,
 			res: handlers.DeleteBookmarkResponse{
 				NumDeleted: 1,
-				Name:       db.Bookmarks[0].Name,
-				Path:       db.Bookmarks[0].Path,
-				URL:        db.Bookmarks[0].URL,
+				Name:       db.Bookmarks[1].Name,
+				Path:       db.Bookmarks[1].Path,
+				URL:        db.Bookmarks[1].URL,
 			},
 		},
 	}

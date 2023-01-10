@@ -21,9 +21,10 @@ type Repository interface {
 
 // Cache provides access to Caching for the Search service.
 type Cache interface {
-	GetSearchData(ctx context.Context, APIKey, cmd string) (string, error)
-	AddCmds(ctx context.Context, APIKey string, cmds map[string]string) bool
-	DeleteCmds(ctx context.Context, APIKey string) bool
+	GetAllCmds(ctx context.Context, cacheKey string) (map[string]string, error)
+	GetOneCmd(ctx context.Context, cacheKey, cmd string) (string, error)
+	AddCmds(ctx context.Context, cacheKey string, cmds map[string]string) (int64, error)
+	DeleteCmds(ctx context.Context, cacheKey string) (int64, error)
 }
 
 // Service provides the search operation.
@@ -113,7 +114,7 @@ func (s *service) evaluateArgs(ctx context.Context, APIKey string, args []string
 			return fmt.Sprintf("%s/webcli/success", os.Getenv("ALLOWED_URL_BASE")), nil
 		}
 	default:
-		cachedURL, err := s.cache.GetSearchData(ctx, APIKey, args[0])
+		cachedURL, err := s.cache.GetOneCmd(ctx, APIKey, args[0])
 		if err == nil {
 			s.log.Info("retrieved search data from cache")
 			return formatURL(cachedURL), nil
@@ -125,9 +126,12 @@ func (s *service) evaluateArgs(ctx context.Context, APIKey string, args []string
 			s.log.Errorf("could not get user by API key: %v", err)
 			return defaultSearch, err
 		}
-		ok := s.cache.AddCmds(ctx, APIKey, usr.Cmds)
-		if !ok {
+		numAdded, err := s.cache.AddCmds(ctx, APIKey, usr.Cmds)
+		if err != nil {
 			s.log.Errorf("could not add cmds to cache: %v", err)
+		}
+		if numAdded == 0 {
+			s.log.Error("could not add cmds to cache")
 		}
 		url, ok := usr.Cmds[args[0]]
 		if !ok {

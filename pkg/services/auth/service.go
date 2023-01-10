@@ -22,6 +22,11 @@ type Repository interface {
 	GetRefreshTokenByAPIKey(ctx context.Context, APIKey string) (string, error)
 }
 
+type Cache interface {
+	AddUser(ctx context.Context, userKey string, user accounts.User) (int64, error)
+	DeleteUser(ctx context.Context, userKey string) (int64, error)
+}
+
 type Service interface {
 	SignUp(context.Context, request.SignUp) (AuthUser, errors.APIErr)
 	LogIn(context.Context, request.LogIn) (AuthUser, errors.APIErr)

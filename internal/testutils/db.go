@@ -252,9 +252,25 @@ func NewCache() *Cache {
 	return &Cache{Cmds: map[string]map[string]string{}}
 }
 
-// GetSearchData tries to get a URL from the cache.
-func (c *Cache) GetSearchData(ctx context.Context, APIKey, cmd string) (string, error) {
-	val, ok := c.Cmds[APIKey]
+func (c *Cache) GetUser(ctx context.Context, userKey string) (accounts.User, error) {
+	return accounts.User{}, fmt.Errorf("no user in cache")
+}
+
+func (c *Cache) AddUser(ctx context.Context, userKey string, user accounts.User) (int64, error) {
+	return 0, fmt.Errorf("no user in cache")
+}
+
+func (c *Cache) DeleteUser(ctx context.Context, userKey string) (int64, error) {
+	return 0, fmt.Errorf("no user in cache")
+}
+
+func (c *Cache) GetAllCmds(ctx context.Context, cacheKey string) (map[string]string, error) {
+	return c.Cmds[cacheKey], nil
+}
+
+// GetCmds tries to get a URL from the cache.
+func (c *Cache) GetOneCmd(ctx context.Context, cacheKey, cmd string) (string, error) {
+	val, ok := c.Cmds[cacheKey]
 	if !ok {
 		return "", fmt.Errorf("no cmds in cache")
 	}
@@ -266,13 +282,13 @@ func (c *Cache) GetSearchData(ctx context.Context, APIKey, cmd string) (string, 
 }
 
 // AddCmds adds cmds to the cache.
-func (c *Cache) AddCmds(ctx context.Context, APIKey string, cmds map[string]string) bool {
+func (c *Cache) AddCmds(ctx context.Context, APIKey string, cmds map[string]string) (int64, error) {
 	c.Cmds[APIKey] = cmds
-	return true
+	return int64(len(c.Cmds[APIKey])), nil
 }
 
 // DeleteCmds removes cmds from the cache.
-func (c *Cache) DeleteCmds(ctx context.Context, APIKey string) bool {
+func (c *Cache) DeleteCmds(ctx context.Context, APIKey string) (int64, error) {
 	delete(c.Cmds, APIKey)
-	return true
+	return 1, nil
 }
