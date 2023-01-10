@@ -70,7 +70,7 @@ func (s *service) SignUp(ctx context.Context, requestData request.SignUp) (AuthU
 		s.log.Errorf("error creating new user; user with email %s already exists", requestData.Email)
 		return AuthUser{}, errors.NewBadRequestError("user already exists")
 	}
-	APIKey, err := accounts.GenerateAPIKey()
+	APIKey, err := GenerateAPIKey()
 	if err != nil {
 		s.log.Error("could not generate uuid")
 		return AuthUser{}, errors.NewInternalServerError()

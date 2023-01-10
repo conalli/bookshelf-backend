@@ -116,7 +116,7 @@ func (s *service) googleOIDCSignUp(ctx context.Context, claims GoogleIDTokenClai
 		s.log.Errorf("error creating new user; user with email %s already exists", claims.Email)
 		return "", errors.NewBadRequestError("user already exists")
 	}
-	newAPIKey, err := accounts.GenerateAPIKey()
+	newAPIKey, err := GenerateAPIKey()
 	if err != nil {
 		s.log.Error("could not generate uuid")
 		return "", errors.NewInternalServerError()
