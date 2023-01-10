@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/auth"
@@ -39,13 +39,13 @@ func Authorized(log logs.Logger) mux.MiddlewareFunc {
 			cookies := r.Cookies()
 			if len(cookies) < 1 {
 				log.Error("no cookies in request")
-				errors.APIErrorResponse(w, errors.NewBadRequestError("no cookies in request"))
+				apierr.APIErrorResponse(w, apierr.NewUnauthorizedError("no cookies in request"))
 				return
 			}
 			bookshelfCookies, err := request.FindCookies(cookies, auth.BookshelfTokenCode, auth.BookshelfAccessToken)
 			if err != nil {
 				log.Errorf("could not find bookshelf cookies: %v", err)
-				errors.APIErrorResponse(w, errors.NewBadRequestError("could not find bookshelf cookies"))
+				apierr.APIErrorResponse(w, apierr.NewUnauthorizedError("no cookies in request"))
 				return
 			}
 			accessToken := bookshelfCookies[auth.BookshelfAccessToken].Value
@@ -53,9 +53,41 @@ func Authorized(log logs.Logger) mux.MiddlewareFunc {
 			parsedToken, err := auth.ParseJWT(log, accessToken, code)
 			if err != nil {
 				log.Errorf("could not parse access token: %v", err)
-				errors.APIErrorResponse(w, errors.NewJWTTokenError(err.Error()))
+				apierr.APIErrorResponse(w, apierr.NewJWTTokenError(err.Error()))
 			}
 
+			req := r.WithContext(context.WithValue(r.Context(), request.JWTAPIKey, parsedToken.RegisteredClaims.Subject))
+			log.Info(parsedToken.RegisteredClaims.Subject)
+			next.ServeHTTP(w, req)
+		})
+	}
+}
+
+// AuthorizedSearch reads the JWT from the incoming request and redirects if the user is not authorized.
+func AuthorizedSearch(log logs.Logger) mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			url := os.Getenv("ALLOWED_URL_BASE") + "/webcli/error"
+			cookies := r.Cookies()
+			if len(cookies) < 1 {
+				log.Error("no cookies in request")
+				http.Redirect(w, r, url, http.StatusUnauthorized)
+				return
+			}
+			bookshelfCookies, err := request.FindCookies(cookies, auth.BookshelfTokenCode, auth.BookshelfAccessToken)
+			if err != nil {
+				log.Errorf("could not find bookshelf cookies: %v", err)
+				http.Redirect(w, r, url, http.StatusUnauthorized)
+				return
+			}
+			accessToken := bookshelfCookies[auth.BookshelfAccessToken].Value
+			code := bookshelfCookies[auth.BookshelfTokenCode].Value
+			parsedToken, err := auth.ParseJWT(log, accessToken, code)
+			if err != nil {
+				log.Errorf("could not parse access token: %v", err)
+				http.Redirect(w, r, url, http.StatusUnauthorized)
+				return
+			}
 			req := r.WithContext(context.WithValue(r.Context(), request.JWTAPIKey, parsedToken.RegisteredClaims.Subject))
 			log.Info(parsedToken.RegisteredClaims.Subject)
 			next.ServeHTTP(w, req)
