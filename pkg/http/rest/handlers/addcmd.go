@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
@@ -24,24 +24,24 @@ func AddCmd(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter,
 		APIKey, ok := request.GetAPIKeyFromContext(r)
 		if len(APIKey) < 1 || !ok {
 			log.Error("could not get APIKey from context")
-			errors.APIErrorResponse(w, errors.NewInternalServerError())
+			apierr.APIErrorResponse(w, apierr.NewInternalServerError())
 			return
 		}
 		setCmdReq, parseErr := request.DecodeJSONRequest[request.AddCmd](r.Body)
 		if parseErr != nil {
-			errRes := errors.NewBadRequestError("could not parse request body")
-			errors.APIErrorResponse(w, errRes)
+			errRes := apierr.NewBadRequestError("could not parse request body")
+			apierr.APIErrorResponse(w, errRes)
 		}
 		numUpdated, err := u.AddCmd(r.Context(), setCmdReq, APIKey)
 		if err != nil {
 			log.Errorf("error returned while trying to add a new cmd: %v", err)
-			errors.APIErrorResponse(w, err)
+			apierr.APIErrorResponse(w, err)
 			return
 		}
 		if numUpdated == 0 {
 			log.Errorf("could not update cmds... maybe %s:%s already exists?", setCmdReq.Cmd, setCmdReq.URL)
-			err := errors.NewBadRequestError("error: could not update cmds")
-			errors.APIErrorResponse(w, err)
+			err := apierr.NewBadRequestError("error: could not update cmds")
+			apierr.APIErrorResponse(w, err)
 			return
 		}
 		log.Infof("successfully set cmd: %s, url: %s", setCmdReq.Cmd, setCmdReq.URL)

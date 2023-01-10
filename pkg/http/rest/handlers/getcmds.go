@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
@@ -17,13 +17,13 @@ func GetCmds(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter
 		APIKey, ok := request.GetAPIKeyFromContext(r)
 		if len(APIKey) < 1 || !ok {
 			log.Error("could not get APIKey from context")
-			errors.APIErrorResponse(w, errors.NewInternalServerError())
+			apierr.APIErrorResponse(w, apierr.NewInternalServerError())
 			return
 		}
 		cmds, err := u.GetAllCmds(r.Context(), APIKey)
 		if err != nil {
 			log.Errorf("error returned while trying to get cmds: %v", err)
-			errors.APIErrorResponse(w, err)
+			apierr.APIErrorResponse(w, err)
 			return
 		}
 		log.Infof("successfully retrieved cmds: %v", cmds)

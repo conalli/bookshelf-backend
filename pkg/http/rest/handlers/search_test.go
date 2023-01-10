@@ -26,15 +26,6 @@ func TestSearch(t *testing.T) {
 			if url != v {
 				t.Errorf("wanted %s: got %s", v, url)
 			}
-			// res, err = http.Get(fmt.Sprintf("%s/api/search/%s/%s", srv.URL, usr.APIKey, k+"test"))
-			// if err != nil {
-			// 	t.Fatalf("Could not create test Search request - %v", err)
-			// }
-			// url = res.Request.URL.String()
-			// google := "http://www.google.com/search?q=" + k + "test"
-			// if url != google {
-			// 	t.Errorf("wanted %s: got %s", v, url)
-			// }
 		}
 	}
 }

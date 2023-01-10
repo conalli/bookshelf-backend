@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/auth"
@@ -16,13 +16,13 @@ func LogIn(a auth.Service, log logs.Logger) func(w http.ResponseWriter, r *http.
 	return func(w http.ResponseWriter, r *http.Request) {
 		logInReq, err := request.DecodeJSONRequest[request.LogIn](r.Body)
 		if err != nil {
-			errRes := errors.NewBadRequestError("could not parse request body")
-			errors.APIErrorResponse(w, errRes)
+			errRes := apierr.NewBadRequestError("could not parse request body")
+			apierr.APIErrorResponse(w, errRes)
 		}
-		authUser, apierr := a.LogIn(r.Context(), logInReq)
-		if apierr != nil {
-			log.Errorf("error returned while trying to get check credentials: %v", apierr)
-			errors.APIErrorResponse(w, apierr)
+		authUser, apiErr := a.LogIn(r.Context(), logInReq)
+		if apiErr != nil {
+			log.Errorf("error returned while trying to get check credentials: %v", apiErr)
+			apierr.APIErrorResponse(w, apiErr)
 			return
 		}
 		cookies := authUser.Tokens.NewTokenCookies(log)

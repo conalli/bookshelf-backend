@@ -3,7 +3,7 @@ package request
 import (
 	"net/http"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 )
 
 // APIRequest represents all API Request types
@@ -26,7 +26,7 @@ func FindCookies(cookies []*http.Cookie, names ...string) (map[string]*http.Cook
 	for _, name := range names {
 		cookie := FilterCookies(cookies, name)
 		if cookie == nil {
-			return nil, errors.ErrBadRequest
+			return nil, apierr.ErrBadRequest
 		}
 		found[name] = cookie
 	}

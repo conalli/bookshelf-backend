@@ -3,7 +3,7 @@ package accounts
 import (
 	"context"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/go-playground/validator/v10"
@@ -12,10 +12,10 @@ import (
 // UserRepository provides access to the user storage.
 type UserRepository interface {
 	GetUserByAPIKey(ctx context.Context, APIKey string) (User, error)
-	GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.APIErr)
-	AddCmd(reqCtx context.Context, requestData request.AddCmd, APIKey string) (int, errors.APIErr)
-	DeleteCmd(ctx context.Context, requestData request.DeleteCmd, APIKey string) (int, errors.APIErr)
-	Delete(reqCtx context.Context, requestData request.DeleteUser, APIKey string) (int, errors.APIErr)
+	GetAllCmds(ctx context.Context, APIKey string) (map[string]string, apierr.Error)
+	AddCmd(reqCtx context.Context, requestData request.AddCmd, APIKey string) (int, apierr.Error)
+	DeleteCmd(ctx context.Context, requestData request.DeleteCmd, APIKey string) (int, apierr.Error)
+	Delete(reqCtx context.Context, requestData request.DeleteUser, APIKey string) (int, apierr.Error)
 }
 
 // UserCache provides access to the cache.
@@ -29,11 +29,11 @@ type UserCache interface {
 
 // UserService provides the user operations.
 type UserService interface {
-	UserInfo(ctx context.Context, APIKey string) (User, errors.APIErr)
-	GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.APIErr)
-	AddCmd(reqCtx context.Context, requestData request.AddCmd, APIKey string) (int, errors.APIErr)
-	DeleteCmd(ctx context.Context, requestData request.DeleteCmd, APIKey string) (int, errors.APIErr)
-	Delete(ctx context.Context, requestData request.DeleteUser, APIKey string) (int, errors.APIErr)
+	UserInfo(ctx context.Context, APIKey string) (User, apierr.Error)
+	GetAllCmds(ctx context.Context, APIKey string) (map[string]string, apierr.Error)
+	AddCmd(reqCtx context.Context, requestData request.AddCmd, APIKey string) (int, apierr.Error)
+	DeleteCmd(ctx context.Context, requestData request.DeleteCmd, APIKey string) (int, apierr.Error)
+	Delete(ctx context.Context, requestData request.DeleteUser, APIKey string) (int, apierr.Error)
 }
 
 type userService struct {
@@ -48,13 +48,13 @@ func NewUserService(l logs.Logger, v *validator.Validate, r UserRepository, c Us
 	return &userService{l, v, r, c}
 }
 
-func (s *userService) UserInfo(ctx context.Context, APIKey string) (User, errors.APIErr) {
+func (s *userService) UserInfo(ctx context.Context, APIKey string) (User, apierr.Error) {
 	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	validateErr := s.validate.Var(APIKey, "uuid")
 	if validateErr != nil {
 		s.log.Errorf("could not validate GET ALL CMDS request: %v", validateErr)
-		return User{}, errors.NewBadRequestError("request format incorrect.")
+		return User{}, apierr.NewBadRequestError("request format incorrect.")
 	}
 	user, err := s.cache.GetUser(ctx, APIKey)
 	if err != nil {
@@ -66,20 +66,20 @@ func (s *userService) UserInfo(ctx context.Context, APIKey string) (User, errors
 	user, err = s.db.GetUserByAPIKey(reqCtx, APIKey)
 	if err != nil {
 		s.log.Error("could not get user by APIKey: %v", err)
-		return User{}, errors.NewInternalServerError()
+		return User{}, apierr.NewInternalServerError()
 	}
 	return user, nil
 }
 
 // Delete calls the Delete method and returns the number of deleted users.
-func (s *userService) Delete(ctx context.Context, requestData request.DeleteUser, APIKey string) (int, errors.APIErr) {
+func (s *userService) Delete(ctx context.Context, requestData request.DeleteUser, APIKey string) (int, apierr.Error) {
 	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	validateReqErr := s.validate.Struct(requestData)
 	validateAPIKeyErr := s.validate.Var(APIKey, "uuid")
 	if validateReqErr != nil || validateAPIKeyErr != nil {
 		s.log.Errorf("could not validate DELETE USER request: %v - %v", validateReqErr, validateAPIKeyErr)
-		return 0, errors.NewBadRequestError("request format incorrect.")
+		return 0, apierr.NewBadRequestError("request format incorrect.")
 	}
 	user, err := s.db.Delete(reqCtx, requestData, APIKey)
 	s.cache.DeleteUser(ctx, APIKey)

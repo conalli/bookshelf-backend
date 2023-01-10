@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
@@ -16,7 +16,7 @@ import (
 // Repository provides access to storage.
 type Repository interface {
 	GetUserByAPIKey(ctx context.Context, APIKey string) (accounts.User, error)
-	AddBookmark(reqCtx context.Context, requestData request.AddBookmark, APIKey string) (int, errors.APIErr)
+	AddBookmark(reqCtx context.Context, requestData request.AddBookmark, APIKey string) (int, apierr.Error)
 }
 
 // Cache provides access to Caching for the Search service.
@@ -51,7 +51,7 @@ func (s *service) Search(ctx context.Context, APIKey, args string) (string, erro
 	err := s.validate.Var(APIKey, "uuid")
 	if err != nil {
 		s.log.Error("invalid API key")
-		return "", errors.NewBadRequestError("invalid API key")
+		return "", apierr.NewBadRequestError("invalid API key")
 	}
 	cmds := strings.Fields(args)
 	return s.evaluateArgs(ctx, APIKey, cmds)
@@ -68,7 +68,7 @@ func (s *service) evaluateArgs(ctx context.Context, APIKey string, args []string
 		err := ls.fs.Parse(args[1:])
 		if err != nil || *ls.b && *ls.c {
 			s.log.Error("webcli: could not parse ls flag cmds")
-			return "", errors.NewBadRequestError("bad ls flags")
+			return "", apierr.NewBadRequestError("bad ls flags")
 		}
 		if *ls.b && *ls.c || len(*ls.bf) > 0 && *ls.c || *ls.b && len(*ls.bf) > 0 {
 			s.log.Error("webcli: incorrect flags passed")
@@ -92,7 +92,7 @@ func (s *service) evaluateArgs(ctx context.Context, APIKey string, args []string
 		err := touch.fs.Parse(args[1:])
 		if err != nil {
 			s.log.Error("could not parse touch flag cmds")
-			return "", errors.NewBadRequestError("bad touch flags")
+			return "", apierr.NewBadRequestError("bad touch flags")
 		}
 		if len(*touch.url) < 5 || *touch.b && len(*touch.c) > 0 {
 			s.log.Error("webcli: incorrect flags passed")

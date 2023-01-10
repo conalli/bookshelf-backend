@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
@@ -43,13 +43,13 @@ func NewTokens(log logs.Logger, APIKey string) (*bookshelfTokens, error) {
 	jwtid, err := uuid.NewRandom()
 	if err != nil {
 		log.Error("could not generate uuid for jwt")
-		return nil, errors.ErrInternalServerError
+		return nil, apierr.ErrInternalServerError
 	}
 	code := jwtid.String()
 	codeHash, err := HashPassword(code)
 	if err != nil {
 		log.Error("could not hash jwt code")
-		return nil, errors.ErrInternalServerError
+		return nil, apierr.ErrInternalServerError
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, JWTCustomClaims{
 		Code: codeHash,
@@ -75,7 +75,7 @@ func NewTokens(log logs.Logger, APIKey string) (*bookshelfTokens, error) {
 	ref, refErr := refresh.SignedString(signingKey)
 	if tknErr != nil || refErr != nil {
 		log.Errorf("error when trying to sign tokens %+v", token)
-		return nil, errors.ErrInternalServerError
+		return nil, apierr.ErrInternalServerError
 	}
 	tokens := &bookshelfTokens{code, access, ref}
 	return tokens, nil
@@ -157,11 +157,11 @@ func ParseJWT(log logs.Logger, token, code string) (*JWTCustomClaims, error) {
 	tkn, ok := parsedToken.Claims.(*JWTCustomClaims)
 	if !ok || err != nil {
 		log.Error("failed to convert token to JWTCustomClaims")
-		return nil, errors.ErrInvalidJWTToken
+		return nil, apierr.ErrInvalidJWTToken
 	}
 	if err = tkn.Valid(); err != nil || !CheckHashedPassword(tkn.Code, code) {
 		log.Errorf("token not valid: error - %v check - %t", err, CheckHashedPassword(tkn.Code, code))
-		return nil, errors.ErrInvalidJWTClaims
+		return nil, apierr.ErrInvalidJWTClaims
 	}
 	return tkn, nil
 }

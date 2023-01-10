@@ -1,9 +1,8 @@
-package errors
+package apierr
 
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 )
 
@@ -34,92 +33,108 @@ var (
 
 // APIError represents an Api/server error.
 type APIError struct {
-	ErrStatus  int
-	ErrValue   string
-	ErrDetails string
+	status int
+	err    error
+	detail string
 }
 
 // APIErr represents the methods needed to return an APIErr.
-type APIErr interface {
+type Error interface {
 	Status() int
 	Error() string
+	Detail() string
 }
 
 // ResError represents an error response.
 type ResError struct {
 	Status int    `json:"status,omitempty"`
-	Error  string `json:"error,omitempty"`
+	Title  string `json:"title,omitempty"`
+	Detail string `json:"detail,omitempty"`
 }
 
 // Status returns the status code of an APIError.
 func (e APIError) Status() int {
-	return e.ErrStatus
+	return e.status
 }
 
 func (e APIError) Error() string {
-	return fmt.Sprintf("%s -- %s", e.ErrDetails, e.ErrValue)
+	return e.err.Error()
+}
+
+func (e APIError) Detail() string {
+	return e.detail
 }
 
 // NewAPIError returns a new APIError with given arguments.
-func NewAPIError(status int, value string, details string) APIError {
+func NewAPIError(status int, value error, detail string) APIError {
 	return APIError{
-		ErrStatus:  status,
-		ErrValue:   value,
-		ErrDetails: details,
+		status: status,
+		err:    value,
+		detail: detail,
 	}
 }
 
 // NewBadRequestError returns a bad request APIError with given arguments.
-func NewBadRequestError(details string) APIError {
+func NewBadRequestError(detail string) APIError {
 	return APIError{
-		ErrStatus:  http.StatusBadRequest,
-		ErrValue:   ErrBadRequest.Error(),
-		ErrDetails: details,
+		status: http.StatusBadRequest,
+		err:    ErrBadRequest,
+		detail: detail,
+	}
+}
+
+// NewUnauthorizedError returns a wrong credentials APIError with given arguments.
+func NewUnauthorizedError(detail string) APIError {
+	return APIError{
+		status: http.StatusUnauthorized,
+		err:    ErrUnauthorized,
+		detail: detail,
 	}
 }
 
 // NewWrongCredentialsError returns a wrong credentials APIError with given arguments.
-func NewWrongCredentialsError(details string) APIError {
+func NewWrongCredentialsError(detail string) APIError {
 	return APIError{
-		ErrStatus:  http.StatusUnauthorized,
-		ErrValue:   ErrWrongCredentials.Error(),
-		ErrDetails: details,
+		status: http.StatusUnauthorized,
+		err:    ErrWrongCredentials,
+		detail: detail,
 	}
 }
 
 // NewInternalServerError returns an internal server error APIError.
 func NewInternalServerError() APIError {
 	return APIError{
-		ErrStatus: http.StatusInternalServerError,
-		ErrValue:  ErrInternalServerError.Error(),
+		status: http.StatusInternalServerError,
+		err:    ErrInternalServerError,
 	}
 }
 
 // NewJWTTokenError returns a wrong credentials APIError with given arguments.
-func NewJWTTokenError(details string) APIError {
+func NewJWTTokenError(detail string) APIError {
 	return APIError{
-		ErrStatus:  http.StatusInternalServerError,
-		ErrValue:   ErrInvalidJWTToken.Error(),
-		ErrDetails: details,
+		status: http.StatusInternalServerError,
+		err:    ErrInvalidJWTToken,
+		detail: detail,
 	}
 }
 
 // NewJWTClaimsError returns a wrong credentials APIError with given arguments.
-func NewJWTClaimsError(details string) APIError {
+func NewJWTClaimsError(detail string) APIError {
 	return APIError{
-		ErrStatus:  http.StatusInternalServerError,
-		ErrValue:   ErrInvalidJWTClaims.Error(),
-		ErrDetails: details,
+		status: http.StatusInternalServerError,
+		err:    ErrInvalidJWTClaims,
+		detail: detail,
 	}
 }
 
 // APIErrorResponse encodes the response with an APIErr.
-func APIErrorResponse(w http.ResponseWriter, err APIErr) {
+func APIErrorResponse(w http.ResponseWriter, err Error) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(err.Status())
 	res := ResError{
 		Status: err.Status(),
-		Error:  err.Error(),
+		Title:  err.Error(),
+		Detail: err.Detail(),
 	}
 	json.NewEncoder(w).Encode(res)
 }

@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
@@ -16,13 +17,13 @@ func AddBookmarksFile(b bookmarks.Service, log logs.Logger) http.HandlerFunc {
 		APIKey, ok := request.GetAPIKeyFromContext(r)
 		if len(APIKey) < 1 || !ok {
 			log.Error("could not get APIKey from context")
-			errors.APIErrorResponse(w, errors.NewInternalServerError())
+			apierr.APIErrorResponse(w, apierr.NewInternalServerError())
 			return
 		}
 		if r.ContentLength > bookmarks.BookmarksFileMaxSize {
 			log.Errorf("bookmarks file too large: %d, max: %d", r.ContentLength, bookmarks.BookmarksFileMaxSize)
-			apierr := errors.NewAPIError(http.StatusExpectationFailed, "request too large", "bookmarks file too large")
-			errors.APIErrorResponse(w, apierr)
+			apiErr := apierr.NewAPIError(http.StatusExpectationFailed, errors.New("request too large"), "bookmarks file too large")
+			apierr.APIErrorResponse(w, apiErr)
 			return
 		}
 		r.Body = http.MaxBytesReader(w, r.Body, bookmarks.BookmarksFileMaxSize)
@@ -32,10 +33,10 @@ func AddBookmarksFile(b bookmarks.Service, log logs.Logger) http.HandlerFunc {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		num, apierr := b.AddBookmarksFromFile(r.Context(), r, APIKey)
-		if apierr != nil {
-			log.Errorf("Could not add bookmarks from file: %v", apierr)
-			errors.APIErrorResponse(w, apierr)
+		num, apiErr := b.AddBookmarksFromFile(r.Context(), r, APIKey)
+		if apiErr != nil {
+			log.Errorf("Could not add bookmarks from file: %v", apiErr)
+			apierr.APIErrorResponse(w, apiErr)
 			return
 		}
 		log.Info(num)

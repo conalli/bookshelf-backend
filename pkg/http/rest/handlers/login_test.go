@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/conalli/bookshelf-backend/internal/testutils"
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
@@ -26,7 +26,7 @@ func TestLogin(t *testing.T) {
 		req        request.LogIn
 		statusCode int
 		res        accounts.User
-		err        errors.ResError
+		err        apierr.ResError
 	}{
 		{
 			name: "Default user",
@@ -44,9 +44,9 @@ func TestLogin(t *testing.T) {
 				Password: "password",
 			},
 			statusCode: 401,
-			err: errors.ResError{
+			err: apierr.ResError{
 				Status: 401,
-				Error:  "error: name or password incorrect -- " + errors.ErrWrongCredentials.Error(),
+				Title:  apierr.ErrWrongCredentials.Error(),
 			},
 		},
 	}
@@ -81,7 +81,7 @@ func TestLogin(t *testing.T) {
 				}
 			}
 			if res.StatusCode >= 400 {
-				var errorResponse errors.ResError
+				var errorResponse apierr.ResError
 				err = json.NewDecoder(res.Body).Decode(&errorResponse)
 				if err != nil {
 					t.Fatalf("Couldn't decode json body upon sign up.")
@@ -89,8 +89,8 @@ func TestLogin(t *testing.T) {
 				if errorResponse.Status != c.err.Status {
 					t.Errorf("expected error json to return status code: %d, got: %d", c.err.Status, errorResponse.Status)
 				}
-				if errorResponse.Error != c.err.Error {
-					t.Errorf("expected error json to return error message: %s, got: %s", c.err.Error, errorResponse.Error)
+				if errorResponse.Title != c.err.Title {
+					t.Errorf("expected error json to return error message: %s, got: %s", c.err.Title, errorResponse.Title)
 				}
 			}
 		})

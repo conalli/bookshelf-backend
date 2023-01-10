@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
@@ -15,13 +15,13 @@ func GetUser(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter
 		APIKey, ok := request.GetAPIKeyFromContext(r)
 		if !ok {
 			log.Error("could not get APIKey from context")
-			errors.NewBadRequestError("could not get APIKey from auth token")
+			apierr.NewBadRequestError("could not get APIKey from auth token")
 			return
 		}
-		user, apierr := u.UserInfo(r.Context(), APIKey)
-		if apierr != nil {
+		user, apiErr := u.UserInfo(r.Context(), APIKey)
+		if apiErr != nil {
 			log.Error("could not get user info")
-			errors.APIErrorResponse(w, apierr)
+			apierr.APIErrorResponse(w, apiErr)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")

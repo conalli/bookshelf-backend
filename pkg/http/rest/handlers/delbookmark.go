@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
@@ -25,24 +25,24 @@ func DeleteBookmark(b bookmarks.Service, log logs.Logger) func(w http.ResponseWr
 		APIKey, ok := request.GetAPIKeyFromContext(r)
 		if len(APIKey) < 1 || !ok {
 			log.Error("could not get APIKey from context")
-			errors.APIErrorResponse(w, errors.NewInternalServerError())
+			apierr.APIErrorResponse(w, apierr.NewInternalServerError())
 			return
 		}
 		delBookReq, parseErr := request.DecodeJSONRequest[request.DeleteBookmark](r.Body)
 		if parseErr != nil {
-			errRes := errors.NewBadRequestError("could not parse request body")
-			errors.APIErrorResponse(w, errRes)
+			errRes := apierr.NewBadRequestError("could not parse request body")
+			apierr.APIErrorResponse(w, errRes)
 		}
 		numUpdated, err := b.DeleteBookmark(r.Context(), delBookReq, APIKey)
 		if err != nil {
 			log.Errorf("error returned while trying to delete a bookmark: %v", err)
-			errors.APIErrorResponse(w, err)
+			apierr.APIErrorResponse(w, err)
 			return
 		}
 		if numUpdated == 0 {
 			log.Error("could not delete bookmark")
-			err := errors.NewBadRequestError("error: could not add bookmark")
-			errors.APIErrorResponse(w, err)
+			err := apierr.NewBadRequestError("error: could not add bookmark")
+			apierr.APIErrorResponse(w, err)
 			return
 		}
 		log.Info("successfully deleted bookmark")

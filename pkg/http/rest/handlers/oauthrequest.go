@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/auth"
 )
@@ -14,7 +14,7 @@ func OAuthRequest(a auth.Service, log logs.Logger) http.HandlerFunc {
 		err := r.ParseForm()
 		if err != nil {
 			log.Error(err)
-			errors.APIErrorResponse(w, errors.NewInternalServerError())
+			apierr.APIErrorResponse(w, apierr.NewInternalServerError())
 		}
 		queryParams := r.URL.Query()
 		authProvider := queryParams.Get("provider")
@@ -22,7 +22,7 @@ func OAuthRequest(a auth.Service, log logs.Logger) http.HandlerFunc {
 		data, err := a.OAuthRequest(r.Context(), authProvider, authType)
 		if err != nil {
 			log.Error(err)
-			errors.APIErrorResponse(w, errors.NewInternalServerError())
+			apierr.APIErrorResponse(w, apierr.NewInternalServerError())
 			return
 		}
 		stateCookie := &http.Cookie{

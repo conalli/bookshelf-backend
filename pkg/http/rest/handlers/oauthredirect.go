@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/auth"
 	"github.com/gorilla/mux"
@@ -17,19 +17,19 @@ func OAuthRedirect(a auth.Service, log logs.Logger) func(w http.ResponseWriter, 
 		authType, ok2 := route["authType"]
 		if !(ok && ok2) {
 			log.Error("no authType returned from redirect")
-			errors.APIErrorResponse(w, errors.NewBadRequestError("invalid request url"))
+			apierr.APIErrorResponse(w, apierr.NewBadRequestError("invalid request url"))
 			return
 		}
 		err := r.ParseForm()
 		if err != nil {
 			log.Error(err)
-			errors.APIErrorResponse(w, errors.NewInternalServerError())
+			apierr.APIErrorResponse(w, apierr.NewInternalServerError())
 			return
 		}
-		tokens, apierr := a.OAuthRedirect(r.Context(), authProvider, authType, r.FormValue("code"), r.FormValue("state"), r.Cookies())
-		if apierr != nil {
-			log.Errorf("error returned while trying to %s a new oauth user: %v", authType, apierr)
-			errors.APIErrorResponse(w, apierr)
+		tokens, apiErr := a.OAuthRedirect(r.Context(), authProvider, authType, r.FormValue("code"), r.FormValue("state"), r.Cookies())
+		if apiErr != nil {
+			log.Errorf("error returned while trying to %s a new oauth user: %v", authType, apiErr)
+			apierr.APIErrorResponse(w, apiErr)
 			return
 		}
 		cookies := tokens.NewTokenCookies(log)

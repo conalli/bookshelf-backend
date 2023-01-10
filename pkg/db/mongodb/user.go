@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/services/auth"
@@ -21,56 +21,56 @@ func (m *Mongo) NewUser(ctx context.Context, userData accounts.User) (string, er
 	err := m.client.Connect(ctx)
 	if err != nil {
 		m.log.Errorf("could not connect to db, %+v", err)
-		return "", errors.ErrInternalServerError
+		return "", apierr.ErrInternalServerError
 	}
 	collection := m.db.Collection(CollectionUsers)
 	result, err := collection.InsertOne(ctx, userData)
 	if err != nil {
 		m.log.Error("could not create new user")
-		return "", errors.ErrInternalServerError
+		return "", apierr.ErrInternalServerError
 	}
 	userOID, ok := result.InsertedID.(primitive.ObjectID)
 	if !ok {
 		m.log.Error("error getting objectID from newly inserted user")
-		return "", errors.ErrInternalServerError
+		return "", apierr.ErrInternalServerError
 	}
 	return userOID.Hex(), nil
 }
 
 // Delete attempts to delete a user from the db, returning the number of deleted users.
 // TODO: remove user from all users teams.
-func (m *Mongo) Delete(ctx context.Context, requestData request.DeleteUser, APIKey string) (int, errors.APIErr) {
+func (m *Mongo) Delete(ctx context.Context, requestData request.DeleteUser, APIKey string) (int, apierr.Error) {
 	m.Initialize()
 	defer m.client.Disconnect(ctx)
 	err := m.client.Connect(ctx)
 	if err != nil {
 		m.log.Error("could not connect to db")
-		return 0, errors.NewInternalServerError()
+		return 0, apierr.NewInternalServerError()
 	}
 	collection := m.db.Collection(CollectionUsers)
 	res, err := m.GetByID(ctx, collection, requestData.ID)
 	if err != nil {
 		m.log.Errorf("could not find user to delete:  %v", err)
-		return 0, errors.NewBadRequestError("could not find user to delete")
+		return 0, apierr.NewBadRequestError("could not find user to delete")
 	}
 	userData, err := m.DecodeUser(res)
 	if err != nil {
 		m.log.Errorf("could not decode user: %v", err)
-		return 0, errors.NewBadRequestError("could not find user to delete")
+		return 0, apierr.NewBadRequestError("could not find user to delete")
 	}
 	ok := auth.CheckHashedPassword(userData.Password, requestData.Password)
 	if !ok {
 		m.log.Errorf("could not delete user - password incorrect: %v", err)
-		return 0, errors.NewWrongCredentialsError("password incorrect")
+		return 0, apierr.NewWrongCredentialsError("password incorrect")
 	}
 	result, err := m.deleteUserFromDB(ctx, collection, requestData.ID)
 	if err != nil {
 		m.log.Errorf("could not delete user: %v", err)
-		return 0, errors.NewInternalServerError()
+		return 0, apierr.NewInternalServerError()
 	}
 	if result.DeletedCount == 0 {
 		m.log.Error("no users deleted")
-		return 0, errors.NewBadRequestError("error: could not remove cmd")
+		return 0, apierr.NewBadRequestError("error: could not remove cmd")
 	}
 	return int(result.DeletedCount), nil
 }
@@ -103,7 +103,7 @@ func (m *Mongo) UserAlreadyExists(ctx context.Context, email string) (bool, erro
 	err := m.client.Connect(ctx)
 	if err != nil {
 		m.log.Error("couldn't connect to db")
-		return false, errors.ErrInternalServerError
+		return false, apierr.ErrInternalServerError
 	}
 	collection := m.db.Collection(CollectionUsers)
 	return m.DataAlreadyExists(ctx, collection, "email", email), nil
@@ -129,7 +129,7 @@ func (m *Mongo) GetUserByEmail(ctx context.Context, email string) (accounts.User
 	err := m.client.Connect(ctx)
 	if err != nil {
 		m.log.Error("couldn't connect to db")
-		return accounts.User{}, errors.NewInternalServerError()
+		return accounts.User{}, apierr.NewInternalServerError()
 	}
 	collection := m.db.Collection(CollectionUsers)
 	res := m.GetByKey(ctx, collection, "email", email)
@@ -137,13 +137,13 @@ func (m *Mongo) GetUserByEmail(ctx context.Context, email string) (accounts.User
 }
 
 // GetAllCmds uses req info to get all users current cmds from the db.
-func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.APIErr) {
+func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]string, apierr.Error) {
 	m.Initialize()
 	defer m.client.Disconnect(ctx)
 	err := m.client.Connect(ctx)
 	if err != nil {
 		m.log.Error("couldn't connect to db")
-		return nil, errors.NewInternalServerError()
+		return nil, apierr.NewInternalServerError()
 	}
 	collection := m.db.Collection(CollectionUsers)
 	res := m.GetByKey(ctx, collection, "api_key", APIKey)
@@ -151,29 +151,29 @@ func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]strin
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			m.log.Error("couldn't find user with given APIKey")
-			return nil, errors.NewBadRequestError("could not find user")
+			return nil, apierr.NewBadRequestError("could not find user")
 		}
 		m.log.Error("error getting user from db")
-		return nil, errors.NewInternalServerError()
+		return nil, apierr.NewInternalServerError()
 	}
 	return user.Cmds, nil
 }
 
 // AddCmd attempts to either add or update a cmd for the user, returning the number
 // of updated cmds.
-func (m *Mongo) AddCmd(ctx context.Context, requestData request.AddCmd, APIKey string) (int, errors.APIErr) {
+func (m *Mongo) AddCmd(ctx context.Context, requestData request.AddCmd, APIKey string) (int, apierr.Error) {
 	m.Initialize()
 	defer m.client.Disconnect(ctx)
 	err := m.client.Connect(ctx)
 	if err != nil {
 		m.log.Error("couldn't connect to db")
-		return 0, errors.NewInternalServerError()
+		return 0, apierr.NewInternalServerError()
 	}
 	collection := m.db.Collection(CollectionUsers)
 	result, err := m.addCmdToUser(ctx, collection, requestData)
 	if err != nil {
 		m.log.Errorf("could not add cmd to user: %v", err)
-		return 0, errors.NewInternalServerError()
+		return 0, apierr.NewInternalServerError()
 	}
 	var numUpdated int
 	if int(result.UpsertedCount) >= int(result.ModifiedCount) {
@@ -203,19 +203,19 @@ func (m *Mongo) addCmdToUser(ctx context.Context, collection *mongo.Collection, 
 
 // DeleteCmd attempts to either rempve a cmd from the user, returning the number
 // of updated cmds.
-func (m *Mongo) DeleteCmd(ctx context.Context, requestData request.DeleteCmd, APIKey string) (int, errors.APIErr) {
+func (m *Mongo) DeleteCmd(ctx context.Context, requestData request.DeleteCmd, APIKey string) (int, apierr.Error) {
 	m.Initialize()
 	defer m.client.Disconnect(ctx)
 	err := m.client.Connect(ctx)
 	if err != nil {
 		m.log.Error("could not connect to db")
-		return 0, errors.NewInternalServerError()
+		return 0, apierr.NewInternalServerError()
 	}
 	collection := m.db.Collection(CollectionUsers)
 	result, err := m.removeUserCmd(ctx, collection, requestData.ID, requestData.Cmd)
 	if err != nil {
 		m.log.Errorf("couldn't remove cmd from user: %v", err)
-		return 0, errors.NewInternalServerError()
+		return 0, apierr.NewInternalServerError()
 	}
 	return int(result.ModifiedCount), nil
 }

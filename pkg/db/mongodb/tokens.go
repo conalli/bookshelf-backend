@@ -3,7 +3,7 @@ package mongodb
 import (
 	"context"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -20,7 +20,7 @@ func (m *Mongo) GetRefreshTokenByAPIKey(ctx context.Context, APIKey string) (str
 	err := m.client.Connect(ctx)
 	if err != nil {
 		m.log.Error("could not connect to db")
-		return "", errors.ErrInternalServerError
+		return "", apierr.ErrInternalServerError
 	}
 	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionTokens)
@@ -29,9 +29,9 @@ func (m *Mongo) GetRefreshTokenByAPIKey(ctx context.Context, APIKey string) (str
 	err = res.Decode(&token)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return "", errors.ErrNotFound
+			return "", apierr.ErrNotFound
 		}
-		return "", errors.ErrInternalServerError
+		return "", apierr.ErrInternalServerError
 	}
 	return token.Token, nil
 }
@@ -41,7 +41,7 @@ func (m *Mongo) NewRefreshToken(ctx context.Context, APIKey, refreshToken string
 	err := m.client.Connect(ctx)
 	if err != nil {
 		m.log.Error("could not connect to db")
-		return errors.ErrInternalServerError
+		return apierr.ErrInternalServerError
 	}
 	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionTokens)
@@ -50,7 +50,7 @@ func (m *Mongo) NewRefreshToken(ctx context.Context, APIKey, refreshToken string
 	res, err := collection.UpdateOne(ctx, bson.M{"api_key": APIKey}, update, options)
 	if err != nil || (res.ModifiedCount+res.UpsertedCount < 1) {
 		m.log.Error("could not update db with refresh token")
-		return errors.ErrInternalServerError
+		return apierr.ErrInternalServerError
 	}
 	return nil
 }

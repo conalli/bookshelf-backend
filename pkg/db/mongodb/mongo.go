@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"go.mongodb.org/mongo-driver/bson"
@@ -78,7 +78,7 @@ func (m *Mongo) SessionWithTransaction(ctx context.Context, transactionFunc func
 	defer sess.EndSession(ctx)
 	if err != nil {
 		m.log.Error("could not start db session")
-		return nil, errors.NewInternalServerError()
+		return nil, apierr.NewInternalServerError()
 	}
 	txnOpts := options.Transaction().SetReadPreference(readpref.Primary())
 	res, err := sess.WithTransaction(ctx, transactionFunc, txnOpts)

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
@@ -23,18 +23,18 @@ func DelUser(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter
 		APIKey, ok := request.GetAPIKeyFromContext(r)
 		if len(APIKey) < 1 || !ok {
 			log.Error("could not get APIKey from context")
-			errors.APIErrorResponse(w, errors.NewInternalServerError())
+			apierr.APIErrorResponse(w, apierr.NewInternalServerError())
 			return
 		}
-		delAccReq, parseErr := request.DecodeJSONRequest[request.DeleteUser](r.Body)
-		if parseErr != nil {
-			errRes := errors.NewBadRequestError("could not parse request body")
-			errors.APIErrorResponse(w, errRes)
-		}
-		numDeleted, err := u.Delete(r.Context(), delAccReq, APIKey)
+		delAccReq, err := request.DecodeJSONRequest[request.DeleteUser](r.Body)
 		if err != nil {
+			errRes := apierr.NewBadRequestError("could not parse request body")
+			apierr.APIErrorResponse(w, errRes)
+		}
+		numDeleted, apiErr := u.Delete(r.Context(), delAccReq, APIKey)
+		if apiErr != nil {
 			log.Errorf("error returned while trying to delete user: %v", err)
-			errors.APIErrorResponse(w, err)
+			apierr.APIErrorResponse(w, apiErr)
 			return
 		}
 		log.Infof("successfully deleted %d users: %v", numDeleted, delAccReq)

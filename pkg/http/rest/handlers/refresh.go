@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/auth"
@@ -15,15 +15,15 @@ func Refresh(a auth.Service, log logs.Logger) http.HandlerFunc {
 		accessCookie := request.FilterCookies(r.Cookies(), auth.BookshelfAccessToken)
 		if codeCookie == nil || accessCookie == nil {
 			log.Error("incorrect cookies in request")
-			errors.APIErrorResponse(w, errors.NewBadRequestError("incorrect information in request"))
+			apierr.APIErrorResponse(w, apierr.NewBadRequestError("incorrect information in request"))
 			return
 		}
 		access := accessCookie.Value
 		code := codeCookie.Value
-		tokens, apierr := a.RefreshTokens(r.Context(), access, code)
-		if apierr != nil {
+		tokens, apiErr := a.RefreshTokens(r.Context(), access, code)
+		if apiErr != nil {
 			log.Error("could not refresh tokens")
-			errors.APIErrorResponse(w, apierr)
+			apierr.APIErrorResponse(w, apiErr)
 			return
 		}
 		cookies := tokens.NewTokenCookies(log)
