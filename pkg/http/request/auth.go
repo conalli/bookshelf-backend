@@ -2,7 +2,7 @@ package request
 
 import "net/http"
 
-const JWTAPIKey string = "api_key"
+const JWTAPIKey ContextKey = "api_key"
 
 // SignUp represents the expected JSON request for the user POST endpoint.
 type SignUp struct {

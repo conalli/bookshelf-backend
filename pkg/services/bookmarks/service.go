@@ -85,11 +85,11 @@ func (s *service) AddBookmarksFromFile(ctx context.Context, r *http.Request, API
 		return 0, apierr.NewBadRequestError("no bookmark file in request")
 	}
 	file, err := header[0].Open()
-	defer file.Close()
 	if err != nil {
 		s.log.Error("Could not open open bookmarks_file")
 		return 0, apierr.NewInternalServerError()
 	}
+	defer file.Close()
 	bookmarks, err := NewHTMLBookmarkParser(file, APIKey).parseBookmarkFileHTML()
 	if err != nil {
 		s.log.Error("Could not parse bookmarks_file")

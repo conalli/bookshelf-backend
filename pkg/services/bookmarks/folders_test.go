@@ -11,10 +11,10 @@ import (
 func TestOrganizeBookmarks(t *testing.T) {
 	t.Parallel()
 	file, err := os.Open("../../../internal/testdata/bookmarks/safaribookmarks.html")
-	defer file.Close()
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer file.Close()
 	APIKey := uuid.New().String()
 	bookmarks, err := NewHTMLBookmarkParser(file, APIKey).parseBookmarkFileHTML()
 	if err != nil {

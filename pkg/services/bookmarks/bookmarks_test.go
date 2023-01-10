@@ -11,10 +11,10 @@ import (
 func TestParseBookmarksHTMLSingleFolder(t *testing.T) {
 	t.Parallel()
 	file, err := os.Open("../../../internal/testdata/bookmarks/safaribookmarks_basic.html")
-	defer file.Close()
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer file.Close()
 	APIKey := uuid.New().String()
 	got, err := NewHTMLBookmarkParser(file, APIKey).parseBookmarkFileHTML()
 	if err != nil {
@@ -50,10 +50,10 @@ func TestParseBookmarksHTMLSingleFolder(t *testing.T) {
 func TestParseBookmarksHTMLMultipleFolders(t *testing.T) {
 	t.Parallel()
 	file, err := os.Open("../../../internal/testdata/bookmarks/safaribookmarks.html")
-	defer file.Close()
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer file.Close()
 	APIKey := uuid.New().String()
 	got, err := NewHTMLBookmarkParser(file, APIKey).parseBookmarkFileHTML()
 	if err != nil {
@@ -106,16 +106,16 @@ func TestParseBookmarksHTMLMultipleFolders(t *testing.T) {
 func TestNonURLHREFsInFile(t *testing.T) {
 	t.Parallel()
 	file, err := os.Open("../../../internal/testdata/bookmarks/firefoxbookmarks.html")
-	defer file.Close()
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer file.Close()
 	APIKey := uuid.New().String()
 	got, err := NewHTMLBookmarkParser(file, APIKey).parseBookmarkFileHTML()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if 29 != len(got) {
+	if len(got) != 29 {
 		t.Fatalf("want and got not same length, want: %d, got: %d\n", 29, len(got))
 	}
 }
