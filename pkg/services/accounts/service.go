@@ -59,7 +59,8 @@ func (s *userService) UserInfo(ctx context.Context, APIKey string) (User, apierr
 	user, err := s.cache.GetUser(ctx, APIKey)
 	if err != nil {
 		s.log.Error("could not get user from cache")
-	} else {
+	}
+	if user.APIKey != "" {
 		s.log.Info("got user from cache")
 		return user, nil
 	}
