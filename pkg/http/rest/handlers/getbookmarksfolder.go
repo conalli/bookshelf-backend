@@ -29,7 +29,6 @@ func GetBookmarksFolder(b bookmarks.Service, log logs.Logger) func(w http.Respon
 			errors.APIErrorResponse(w, err)
 			return
 		}
-		log.Infof("successfully retrieved cmds: %v", books)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(books)

@@ -41,11 +41,19 @@ func (t *Testdb) AddDefaultUsers() *Testdb {
 	t.Users = usrs
 	t.Bookmarks = []bookmarks.Bookmark{
 		{
-			ID:     "c55fdaace3388c2189875fc5",
-			APIKey: "bd1eb780-0124-11ed-b939-0242ac120002",
-			Name:   "bbc",
-			Path:   ",News,",
-			URL:    "bbc.co.uk",
+			ID:       "newsfolderid",
+			APIKey:   "bd1eb780-0124-11ed-b939-0242ac120002",
+			Name:     "News",
+			Path:     bookmarks.BookmarksBasePath,
+			IsFolder: true,
+		},
+		{
+			ID:       "c55fdaace3388c2189875fc5",
+			APIKey:   "bd1eb780-0124-11ed-b939-0242ac120002",
+			Name:     "bbc",
+			Path:     ",News,",
+			URL:      "bbc.co.uk",
+			IsFolder: false,
 		},
 	}
 	return t

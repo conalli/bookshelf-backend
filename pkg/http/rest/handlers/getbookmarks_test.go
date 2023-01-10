@@ -9,6 +9,7 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestGetBookmarks(t *testing.T) {
@@ -21,13 +22,25 @@ func TestGetBookmarks(t *testing.T) {
 		name       string
 		APIKey     string
 		statusCode int
-		res        []bookmarks.Bookmark
+		res        bookmarks.Folder
 	}{
 		{
 			name:       "Default user, correct request",
 			APIKey:     db.Users["1"].APIKey,
 			statusCode: 200,
-			res:        []bookmarks.Bookmark{db.Bookmarks[0]},
+			res: bookmarks.Folder{
+				ID:        "",
+				Name:      "",
+				Path:      "",
+				Bookmarks: nil,
+				Folders: []bookmarks.Folder{
+					{
+						ID:        "newsfolderid",
+						Name:      "News",
+						Bookmarks: []bookmarks.Bookmark{db.Bookmarks[1]},
+					},
+				},
+			},
 		},
 	}
 	for _, c := range tc {
@@ -39,13 +52,13 @@ func TestGetBookmarks(t *testing.T) {
 			if res.StatusCode != c.statusCode {
 				t.Errorf("Expected get bookmarks request to give status code %d: got %d", c.statusCode, res.StatusCode)
 			}
-			var response []bookmarks.Bookmark
+			var response bookmarks.Folder
 			err = json.NewDecoder(res.Body).Decode(&response)
 			if err != nil {
 				t.Fatalf("Couldn't decode json body upon getting bookmarks.")
 			}
-			if len(response) != len(c.res) {
-				t.Errorf("Expected 1 bookmark for user: got %d", len(response))
+			if !cmp.Equal(response, c.res) {
+				t.Errorf(cmp.Diff(response, c.res))
 			}
 			res.Body.Close()
 		})
