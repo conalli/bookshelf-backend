@@ -4,7 +4,7 @@
 
 ## About Bookshelf 📚
 
-Bookshelf is a smart-booking application for efficiently saving and using bookmarks while working in the browser. To get started head on over to [Bookshelf web client](https://bookshelf-web.vercel.app) and Sign up for an account.
+Bookshelf is a smart-booking application for efficiently saving and using bookmarks while working in the browser. To get started head on over to [Bookshelf web client](bookshelf.conalli.info) and Sign up for an account.
 
 ## How to add a custom search engine 📑
 
@@ -29,13 +29,13 @@ To get started
 - Clone this repository.
 - To build the project and run the server, in the terminal run:
 
-```
-./scripts/build <dev|local> (optional: <up> to run ./up script after building)
-./scripts/up <dev|local>
+``` sh
+./scripts/build <dev> (optional: <up> to run ./up script after building)
+./scripts/up <dev>
 ```
 
 - When you are done, run:
 
-```
-./scripts/down <dev|local>
+``` sh
+./scripts/down <dev>
 ```
