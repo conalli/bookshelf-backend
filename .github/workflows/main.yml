@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Login to Heroku Container registry
+      - name: Deploy backend
         env:
           DEPLOY_URL: ${{ secrets.DEPLOY_URL }}
         run: curl $DEPLOY_URL
