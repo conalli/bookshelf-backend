@@ -37,7 +37,7 @@ func newGoogleOAuth2Config(authType string) *oauth2.Config {
 		ClientID:     googleClientID,
 		ClientSecret: googleClientSecret,
 		Endpoint:     endpoints.Google,
-		RedirectURL:  fmt.Sprintf("http://localhost:8080/api/auth/redirect/google/%s", authType),
+		RedirectURL:  fmt.Sprintf("%s/api/auth/redirect/google/%s", os.Getenv("SERVER_URL_BASE"), authType),
 		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
 	}
 }

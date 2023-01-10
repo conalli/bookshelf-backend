@@ -54,10 +54,10 @@ func NewTokens(log logs.Logger, APIKey string) (*bookshelfTokens, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, JWTCustomClaims{
 		Code: codeHash,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(20 * time.Minute)),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    "https://localhost:8080/api",
+			Issuer:    os.Getenv("SERVER_URL_BASE"),
 			Subject:   APIKey,
 		},
 	})
@@ -67,7 +67,7 @@ func NewTokens(log logs.Logger, APIKey string) (*bookshelfTokens, error) {
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    "https://localhost:8080/api",
+			Issuer:    os.Getenv("SERVER_URL_BASE"),
 			Subject:   APIKey,
 		},
 	})
@@ -84,7 +84,7 @@ func NewTokens(log logs.Logger, APIKey string) (*bookshelfTokens, error) {
 func (t *bookshelfTokens) NewTokenCookies(log logs.Logger) []*http.Cookie {
 	now := time.Now()
 	codeExpires := now.Add(24 * time.Hour)
-	accessExpires := now.Add(15 * time.Minute)
+	accessExpires := now.Add(20 * time.Minute)
 	path := "/"
 	secure := true
 	httpOnly := true
@@ -109,7 +109,7 @@ func (t *bookshelfTokens) NewTokenCookies(log logs.Logger) []*http.Cookie {
 		Secure:   secure,
 		HttpOnly: httpOnly,
 		SameSite: sameSite,
-		MaxAge:   15 * 60,
+		MaxAge:   20 * 60,
 	}
 
 	return []*http.Cookie{codeCookie, accessCookie}
