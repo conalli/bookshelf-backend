@@ -102,6 +102,10 @@ func (s *service) googleOIDCLogIn(ctx context.Context, email string) (string, ap
 		s.log.Error(err)
 		return "", apierr.NewBadRequestError("couldnt find user with given email")
 	}
+	_, err = s.cache.AddUser(ctx, userInfo.APIKey, userInfo)
+	if err != nil {
+		s.log.Error("could not add google login user to cache")
+	}
 	return userInfo.APIKey, nil
 }
 
@@ -134,10 +138,15 @@ func (s *service) googleOIDCSignUp(ctx context.Context, claims GoogleIDTokenClai
 		Cmds:          map[string]string{},
 		Teams:         map[string]string{},
 	}
-	_, err = s.db.NewUser(ctx, user)
+	userID, err := s.db.NewUser(ctx, user)
 	if err != nil {
 		s.log.Errorf("couldnt create user from id token: %v", err)
 		return "", apierr.NewInternalServerError()
+	}
+	user.ID = userID
+	_, err = s.cache.AddUser(ctx, user.APIKey, user)
+	if err != nil {
+		s.log.Error("could not add google login user to cache")
 	}
 	return user.APIKey, nil
 }
