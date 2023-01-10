@@ -21,6 +21,7 @@ type UserRepository interface {
 // UserCache provides access to the cache.
 type UserCache interface {
 	GetUser(ctx context.Context, userKey string) (User, error)
+	DeleteUser(ctx context.Context, userKey string) (int64, error)
 	GetAllCmds(ctx context.Context, cacheKey string) (map[string]string, error)
 	AddCmds(ctx context.Context, cacheKey string, cmds map[string]string) (int64, error)
 	DeleteCmds(ctx context.Context, cacheKey string) (int64, error)
@@ -52,10 +53,17 @@ func (s *userService) UserInfo(ctx context.Context, APIKey string) (User, errors
 	defer cancelFunc()
 	validateErr := s.validate.Var(APIKey, "uuid")
 	if validateErr != nil {
-		s.log.Errorf("Could not validate GET ALL CMDS request: %v", validateErr)
+		s.log.Errorf("could not validate GET ALL CMDS request: %v", validateErr)
 		return User{}, errors.NewBadRequestError("request format incorrect.")
 	}
-	user, err := s.db.GetUserByAPIKey(reqCtx, APIKey)
+	user, err := s.cache.GetUser(ctx, APIKey)
+	if err != nil {
+		s.log.Error("could not get user from cache")
+	} else {
+		s.log.Info("got user from cache")
+		return user, nil
+	}
+	user, err = s.db.GetUserByAPIKey(reqCtx, APIKey)
 	if err != nil {
 		s.log.Error("could not get user by APIKey: %v", err)
 		return User{}, errors.NewInternalServerError()
@@ -69,11 +77,18 @@ func (s *userService) GetAllCmds(ctx context.Context, APIKey string) (map[string
 	defer cancelFunc()
 	validateErr := s.validate.Var(APIKey, "uuid")
 	if validateErr != nil {
-		s.log.Errorf("Could not validate GET ALL CMDS request: %v", validateErr)
+		s.log.Errorf("could not validate GET ALL CMDS request: %v", validateErr)
 		return nil, errors.NewBadRequestError("request format incorrect.")
 	}
-	cmds, err := s.db.GetAllCmds(reqCtx, APIKey)
-	return cmds, err
+	cmds, err := s.cache.GetAllCmds(ctx, APIKey)
+	if err != nil {
+		s.log.Error("could not get user from cache")
+	} else {
+		s.log.Info("got user from cache")
+		return cmds, nil
+	}
+	cmds, apierr := s.db.GetAllCmds(reqCtx, APIKey)
+	return cmds, apierr
 }
 
 // AddCmd calls the AddCmd method and returns the number of updated commands.
@@ -83,7 +98,7 @@ func (s *userService) AddCmd(ctx context.Context, requestData request.AddCmd, AP
 	validateReqErr := s.validate.Struct(requestData)
 	validateAPIKeyErr := s.validate.Var(APIKey, "uuid")
 	if validateReqErr != nil || validateAPIKeyErr != nil {
-		s.log.Errorf("Could not validate ADD CMD request: %v - %v", validateReqErr, validateAPIKeyErr)
+		s.log.Errorf("could not validate ADD CMD request: %v - %v", validateReqErr, validateAPIKeyErr)
 		return 0, errors.NewBadRequestError("request format incorrect.")
 	}
 	numUpdated, err := s.db.AddCmd(reqCtx, requestData, APIKey)
@@ -98,7 +113,7 @@ func (s *userService) DeleteCmd(ctx context.Context, requestData request.DeleteC
 	validateReqErr := s.validate.Struct(requestData)
 	validateAPIKeyErr := s.validate.Var(APIKey, "uuid")
 	if validateReqErr != nil || validateAPIKeyErr != nil {
-		s.log.Errorf("Could not validate DELETE CMD request: %v - %v", validateReqErr, validateAPIKeyErr)
+		s.log.Errorf("could not validate DELETE CMD request: %v - %v", validateReqErr, validateAPIKeyErr)
 		return 0, errors.NewBadRequestError("request format incorrect.")
 	}
 	numUpdated, err := s.db.DeleteCmd(reqCtx, requestData, APIKey)
@@ -113,9 +128,10 @@ func (s *userService) Delete(ctx context.Context, requestData request.DeleteUser
 	validateReqErr := s.validate.Struct(requestData)
 	validateAPIKeyErr := s.validate.Var(APIKey, "uuid")
 	if validateReqErr != nil || validateAPIKeyErr != nil {
-		s.log.Errorf("Could not validate DELETE USER request: %v - %v", validateReqErr, validateAPIKeyErr)
+		s.log.Errorf("could not validate DELETE USER request: %v - %v", validateReqErr, validateAPIKeyErr)
 		return 0, errors.NewBadRequestError("request format incorrect.")
 	}
 	user, err := s.db.Delete(reqCtx, requestData, APIKey)
+	s.cache.DeleteUser(ctx, APIKey)
 	return user, err
 }

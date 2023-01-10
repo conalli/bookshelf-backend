@@ -24,7 +24,7 @@ type Router struct {
 
 // NewRouter returns a router with all handlers assigned to it
 func NewRouter(l logs.Logger, v *validator.Validate, store db.Storage, cache db.Cache, p *oidc.Provider) *Router {
-	a := auth.NewService(l, v, p, store)
+	a := auth.NewService(l, v, p, store, cache)
 	u := accounts.NewUserService(l, v, store, cache)
 	s := search.NewService(l, v, store, cache)
 	b := bookmarks.NewService(l, v, store)

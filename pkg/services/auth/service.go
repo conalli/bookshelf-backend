@@ -40,10 +40,11 @@ type service struct {
 	validate *validator.Validate
 	p        *oidc.Provider
 	db       Repository
+	cache    Cache
 }
 
-func NewService(l logs.Logger, v *validator.Validate, p *oidc.Provider, db Repository) *service {
-	return &service{l, v, p, db}
+func NewService(l logs.Logger, v *validator.Validate, p *oidc.Provider, db Repository, c Cache) *service {
+	return &service{l, v, p, db, c}
 }
 
 type AuthUser struct {
@@ -103,6 +104,10 @@ func (s *service) SignUp(ctx context.Context, requestData request.SignUp) (AuthU
 		s.log.Error("could not save refresh token to db")
 		return AuthUser{}, errors.NewInternalServerError()
 	}
+	_, err = s.cache.AddUser(ctx, user.APIKey, user)
+	if err != nil {
+		s.log.Error("could not add user to cache")
+	}
 	authUser := AuthUser{
 		User:   user,
 		Tokens: tokens,
@@ -132,6 +137,10 @@ func (s *service) LogIn(ctx context.Context, requestData request.LogIn) (AuthUse
 	err = s.db.NewRefreshToken(ctx, user.APIKey, tokens.refreshToken)
 	if err != nil {
 		s.log.Error("could not save refresh token to db")
+	}
+	_, err = s.cache.AddUser(ctx, user.APIKey, user)
+	if err != nil {
+		s.log.Error("could not add user to cache")
 	}
 	authUser := AuthUser{
 		User:   user,
