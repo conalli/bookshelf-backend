@@ -7,16 +7,17 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
-	"github.com/conalli/bookshelf-backend/pkg/password"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
+	"github.com/conalli/bookshelf-backend/pkg/services/auth"
+	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
 )
 
 // Testdb represents a testutils.
 type Testdb struct {
 	Users     map[string]accounts.User
-	Bookmarks []accounts.Bookmark
+	Bookmarks []bookmarks.Bookmark
 }
 
 // NewDB returns a new Testdb.
@@ -26,39 +27,45 @@ func NewDB() *Testdb {
 
 // AddDefaultUsers adds users to an empty testutils.
 func (t *Testdb) AddDefaultUsers() *Testdb {
-	pw, _ := password.HashPassword("password")
+	pw, _ := auth.HashPassword("password")
 	usrs := map[string]accounts.User{
 		"1": {
 			ID:       "c55fdaace3388c2189875fc5",
 			Name:     "user1",
+			Email:    "default_user@bookshelftest.com",
 			Password: pw,
 			APIKey:   "bd1eb780-0124-11ed-b939-0242ac120002",
 			Cmds:     map[string]string{"bbc": "https://www.bbc.co.uk"},
 		},
 	}
 	t.Users = usrs
-	t.Bookmarks = []accounts.Bookmark{
+	t.Bookmarks = []bookmarks.Bookmark{
 		{
-			ID:     "c55fdaace3388c2189875fc5",
-			APIKey: "bd1eb780-0124-11ed-b939-0242ac120002",
-			Name:   "bbc",
-			Path:   ",News,",
-			URL:    "bbc.co.uk",
+			ID:       "newsfolderid",
+			APIKey:   "bd1eb780-0124-11ed-b939-0242ac120002",
+			Name:     "News",
+			Path:     bookmarks.BookmarksBasePath,
+			IsFolder: true,
+		},
+		{
+			ID:       "c55fdaace3388c2189875fc5",
+			APIKey:   "bd1eb780-0124-11ed-b939-0242ac120002",
+			Name:     "bbc",
+			Path:     ",News,",
+			URL:      "bbc.co.uk",
+			IsFolder: false,
 		},
 	}
 	return t
 }
 
-func (t *Testdb) dataAlreadyExists(name string, coll string) bool {
-	if coll == "users" {
-		for _, v := range t.Users {
-			if v.Name == name {
-				return true
-			}
+func (t *Testdb) UserAlreadyExists(ctx context.Context, email string) (bool, error) {
+	for _, v := range t.Users {
+		if v.Email == email {
+			return true, nil
 		}
 	}
-
-	return false
+	return false, nil
 }
 
 func (t *Testdb) findUserByAPIKey(APIKey string) *accounts.User {
@@ -71,40 +78,22 @@ func (t *Testdb) findUserByAPIKey(APIKey string) *accounts.User {
 }
 
 // NewUser creates a new user in the testdb.
-func (t *Testdb) NewUser(ctx context.Context, body request.SignUp) (accounts.User, errors.APIErr) {
-	found := t.dataAlreadyExists(body.Name, "users")
-	if found {
-		return accounts.User{}, errors.NewBadRequestError("error creating new user; user with name " + body.Name + " already exists")
-	}
-	key, err := accounts.GenerateAPIKey()
-	if err != nil {
-		return accounts.User{}, errors.NewInternalServerError()
-	}
-	usr := accounts.User{
-		ID:       body.Name + "999",
-		Name:     body.Name,
-		Password: body.Password,
-		APIKey:   key,
-		Cmds: map[string]string{
-			"yt": "www.youtube.com",
-		},
-		Teams: map[string]string{},
-	}
-	t.Users[usr.ID] = usr
-	return usr, nil
+func (t *Testdb) NewUser(ctx context.Context, user accounts.User) (string, error) {
+	id := len(t.Users) + 1
+	userID, _ := randomID(24)
+	user.ID = userID
+	t.Users[fmt.Sprint(id)] = user
+	return user.ID, nil
 }
 
-// GetUserByName gets a user by their name in the test db.
-func (t *Testdb) GetUserByName(ctx context.Context, body request.LogIn) (accounts.User, error) {
+// GetUserByEmail gets a user by their name in the test db.
+func (t *Testdb) GetUserByEmail(ctx context.Context, email string) (accounts.User, error) {
 	for _, v := range t.Users {
-		if v.Name == body.Name {
-			if v.Password == body.Password {
-				return accounts.User{}, errors.NewAPIError(403, errors.ErrWrongCredentials.Error(), "error: name or password incorrect")
-			}
+		if v.Email == email {
 			return v, nil
 		}
 	}
-	return accounts.User{}, errors.NewAPIError(403, errors.ErrWrongCredentials.Error(), "error: name or password incorrect")
+	return accounts.User{}, apierr.ErrBadRequest
 }
 
 // GetUserByAPIKey gets a user by their APIKey in the test db.
@@ -114,10 +103,10 @@ func (t *Testdb) GetUserByAPIKey(ctx context.Context, APIKey string) (accounts.U
 			return v, nil
 		}
 	}
-	return accounts.User{}, errors.NewAPIError(404, errors.ErrNotFound.Error(), "error: could not find user with APIKey - "+APIKey)
+	return accounts.User{}, apierr.NewAPIError(404, apierr.ErrNotFound, "error: could not find user with APIKey - "+APIKey)
 }
 
-// func (t *Testdb) GetTeams(ctx context.Context, APIKey string) ([]accounts.Team, errors.APIErr) {
+// func (t *Testdb) GetTeams(ctx context.Context, APIKey string) ([]accounts.Team, apierr.Error) {
 // 	teams := []accounts.Team{}
 // 	for _, v := range t.Teams {
 // 		for m := range v.Members {
@@ -130,37 +119,37 @@ func (t *Testdb) GetUserByAPIKey(ctx context.Context, APIKey string) (accounts.U
 // }
 
 // GetAllCmds gets all cmds for a user in the test db.
-func (t *Testdb) GetAllCmds(ctx context.Context, APIKey string) (map[string]string, errors.APIErr) {
+func (t *Testdb) GetAllCmds(ctx context.Context, APIKey string) (map[string]string, apierr.Error) {
 	usr := t.findUserByAPIKey(APIKey)
 	if usr == nil {
-		return nil, errors.NewBadRequestError("error: could not find user with value " + APIKey)
+		return nil, apierr.NewBadRequestError("error: could not find user with value " + APIKey)
 	}
 	return usr.Cmds, nil
 }
 
 // AddCmd adds a cmd to a user in the test db.
-func (t *Testdb) AddCmd(ctx context.Context, body request.AddCmd, APIKey string) (int, errors.APIErr) {
+func (t *Testdb) AddCmd(ctx context.Context, body request.AddCmd, APIKey string) (int, apierr.Error) {
 	usr := t.findUserByAPIKey(APIKey)
 	if usr == nil {
-		return 0, errors.NewBadRequestError("error: could not find user with value " + APIKey)
+		return 0, apierr.NewBadRequestError("error: could not find user with value " + APIKey)
 	}
 	usr.Cmds[body.Cmd] = body.URL
 	return 1, nil
 }
 
 // DeleteCmd removes a cmd from a user in the test db.
-func (t *Testdb) DeleteCmd(ctx context.Context, body request.DeleteCmd, APIKey string) (int, errors.APIErr) {
+func (t *Testdb) DeleteCmd(ctx context.Context, body request.DeleteCmd, APIKey string) (int, apierr.Error) {
 	usr := t.findUserByAPIKey(APIKey)
 	if usr == nil {
-		return 0, errors.NewBadRequestError("error: could not find user with value " + APIKey)
+		return 0, apierr.NewBadRequestError("error: could not find user with value " + APIKey)
 	}
 	delete(usr.Cmds, body.Cmd)
 	return 1, nil
 }
 
 // GetAllBookmarks gets all bookmarks from the test db.
-func (t *Testdb) GetAllBookmarks(ctx context.Context, APIKey string) ([]accounts.Bookmark, errors.APIErr) {
-	books := make([]accounts.Bookmark, 0)
+func (t *Testdb) GetAllBookmarks(ctx context.Context, APIKey string) ([]bookmarks.Bookmark, apierr.Error) {
+	books := make([]bookmarks.Bookmark, 0)
 	for _, v := range t.Bookmarks {
 		if v.APIKey == APIKey {
 			books = append(books, v)
@@ -170,12 +159,12 @@ func (t *Testdb) GetAllBookmarks(ctx context.Context, APIKey string) ([]accounts
 }
 
 // GetBookmarksFolder gets all bookmarks from the test db.
-func (t *Testdb) GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]accounts.Bookmark, errors.APIErr) {
-	folder := []accounts.Bookmark{}
+func (t *Testdb) GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]bookmarks.Bookmark, apierr.Error) {
+	folder := []bookmarks.Bookmark{}
 	for _, val := range t.Bookmarks {
 		match, err := regexp.Match(path, []byte(val.Path))
 		if err != nil {
-			return nil, errors.NewBadRequestError("invalid bookmark folder path")
+			return nil, apierr.NewBadRequestError("invalid bookmark folder path")
 		}
 		if match {
 			folder = append(folder, val)
@@ -185,11 +174,11 @@ func (t *Testdb) GetBookmarksFolder(ctx context.Context, path, APIKey string) ([
 }
 
 // AddBookmark adds a bookmark to the test db.
-func (t *Testdb) AddBookmark(ctx context.Context, requestData request.AddBookmark, APIKey string) (int, errors.APIErr) {
+func (t *Testdb) AddBookmark(ctx context.Context, requestData request.AddBookmark, APIKey string) (int, apierr.Error) {
 	if _, err := t.GetUserByAPIKey(ctx, APIKey); err != nil {
-		return 0, errors.NewBadRequestError("User does not exist.")
+		return 0, apierr.NewBadRequestError("User does not exist.")
 	}
-	bookmark := accounts.Bookmark{
+	bookmark := bookmarks.Bookmark{
 		APIKey: APIKey,
 		Name:   requestData.Name,
 		Path:   requestData.Path,
@@ -199,8 +188,13 @@ func (t *Testdb) AddBookmark(ctx context.Context, requestData request.AddBookmar
 	return 1, nil
 }
 
+func (t *Testdb) AddManyBookmarks(ctx context.Context, bookmarks []bookmarks.Bookmark) (int, apierr.Error) {
+	t.Bookmarks = append(t.Bookmarks, bookmarks...)
+	return len(bookmarks), nil
+}
+
 // DeleteBookmark removes a bookmark from the test db.
-func (t *Testdb) DeleteBookmark(ctx context.Context, requestData request.DeleteBookmark, APIKey string) (int, errors.APIErr) {
+func (t *Testdb) DeleteBookmark(ctx context.Context, requestData request.DeleteBookmark, APIKey string) (int, apierr.Error) {
 	i := -1
 	for idx := range t.Bookmarks {
 		log.Println(idx, t.Bookmarks[idx], t.Bookmarks[idx].ID == requestData.ID)
@@ -210,7 +204,7 @@ func (t *Testdb) DeleteBookmark(ctx context.Context, requestData request.DeleteB
 		}
 	}
 	if i < 0 {
-		return 0, errors.NewBadRequestError("id not in bookmarks")
+		return 0, apierr.NewBadRequestError("id not in bookmarks")
 	}
 	t.Bookmarks[i] = t.Bookmarks[len(t.Bookmarks)-1]
 	t.Bookmarks = t.Bookmarks[:len(t.Bookmarks)-1]
@@ -218,20 +212,28 @@ func (t *Testdb) DeleteBookmark(ctx context.Context, requestData request.DeleteB
 }
 
 // Delete removes a user from the test db.
-func (t *Testdb) Delete(ctx context.Context, body request.DeleteUser, APIKey string) (int, errors.APIErr) {
+func (t *Testdb) Delete(ctx context.Context, body request.DeleteUser, APIKey string) (int, apierr.Error) {
 	usr := t.findUserByAPIKey(APIKey)
 	if usr == nil {
-		return 0, errors.NewBadRequestError("error: could not find user with value " + APIKey)
+		return 0, apierr.NewBadRequestError("error: could not find user with value " + APIKey)
 	}
 	delete(t.Users, body.ID)
 	return 1, nil
+}
+
+func (t *Testdb) GetRefreshTokenByAPIKey(ctx context.Context, APIKey string) (string, error) {
+	return "", nil
+}
+
+func (t *Testdb) NewRefreshToken(ctx context.Context, APIKey, refreshToken string) error {
+	return nil
 }
 
 // Search function for the testutils.
 func (t *Testdb) Search(ctx context.Context, APIKey, cmd string) (string, error) {
 	usr := t.findUserByAPIKey(APIKey)
 	if usr == nil {
-		return "", errors.NewBadRequestError("error: could not find user with value " + APIKey)
+		return "", apierr.NewBadRequestError("error: could not find user with value " + APIKey)
 	}
 	val, found := usr.Cmds[cmd]
 	if !found {
@@ -250,9 +252,25 @@ func NewCache() *Cache {
 	return &Cache{Cmds: map[string]map[string]string{}}
 }
 
-// GetSearchData tries to get a URL from the cache.
-func (c *Cache) GetSearchData(ctx context.Context, APIKey, cmd string) (string, error) {
-	val, ok := c.Cmds[APIKey]
+func (c *Cache) GetUser(ctx context.Context, userKey string) (accounts.User, error) {
+	return accounts.User{}, fmt.Errorf("no user in cache")
+}
+
+func (c *Cache) AddUser(ctx context.Context, userKey string, user accounts.User) (int64, error) {
+	return 0, fmt.Errorf("no user in cache")
+}
+
+func (c *Cache) DeleteUser(ctx context.Context, userKey string) (int64, error) {
+	return 0, fmt.Errorf("no user in cache")
+}
+
+func (c *Cache) GetAllCmds(ctx context.Context, cacheKey string) (map[string]string, error) {
+	return c.Cmds[cacheKey], nil
+}
+
+// GetCmds tries to get a URL from the cache.
+func (c *Cache) GetOneCmd(ctx context.Context, cacheKey, cmd string) (string, error) {
+	val, ok := c.Cmds[cacheKey]
 	if !ok {
 		return "", fmt.Errorf("no cmds in cache")
 	}
@@ -264,13 +282,13 @@ func (c *Cache) GetSearchData(ctx context.Context, APIKey, cmd string) (string, 
 }
 
 // AddCmds adds cmds to the cache.
-func (c *Cache) AddCmds(ctx context.Context, APIKey string, cmds map[string]string) bool {
+func (c *Cache) AddCmds(ctx context.Context, APIKey string, cmds map[string]string) (int64, error) {
 	c.Cmds[APIKey] = cmds
-	return true
+	return int64(len(c.Cmds[APIKey])), nil
 }
 
 // DeleteCmds removes cmds from the cache.
-func (c *Cache) DeleteCmds(ctx context.Context, APIKey string) bool {
+func (c *Cache) DeleteCmds(ctx context.Context, APIKey string) (int64, error) {
 	delete(c.Cmds, APIKey)
-	return true
+	return 1, nil
 }

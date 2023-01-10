@@ -3,59 +3,33 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
-	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
-	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
+	"github.com/conalli/bookshelf-backend/pkg/services/auth"
 )
 
 // SignUp is the handler for the signup endpoint. Checks db for username and if
 // unique adds new user with given credentials.
-func SignUp(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
+func SignUp(a auth.Service, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Info("Sign Up endpoint hit")
-		newUserReq, parseErr := request.DecodeJSONRequest[request.SignUp](r.Body)
-		if parseErr != nil {
-			errRes := errors.NewBadRequestError("could not parse request body")
-			errors.APIErrorResponse(w, errRes)
-		}
-		newUser, err := u.NewUser(r.Context(), newUserReq)
+		newUserReq, err := request.DecodeJSONRequest[request.SignUp](r.Body)
 		if err != nil {
-			log.Errorf("error returned while trying to create a new user: %v", err)
-			errors.APIErrorResponse(w, err)
+			errRes := apierr.NewBadRequestError("could not parse request body")
+			apierr.APIErrorResponse(w, errRes)
+		}
+		authUser, apiErr := a.SignUp(r.Context(), newUserReq)
+		if apiErr != nil {
+			log.Errorf("error returned while trying to create a new user: %v", apiErr)
+			apierr.APIErrorResponse(w, apiErr)
 			return
 		}
-		log.Infof("successfully created a new user: %+v", newUser)
-		tokens, err := jwtauth.NewTokens(newUser.APIKey, log)
-		if err != nil {
-			log.Errorf("error returned while trying to create a new token: %v", err)
-			errors.APIErrorResponse(w, err)
-			return
-		}
-		accessToken := http.Cookie{
-			Name:     "bookshelfjwt",
-			Value:    tokens["access_token"],
-			Expires:  time.Now().Add(15 * time.Minute),
-			HttpOnly: true,
-			Secure:   true,
-			SameSite: http.SameSiteNoneMode,
-		}
-		refreshToken := http.Cookie{
-			Name:     "bookshelfrefresh",
-			Value:    tokens["refresh_token"],
-			Expires:  time.Now().Add(24 * time.Hour),
-			Secure:   true,
-			SameSite: http.SameSiteNoneMode,
-		}
+		cookies := authUser.Tokens.NewTokenCookies(log)
 		log.Info("successfully returned token as cookie")
-		http.SetCookie(w, &accessToken)
-		http.SetCookie(w, &refreshToken)
+		auth.AddCookiesToResponse(w, cookies)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		res := newUser
-		json.NewEncoder(w).Encode(res)
+		json.NewEncoder(w).Encode(authUser.User)
 	}
 }

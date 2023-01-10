@@ -1,11 +1,11 @@
-package jwtauth_test
+package auth_test
 
 import (
 	"os"
 	"testing"
 
 	"github.com/conalli/bookshelf-backend/internal/testutils"
-	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
+	"github.com/conalli/bookshelf-backend/pkg/services/auth"
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -23,20 +23,20 @@ func TestNewToken(t *testing.T) {
 
 	for _, n := range tn {
 		t.Run(n, func(t *testing.T) {
-			tkn, err := jwtauth.NewTokens(n, testutils.NewLogger())
+			tkns, err := auth.NewTokens(testutils.NewLogger(), n)
 			if err != nil {
 				t.Fatalf("couldn't make a new token with name: %s", n)
 			}
-			token, e := jwt.ParseWithClaims(tkn["access_token"], &jwtauth.CustomClaims{}, func(t *jwt.Token) (interface{}, error) { return signingKey, nil })
+			token, e := jwt.ParseWithClaims(tkns.AccessToken(), &auth.JWTCustomClaims{}, func(t *jwt.Token) (interface{}, error) { return signingKey, nil })
 			if e != nil {
 				t.Fatalf("couldn't parse token: %+v", e)
 			}
-			claimToken, ok := token.Claims.(*jwtauth.CustomClaims)
+			claimToken, ok := token.Claims.(*auth.JWTCustomClaims)
 			if !ok {
 				t.Fatal("invalid custom claims")
 			}
-			if claimToken.Name != n {
-				t.Fatalf("token.Name: %s not equal to name: %s", claimToken.Name, n)
+			if claimToken.Subject != n {
+				t.Fatalf("token.Name: %s not equal to name: %s", claimToken.Subject, n)
 			}
 		})
 	}

@@ -15,7 +15,7 @@ import (
 func TestDeleteBookmark(t *testing.T) {
 	t.Parallel()
 	db := testutils.NewDB().AddDefaultUsers()
-	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db, testutils.NewCache())
+	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db, testutils.NewCache(), nil)
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 	tc := []struct {
@@ -28,15 +28,15 @@ func TestDeleteBookmark(t *testing.T) {
 		{
 			name: "Default bookmark, correct request",
 			req: request.DeleteBookmark{
-				ID: db.Bookmarks[0].ID,
+				ID: db.Bookmarks[1].ID,
 			},
 			APIKey:     db.Users["1"].APIKey,
 			statusCode: 200,
 			res: handlers.DeleteBookmarkResponse{
 				NumDeleted: 1,
-				Name:       db.Bookmarks[0].Name,
-				Path:       db.Bookmarks[0].Path,
-				URL:        db.Bookmarks[0].URL,
+				Name:       db.Bookmarks[1].Name,
+				Path:       db.Bookmarks[1].Path,
+				URL:        db.Bookmarks[1].URL,
 			},
 		},
 	}
@@ -46,7 +46,7 @@ func TestDeleteBookmark(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Couldn't create del bookmark request body.")
 			}
-			res, err := testutils.RequestWithCookie("DELETE", srv.URL+"/api/user/bookmark/"+c.APIKey, body, c.APIKey, testutils.NewLogger())
+			res, err := testutils.RequestWithCookie("DELETE", srv.URL+"/api/bookmark", body, c.APIKey, testutils.NewLogger())
 			if err != nil {
 				t.Fatalf("Couldn't create request to del bookmark with cookie.")
 			}
@@ -58,7 +58,6 @@ func TestDeleteBookmark(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Couldn't decode json body upon deleting bookmarks.")
 			}
-			t.Logf("%+v", response)
 			if response.NumDeleted != c.res.NumDeleted {
 				t.Errorf("Expected %d bookmarks to be deleted: got %d", c.res.NumDeleted, response.NumDeleted)
 			}

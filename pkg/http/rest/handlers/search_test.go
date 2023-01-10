@@ -1,8 +1,6 @@
 package handlers_test
 
 import (
-	"fmt"
-	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -14,12 +12,12 @@ import (
 func TestSearch(t *testing.T) {
 	t.Parallel()
 	db := testutils.NewDB().AddDefaultUsers()
-	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db, testutils.NewCache())
+	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db, testutils.NewCache(), nil)
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 	for _, usr := range db.Users {
 		for k, v := range usr.Cmds {
-			res, err := http.Get(fmt.Sprintf("%s/api/search/%s/%s", srv.URL, usr.APIKey, k))
+			res, err := testutils.RequestWithCookie("GET", srv.URL+"/api/search/"+k, nil, usr.APIKey, testutils.NewLogger())
 			if err != nil {
 				t.Fatalf("Could not create Search request - %v", err)
 			}
@@ -28,15 +26,6 @@ func TestSearch(t *testing.T) {
 			if url != v {
 				t.Errorf("wanted %s: got %s", v, url)
 			}
-			// res, err = http.Get(fmt.Sprintf("%s/api/search/%s/%s", srv.URL, usr.APIKey, k+"test"))
-			// if err != nil {
-			// 	t.Fatalf("Could not create test Search request - %v", err)
-			// }
-			// url = res.Request.URL.String()
-			// google := "http://www.google.com/search?q=" + k + "test"
-			// if url != google {
-			// 	t.Errorf("wanted %s: got %s", v, url)
-			// }
 		}
 	}
 }

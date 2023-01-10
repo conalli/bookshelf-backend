@@ -4,48 +4,52 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
-	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
-	"github.com/gorilla/mux"
+	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
 )
 
 // DeleteBookmarkResponse represents a successful response from the /user/bookmark POST endpoint.
 type DeleteBookmarkResponse struct {
-	NumDeleted int    `json:"numDeleted"`
+	ID         string `json:"id"`
 	Name       string `json:"name,omitempty"`
 	Path       string `json:"path,omitempty"`
 	URL        string `json:"url"`
+	NumDeleted int    `json:"num_deleted"`
 }
 
 // DeleteBookmark is the handler for the bookmark POST endpoint.
-func DeleteBookmark(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
+func DeleteBookmark(b bookmarks.Service, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Info("DELETE BOOKMARK endpoint hit")
-		vars := mux.Vars(r)
-		APIKey := vars["APIKey"]
+		APIKey, ok := request.GetAPIKeyFromContext(r)
+		if len(APIKey) < 1 || !ok {
+			log.Error("could not get APIKey from context")
+			apierr.APIErrorResponse(w, apierr.NewInternalServerError())
+			return
+		}
 		delBookReq, parseErr := request.DecodeJSONRequest[request.DeleteBookmark](r.Body)
 		if parseErr != nil {
-			errRes := errors.NewBadRequestError("could not parse request body")
-			errors.APIErrorResponse(w, errRes)
+			errRes := apierr.NewBadRequestError("could not parse request body")
+			apierr.APIErrorResponse(w, errRes)
 		}
-		numUpdated, err := u.DeleteBookmark(r.Context(), delBookReq, APIKey)
+		numUpdated, err := b.DeleteBookmark(r.Context(), delBookReq, APIKey)
 		if err != nil {
 			log.Errorf("error returned while trying to delete a bookmark: %v", err)
-			errors.APIErrorResponse(w, err)
+			apierr.APIErrorResponse(w, err)
 			return
 		}
 		if numUpdated == 0 {
 			log.Error("could not delete bookmark")
-			err := errors.NewBadRequestError("error: could not add bookmark")
-			errors.APIErrorResponse(w, err)
+			err := apierr.NewBadRequestError("error: could not add bookmark")
+			apierr.APIErrorResponse(w, err)
 			return
 		}
 		log.Info("successfully deleted bookmark")
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		res := DeleteBookmarkResponse{
+			ID:         delBookReq.ID,
 			NumDeleted: numUpdated,
 			Path:       delBookReq.Path,
 			URL:        delBookReq.URL,

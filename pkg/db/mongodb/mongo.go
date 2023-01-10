@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/conalli/bookshelf-backend/pkg/errors"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"go.mongodb.org/mongo-driver/bson"
@@ -21,6 +21,7 @@ const (
 	CollectionUsers     = "users"
 	CollectionTeams     = "teams"
 	CollectionBookmarks = "bookmarks"
+	CollectionTokens    = "tokens"
 )
 
 // Mongo represents a Mongodb client and database.
@@ -77,7 +78,7 @@ func (m *Mongo) SessionWithTransaction(ctx context.Context, transactionFunc func
 	defer sess.EndSession(ctx)
 	if err != nil {
 		m.log.Error("could not start db session")
-		return nil, errors.NewInternalServerError()
+		return nil, apierr.NewInternalServerError()
 	}
 	txnOpts := options.Transaction().SetReadPreference(readpref.Primary())
 	res, err := sess.WithTransaction(ctx, transactionFunc, txnOpts)
@@ -142,6 +143,8 @@ func (m *Mongo) DecodeUser(res *mongo.SingleResult) (accounts.User, error) {
 	var user accounts.User
 	err := res.Decode(&user)
 	if err != nil {
+		// TODO: check for errNoDocuments
+		m.log.Errorf("could not decode mongo single result into user: %v", err)
 		return accounts.User{}, err
 	}
 	return user, nil

@@ -16,7 +16,7 @@ import (
 func TestAddBookmark(t *testing.T) {
 	t.Parallel()
 	db := testutils.NewDB().AddDefaultUsers()
-	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db, testutils.NewCache())
+	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db, testutils.NewCache(), nil)
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 	tc := []struct {
@@ -52,7 +52,7 @@ func TestAddBookmark(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Couldn't create add cmd request body.")
 			}
-			res, err := testutils.RequestWithCookie("POST", srv.URL+"/api/user/bookmark/"+c.APIKey, body, c.APIKey, testutils.NewLogger())
+			res, err := testutils.RequestWithCookie("POST", srv.URL+"/api/bookmark", body, c.APIKey, testutils.NewLogger())
 			if err != nil {
 				t.Fatalf("Couldn't create request to add cmd with cookie.")
 			}

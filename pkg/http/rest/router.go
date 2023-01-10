@@ -6,10 +6,12 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/db"
 	"github.com/conalli/bookshelf-backend/pkg/http/middleware"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest/handlers"
-	"github.com/conalli/bookshelf-backend/pkg/jwtauth"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
+	"github.com/conalli/bookshelf-backend/pkg/services/auth"
+	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
 	"github.com/conalli/bookshelf-backend/pkg/services/search"
+	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 )
@@ -21,21 +23,26 @@ type Router struct {
 }
 
 // NewRouter returns a router with all handlers assigned to it
-func NewRouter(l logs.Logger, v *validator.Validate, store db.Storage, cache db.Cache) *Router {
+func NewRouter(l logs.Logger, v *validator.Validate, store db.Storage, cache db.Cache, p *oidc.Provider) *Router {
+	a := auth.NewService(l, v, p, store, cache)
 	u := accounts.NewUserService(l, v, store, cache)
 	s := search.NewService(l, v, store, cache)
-
+	b := bookmarks.NewService(l, v, store)
 	r := &Router{l, mux.NewRouter()}
+
 	api := r.initRouter()
+	addAuthRoutes(api, a, l)
 	addUserRoutes(api, u, l)
 	addSearchRoutes(api, s, l)
+	addBookmarkRoutes(api, b, l)
 
+	r.router.Use(middleware.RouteLogger(l))
 	return r
 }
 
 func (r *Router) initRouter() *mux.Router {
 	api := r.router.PathPrefix("/api").Subrouter()
-	api.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) { w.Write([]byte("Hello")) }).Methods("GET")
+	api.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) }).Methods("GET")
 	return api
 }
 
@@ -44,7 +51,7 @@ func (r *Router) Walk() *Router {
 	r.router.Walk(func(route *mux.Route, _ *mux.Router, _ []*mux.Route) error {
 		tpl, err1 := route.GetPathTemplate()
 		met, err2 := route.GetMethods()
-		r.log.Infof("Path:", tpl, "Err:", err1, "Methods:", met, "Err:", err2)
+		r.log.Info("Path:", tpl, "Err:", err1, "Methods:", met, "Err:", err2)
 		return nil
 	})
 	return r
@@ -57,25 +64,41 @@ func (r *Router) Handler() http.Handler {
 
 // HandlerWithCORS provides basic CORS middleware for a router.
 func (r *Router) HandlerWithCORS() http.Handler {
-	return middleware.CORSMiddleware(r.router)
+	return middleware.CORS(r.router)
+}
+
+func addAuthRoutes(router *mux.Router, a auth.Service, l logs.Logger) {
+	auth := router.PathPrefix("/auth").Subrouter()
+	auth.HandleFunc("/signup", handlers.SignUp(a, l)).Methods("POST")
+	auth.HandleFunc("/login", handlers.LogIn(a, l)).Methods("POST")
+	auth.HandleFunc("/oauth", handlers.OAuthRequest(a, l)).Methods("GET")
+	auth.HandleFunc("/redirect/{authProvider}/{authType}", handlers.OAuthRedirect(a, l)).Methods("GET")
+	auth.HandleFunc("/refresh", handlers.Refresh(a, l)).Methods("POST")
+	auth.HandleFunc("/logout", handlers.LogOut(a, l)).Methods("POST")
 }
 
 func addUserRoutes(router *mux.Router, u accounts.UserService, l logs.Logger) {
 	user := router.PathPrefix("/user").Subrouter()
-	user.HandleFunc("", handlers.SignUp(u, l)).Methods("POST")
-	user.HandleFunc("/{APIKey}", jwtauth.Authorized(handlers.DelUser(u, l), l)).Methods("DELETE")
-	user.HandleFunc("/login", handlers.LogIn(u, l)).Methods("POST")
-	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.GetCmds(u, l), l)).Methods("GET")
-	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.AddCmd(u, l), l)).Methods("POST")
-	user.HandleFunc("/cmd/{APIKey}", jwtauth.Authorized(handlers.DeleteCmd(u, l), l)).Methods("PATCH")
-	user.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.GetAllBookmarks(u, l), l)).Methods("GET")
-	user.HandleFunc("/bookmark/{path}/{APIKey}", jwtauth.Authorized(handlers.GetBookmarksFolder(u, l), l)).Methods("GET")
-	user.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.AddBookmark(u, l), l)).Methods("POST")
-	// user.HandleFunc("/bookmark/file/{APIKey}", jwtauth.Authorized(handlers.AddBookmarkFile(u, l), l)).Methods("POST")
-	user.HandleFunc("/bookmark/{APIKey}", jwtauth.Authorized(handlers.DeleteBookmark(u, l), l)).Methods("DELETE")
+	user.Use(middleware.Authorized(l))
+	user.HandleFunc("", handlers.GetUser(u, l)).Methods("GET")
+	user.HandleFunc("", handlers.DelUser(u, l)).Methods("DELETE")
+	user.HandleFunc("/cmd", handlers.GetCmds(u, l)).Methods("GET")
+	user.HandleFunc("/cmd", handlers.AddCmd(u, l)).Methods("POST")
+	user.HandleFunc("/cmd", handlers.DeleteCmd(u, l)).Methods("PATCH")
 }
 
 func addSearchRoutes(router *mux.Router, s search.Service, l logs.Logger) {
 	search := router.PathPrefix("/search").Subrouter()
-	search.HandleFunc("/{APIKey}/{args}", handlers.Search(s, l)).Methods("GET")
+	search.Use(middleware.AuthorizedSearch(l))
+	search.HandleFunc("/{args}", handlers.Search(s, l)).Methods("GET")
+}
+
+func addBookmarkRoutes(router *mux.Router, b bookmarks.Service, l logs.Logger) {
+	bookmarks := router.PathPrefix("/bookmark").Subrouter()
+	bookmarks.Use(middleware.Authorized(l))
+	bookmarks.HandleFunc("", handlers.GetAllBookmarks(b, l)).Methods("GET")
+	bookmarks.HandleFunc("", handlers.AddBookmark(b, l)).Methods("POST")
+	bookmarks.HandleFunc("", handlers.DeleteBookmark(b, l)).Methods("DELETE")
+	bookmarks.HandleFunc("/{path}", handlers.GetBookmarksFolder(b, l)).Methods("GET")
+	bookmarks.HandleFunc("/file", handlers.AddBookmarksFile(b, l)).Methods("POST")
 }
