@@ -47,6 +47,11 @@ func NewService(l logs.Logger, v *validator.Validate, r Repository, c Cache) Ser
 	return &service{l, v, r, c}
 }
 
+type refreshResult struct {
+	tkn *auth.BookshelfTokens
+	err error
+}
+
 // Search returns the url of a given cmd.
 func (s *service) Search(ctx context.Context, APIKey, args, code string, refresh bool) (string, *auth.BookshelfTokens, error) {
 	ctx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
@@ -56,13 +61,17 @@ func (s *service) Search(ctx context.Context, APIKey, args, code string, refresh
 		s.log.Error("invalid API key")
 		return "", nil, apierr.NewBadRequestError("invalid API key")
 	}
-	var tokens *auth.BookshelfTokens
+	refChan := make(chan refreshResult, 1)
 	if refresh {
-		tokens, err = s.refresh(ctx, APIKey, code)
-		if err != nil {
-			s.log.Error("could not refresh tokens in search")
-			return "", nil, err
-		}
+		go func() {
+			tokens, err := s.refresh(ctx, APIKey, code)
+			res := refreshResult{tokens, err}
+			refChan <- res
+			close(refChan)
+		}()
+	} else {
+		refChan <- refreshResult{}
+		close(refChan)
 	}
 	cmds := strings.Fields(args)
 	url, err := s.evaluateArgs(ctx, APIKey, cmds)
@@ -70,7 +79,12 @@ func (s *service) Search(ctx context.Context, APIKey, args, code string, refresh
 		s.log.Error("could not evaluate args in search")
 		return "", nil, err
 	}
-	return url, tokens, nil
+	res := <-refChan
+	if res.err != nil {
+		s.log.Error("could not refresh tokens in search")
+		return "", nil, err
+	}
+	return url, res.tkn, nil
 }
 
 func (s *service) evaluateArgs(ctx context.Context, APIKey string, args []string) (string, error) {
