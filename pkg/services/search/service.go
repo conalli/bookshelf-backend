@@ -10,6 +10,7 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
+	"github.com/conalli/bookshelf-backend/pkg/services/auth"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -17,6 +18,8 @@ import (
 type Repository interface {
 	GetUserByAPIKey(ctx context.Context, APIKey string) (accounts.User, error)
 	AddBookmark(reqCtx context.Context, requestData request.AddBookmark, APIKey string) (int, apierr.Error)
+	NewRefreshToken(ctx context.Context, APIKey, refreshToken string) error
+	GetRefreshTokenByAPIKey(ctx context.Context, APIKey string) (string, error)
 }
 
 // Cache provides access to Caching for the Search service.
@@ -29,7 +32,7 @@ type Cache interface {
 
 // Service provides the search operation.
 type Service interface {
-	Search(ctx context.Context, APIKey, cmd string) (string, error)
+	Search(ctx context.Context, APIKey, args, code string, refresh bool) (string, *auth.BookshelfTokens, error)
 }
 
 type service struct {
@@ -45,16 +48,29 @@ func NewService(l logs.Logger, v *validator.Validate, r Repository, c Cache) Ser
 }
 
 // Search returns the url of a given cmd.
-func (s *service) Search(ctx context.Context, APIKey, args string) (string, error) {
+func (s *service) Search(ctx context.Context, APIKey, args, code string, refresh bool) (string, *auth.BookshelfTokens, error) {
 	ctx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	err := s.validate.Var(APIKey, "uuid")
 	if err != nil {
 		s.log.Error("invalid API key")
-		return "", apierr.NewBadRequestError("invalid API key")
+		return "", nil, apierr.NewBadRequestError("invalid API key")
+	}
+	var tokens *auth.BookshelfTokens
+	if refresh {
+		tokens, err = s.refresh(ctx, APIKey, code)
+		if err != nil {
+			s.log.Error("could not refresh tokens in search")
+			return "", nil, err
+		}
 	}
 	cmds := strings.Fields(args)
-	return s.evaluateArgs(ctx, APIKey, cmds)
+	url, err := s.evaluateArgs(ctx, APIKey, cmds)
+	if err != nil {
+		s.log.Error("could not evaluate args in search")
+		return "", nil, err
+	}
+	return url, tokens, nil
 }
 
 func (s *service) evaluateArgs(ctx context.Context, APIKey string, args []string) (string, error) {
@@ -141,4 +157,31 @@ func (s *service) evaluateArgs(ctx context.Context, APIKey string, args []string
 		return formatURL(url), nil
 	}
 	return "", nil
+}
+
+func (s *service) refresh(ctx context.Context, APIKey, code string) (*auth.BookshelfTokens, error) {
+	token, err := s.db.GetRefreshTokenByAPIKey(ctx, APIKey)
+	if err != nil {
+		s.log.Error("could not get refresh token from db")
+		if err == apierr.ErrInternalServerError {
+			return nil, apierr.ErrInternalServerError
+		}
+		return nil, apierr.ErrNotFound
+	}
+	tkn, err := auth.ParseJWT(s.log, token, code)
+	if err != nil || !tkn.IsValid() || !tkn.HasCorrectClaims(code) {
+		s.log.Error("parsed refresh token invalid")
+		return nil, apierr.ErrBadRequest
+	}
+	tokens, err := auth.NewTokens(s.log, APIKey)
+	if err != nil {
+		s.log.Error("could not create new tokens")
+		return nil, apierr.ErrInternalServerError
+	}
+	err = s.db.NewRefreshToken(ctx, APIKey, tokens.RefreshToken())
+	if err != nil {
+		s.log.Error("could not save refresh token to db")
+		return nil, apierr.ErrInternalServerError
+	}
+	return tokens, nil
 }

@@ -39,10 +39,7 @@ func resolveEnv(envType string) string {
 		}
 		return os.Getenv("LOCAL_MONGO_URI")
 	case "db":
-		if d := os.Getenv("LOCAL"); d == "production" {
-			return os.Getenv("DB_NAME")
-		}
-		return os.Getenv("DEV_DB_NAME")
+		return os.Getenv("DB_NAME")
 	default:
 		return ""
 	}
