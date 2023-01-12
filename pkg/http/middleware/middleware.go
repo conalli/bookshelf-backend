@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"net/http"
 	"os"
 
@@ -54,9 +53,15 @@ func Authorized(log logs.Logger) mux.MiddlewareFunc {
 			if err != nil {
 				log.Errorf("could not parse access token: %v", err)
 				apierr.APIErrorResponse(w, apierr.NewJWTTokenError(err.Error()))
+				return
 			}
-
-			req := r.WithContext(context.WithValue(r.Context(), request.JWTAPIKey, parsedToken.RegisteredClaims.Subject))
+			if !parsedToken.IsValid() || !parsedToken.HasCorrectClaims(code) {
+				log.Errorf("token not valid: error - %v check - %t", err, auth.CheckHash(parsedToken.Code, code))
+				apierr.APIErrorResponse(w, apierr.NewJWTTokenError("invalid token"))
+				return
+			}
+			ctx := request.AddAPIKeyToContext(r.Context(), parsedToken.RegisteredClaims.Subject)
+			req := r.WithContext(ctx)
 			log.Info(parsedToken.RegisteredClaims.Subject)
 			next.ServeHTTP(w, req)
 		})
@@ -71,13 +76,13 @@ func AuthorizedSearch(log logs.Logger) mux.MiddlewareFunc {
 			cookies := r.Cookies()
 			if len(cookies) < 1 {
 				log.Error("no cookies in request")
-				http.Redirect(w, r, url, http.StatusUnauthorized)
+				http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 				return
 			}
 			bookshelfCookies, err := request.FindCookies(cookies, auth.BookshelfTokenCode, auth.BookshelfAccessToken)
 			if err != nil {
 				log.Errorf("could not find bookshelf cookies: %v", err)
-				http.Redirect(w, r, url, http.StatusUnauthorized)
+				http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 				return
 			}
 			accessToken := bookshelfCookies[auth.BookshelfAccessToken].Value
@@ -85,10 +90,22 @@ func AuthorizedSearch(log logs.Logger) mux.MiddlewareFunc {
 			parsedToken, err := auth.ParseJWT(log, accessToken, code)
 			if err != nil {
 				log.Errorf("could not parse access token: %v", err)
-				http.Redirect(w, r, url, http.StatusUnauthorized)
+				http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 				return
 			}
-			req := r.WithContext(context.WithValue(r.Context(), request.JWTAPIKey, parsedToken.RegisteredClaims.Subject))
+			if !parsedToken.HasCorrectClaims(code) {
+				log.Errorf("token not valid: error - %v check - %t", err, auth.CheckHash(parsedToken.Code, code))
+				apierr.APIErrorResponse(w, apierr.NewJWTTokenError("invalid token"))
+				return
+			}
+			refreshCode := ""
+			needRefresh := !parsedToken.IsValid()
+			if needRefresh {
+				log.Info("token refresh required on search")
+				refreshCode = code
+			}
+			ctx := request.AddSearchKeysToContext(r.Context(), parsedToken.Subject, refreshCode)
+			req := r.WithContext(ctx)
 			log.Info(parsedToken.RegisteredClaims.Subject)
 			next.ServeHTTP(w, req)
 		})

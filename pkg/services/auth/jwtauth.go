@@ -15,9 +15,12 @@ const (
 	BookshelfTokenCode    string = "bookshelf_token_code"
 	BookshelfAccessToken  string = "bookshelf_access_token"
 	BookshelfRefreshToken string = "bookshelf_refresh_token"
+	BookshelfBasePath     string = "/"
 )
 
-var signingKey = []byte(os.Getenv("SIGNING_SECRET"))
+var (
+	signingKey = []byte(os.Getenv("SIGNING_SECRET"))
+)
 
 // CustomClaims represents the claims made in the JWT.
 type JWTCustomClaims struct {
@@ -25,28 +28,41 @@ type JWTCustomClaims struct {
 	jwt.RegisteredClaims
 }
 
-type bookshelfTokens struct {
+func (j *JWTCustomClaims) IsValid() bool {
+	err := j.Valid()
+	return err == nil && j.Code != ""
+}
+
+func (j *JWTCustomClaims) HasCorrectClaims(code string) bool {
+	return CheckHash(j.Code, code)
+}
+
+type BookshelfTokens struct {
 	code, accessToken, refreshToken string
 }
 
-func (b *bookshelfTokens) Code() string {
+func (b *BookshelfTokens) Code() string {
 	return b.code
 }
 
-func (b *bookshelfTokens) AccessToken() string {
+func (b *BookshelfTokens) AccessToken() string {
 	return b.accessToken
+}
+
+func (b *BookshelfTokens) RefreshToken() string {
+	return b.refreshToken
 }
 
 // NewTokens creates a new token based on the CustomClaims and returns the token
 // as a string signed with the secret.
-func NewTokens(log logs.Logger, APIKey string) (*bookshelfTokens, error) {
+func NewTokens(log logs.Logger, APIKey string) (*BookshelfTokens, error) {
 	jwtid, err := uuid.NewRandom()
 	if err != nil {
 		log.Error("could not generate uuid for jwt")
 		return nil, apierr.ErrInternalServerError
 	}
 	code := jwtid.String()
-	codeHash, err := HashPassword(code)
+	codeHash, err := Hash(code)
 	if err != nil {
 		log.Error("could not hash jwt code")
 		return nil, apierr.ErrInternalServerError
@@ -77,15 +93,15 @@ func NewTokens(log logs.Logger, APIKey string) (*bookshelfTokens, error) {
 		log.Errorf("error when trying to sign tokens %+v", token)
 		return nil, apierr.ErrInternalServerError
 	}
-	tokens := &bookshelfTokens{code, access, ref}
+	tokens := &BookshelfTokens{code, access, ref}
 	return tokens, nil
 }
 
-func (t *bookshelfTokens) NewTokenCookies(log logs.Logger) []*http.Cookie {
+func (t *BookshelfTokens) NewTokenCookies(log logs.Logger) []*http.Cookie {
 	now := time.Now()
-	codeExpires := now.Add(24 * time.Hour)
-	accessExpires := now.Add(20 * time.Minute)
-	path := "/"
+	expires := now.Add(24 * time.Hour)
+	maxAge := 24 * 60 * 60
+	path := BookshelfBasePath
 	secure := true
 	httpOnly := true
 	sameSite := http.SameSiteNoneMode
@@ -94,22 +110,22 @@ func (t *bookshelfTokens) NewTokenCookies(log logs.Logger) []*http.Cookie {
 		Name:     BookshelfTokenCode,
 		Value:    t.code,
 		Path:     path,
-		Expires:  codeExpires,
+		Expires:  expires,
 		Secure:   secure,
 		HttpOnly: httpOnly,
 		SameSite: sameSite,
-		MaxAge:   24 * 60 * 60,
+		MaxAge:   maxAge,
 	}
 
 	accessCookie := &http.Cookie{
 		Name:     BookshelfAccessToken,
 		Value:    t.accessToken,
 		Path:     path,
-		Expires:  accessExpires,
+		Expires:  expires,
 		Secure:   secure,
 		HttpOnly: httpOnly,
 		SameSite: sameSite,
-		MaxAge:   20 * 60,
+		MaxAge:   maxAge,
 	}
 
 	return []*http.Cookie{codeCookie, accessCookie}
@@ -122,7 +138,7 @@ func AddCookiesToResponse(w http.ResponseWriter, cookies []*http.Cookie) {
 }
 
 func RemoveBookshelfCookies(w http.ResponseWriter) {
-	path := "/"
+	path := BookshelfBasePath
 	expires := time.Now().Add(-100 * time.Hour)
 	secure := true
 	httpOnly := true
@@ -152,15 +168,17 @@ func RemoveBookshelfCookies(w http.ResponseWriter) {
 	http.SetCookie(w, accessCookie)
 }
 
+func keyFunc(t *jwt.Token) (interface{}, error) { return signingKey, nil }
+
 func ParseJWT(log logs.Logger, token, code string) (*JWTCustomClaims, error) {
-	parsedToken, err := jwt.ParseWithClaims(token, &JWTCustomClaims{}, func(t *jwt.Token) (interface{}, error) { return signingKey, nil })
-	tkn, ok := parsedToken.Claims.(*JWTCustomClaims)
-	if !ok || err != nil {
-		log.Error("failed to convert token to JWTCustomClaims")
+	parsedToken, err := jwt.ParseWithClaims(token, &JWTCustomClaims{}, keyFunc, jwt.WithoutClaimsValidation())
+	if err != nil {
+		log.Error("failed to parse token")
 		return nil, apierr.ErrInvalidJWTToken
 	}
-	if err = tkn.Valid(); err != nil || !CheckHashedPassword(tkn.Code, code) {
-		log.Errorf("token not valid: error - %v check - %t", err, CheckHashedPassword(tkn.Code, code))
+	tkn, ok := parsedToken.Claims.(*JWTCustomClaims)
+	if !ok {
+		log.Error("failed to convert token to JWTCustomClaims")
 		return nil, apierr.ErrInvalidJWTClaims
 	}
 	return tkn, nil

@@ -20,7 +20,7 @@ type DeleteCmdResponse struct {
 // authorized deletes given cmd.
 func DeleteCmd(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		APIKey, ok := request.GetAPIKeyFromContext(r)
+		APIKey, ok := request.GetAPIKeyFromContext(r.Context())
 		if len(APIKey) < 1 || !ok {
 			log.Error("could not get APIKey from context")
 			apierr.APIErrorResponse(w, apierr.NewInternalServerError())

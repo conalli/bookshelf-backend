@@ -12,7 +12,7 @@ import (
 
 func GetUser(u accounts.UserService, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		APIKey, ok := request.GetAPIKeyFromContext(r)
+		APIKey, ok := request.GetAPIKeyFromContext(r.Context())
 		if !ok {
 			log.Error("could not get APIKey from context")
 			apierr.NewBadRequestError("could not get APIKey from auth token")

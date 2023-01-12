@@ -112,8 +112,8 @@ func NewInternalServerError() APIError {
 // NewJWTTokenError returns a wrong credentials APIError with given arguments.
 func NewJWTTokenError(detail string) APIError {
 	return APIError{
-		status: http.StatusInternalServerError,
-		err:    ErrInvalidJWTToken,
+		status: http.StatusUnauthorized,
+		err:    ErrUnauthorized,
 		detail: detail,
 	}
 }

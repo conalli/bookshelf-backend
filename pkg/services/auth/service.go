@@ -31,8 +31,8 @@ type Service interface {
 	SignUp(context.Context, request.SignUp) (AuthUser, apierr.Error)
 	LogIn(context.Context, request.LogIn) (AuthUser, apierr.Error)
 	OAuthRequest(ctx context.Context, authProvider, authType string) (OIDCRequest, apierr.Error)
-	OAuthRedirect(ctx context.Context, authProvider, authType, code, state string, cookies []*http.Cookie) (*bookshelfTokens, apierr.Error)
-	RefreshTokens(ctx context.Context, accessToken, code string) (*bookshelfTokens, apierr.Error)
+	OAuthRedirect(ctx context.Context, authProvider, authType, code, state string, cookies []*http.Cookie) (*BookshelfTokens, apierr.Error)
+	RefreshTokens(ctx context.Context, accessToken, code string) (*BookshelfTokens, apierr.Error)
 }
 
 type service struct {
@@ -49,7 +49,7 @@ func NewService(l logs.Logger, v *validator.Validate, p *oidc.Provider, db Repos
 
 type AuthUser struct {
 	User   accounts.User
-	Tokens *bookshelfTokens
+	Tokens *BookshelfTokens
 }
 
 // SignUp returns the url of a given cmd.
@@ -75,7 +75,7 @@ func (s *service) SignUp(ctx context.Context, requestData request.SignUp) (AuthU
 		s.log.Error("could not generate uuid")
 		return AuthUser{}, apierr.NewInternalServerError()
 	}
-	hashedPassword, err := HashPassword(requestData.Password)
+	hashedPassword, err := Hash(requestData.Password)
 	if err != nil {
 		s.log.Error("could not hash password")
 		return AuthUser{}, apierr.NewInternalServerError()
@@ -125,7 +125,7 @@ func (s *service) LogIn(ctx context.Context, requestData request.LogIn) (AuthUse
 		return AuthUser{}, apierr.NewBadRequestError("request format incorrect.")
 	}
 	user, err := s.db.GetUserByEmail(reqCtx, requestData.Email)
-	if err != nil || !CheckHashedPassword(user.Password, requestData.Password) {
+	if err != nil || !CheckHash(user.Password, requestData.Password) {
 		s.log.Errorf("could not login: %+v", err)
 		return AuthUser{}, apierr.NewAPIError(http.StatusUnauthorized, apierr.ErrWrongCredentials, "error: name or password incorrect")
 	}
@@ -165,7 +165,7 @@ func (s *service) OAuthRequest(ctx context.Context, authProvider, authType strin
 	return OIDCRequest{State: state, Nonce: nonce, AuthURL: url}, nil
 }
 
-func (s *service) OAuthRedirect(ctx context.Context, authProvider, authType, code, state string, cookies []*http.Cookie) (*bookshelfTokens, apierr.Error) {
+func (s *service) OAuthRedirect(ctx context.Context, authProvider, authType, code, state string, cookies []*http.Cookie) (*BookshelfTokens, apierr.Error) {
 	stateCookie := request.FilterCookies(cookies, "state")
 	if stateCookie == nil {
 		s.log.Error("no state cookie in OAuth redirect")
@@ -200,9 +200,9 @@ func (s *service) OAuthRedirect(ctx context.Context, authProvider, authType, cod
 	return tokens, nil
 }
 
-func (s *service) RefreshTokens(ctx context.Context, accessToken, code string) (*bookshelfTokens, apierr.Error) {
+func (s *service) RefreshTokens(ctx context.Context, accessToken, code string) (*BookshelfTokens, apierr.Error) {
 	tkn, err := ParseJWT(s.log, accessToken, code)
-	if err != nil {
+	if err != nil || !tkn.HasCorrectClaims(code) {
 		s.log.Error("could not parse jwt from cookie")
 		return nil, apierr.NewJWTTokenError("could not parse token")
 	}
@@ -215,8 +215,8 @@ func (s *service) RefreshTokens(ctx context.Context, accessToken, code string) (
 		}
 		return nil, apierr.NewAPIError(http.StatusNotFound, err, "no refresh token")
 	}
-	_, err = ParseJWT(s.log, token, code)
-	if err != nil {
+	tkn, err = ParseJWT(s.log, token, code)
+	if err != nil || !tkn.IsValid() || !tkn.HasCorrectClaims(code) {
 		s.log.Error("parsed refresh token invalid")
 		return nil, apierr.NewBadRequestError("invalid refresh token")
 	}
