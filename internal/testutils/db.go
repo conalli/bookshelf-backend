@@ -27,7 +27,7 @@ func NewDB() *Testdb {
 
 // AddDefaultUsers adds users to an empty testutils.
 func (t *Testdb) AddDefaultUsers() *Testdb {
-	pw, _ := auth.HashPassword("password")
+	pw, _ := auth.Hash("password")
 	usrs := map[string]accounts.User{
 		"1": {
 			ID:       "c55fdaace3388c2189875fc5",

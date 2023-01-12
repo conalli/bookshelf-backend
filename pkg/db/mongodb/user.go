@@ -58,7 +58,7 @@ func (m *Mongo) Delete(ctx context.Context, requestData request.DeleteUser, APIK
 		m.log.Errorf("could not decode user: %v", err)
 		return 0, apierr.NewBadRequestError("could not find user to delete")
 	}
-	ok := auth.CheckHashedPassword(userData.Password, requestData.Password)
+	ok := auth.CheckHash(userData.Password, requestData.Password)
 	if !ok {
 		m.log.Errorf("could not delete user - password incorrect: %v", err)
 		return 0, apierr.NewWrongCredentialsError("password incorrect")

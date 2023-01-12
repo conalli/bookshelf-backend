@@ -11,14 +11,14 @@ func GenerateAPIKey() (string, error) {
 	return key.String(), err
 }
 
-// HashPassword takes a password and returns the hashed version of it.
-func HashPassword(password string) (string, error) {
-	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+// Hash takes a password and returns the hashed version of it.
+func Hash(input string) (string, error) {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(input), bcrypt.DefaultCost)
 	return string(hashed), err
 }
 
-// CheckHashedPassword takes a hashed password and compares it to an unhashed password.
-func CheckHashedPassword(hash, password string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+// CheckHash takes a hashed password and compares it to an unhashed password.
+func CheckHash(hash, input string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(input))
 	return err == nil
 }
