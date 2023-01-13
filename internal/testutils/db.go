@@ -103,7 +103,7 @@ func (t *Testdb) GetUserByAPIKey(ctx context.Context, APIKey string) (accounts.U
 			return v, nil
 		}
 	}
-	return accounts.User{}, apierr.NewAPIError(404, apierr.ErrNotFound, "error: could not find user with APIKey - "+APIKey)
+	return accounts.User{}, apierr.ErrNotFound
 }
 
 // func (t *Testdb) GetTeams(ctx context.Context, APIKey string) ([]accounts.Team, apierr.Error) {

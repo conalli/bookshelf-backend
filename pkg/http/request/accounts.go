@@ -18,7 +18,7 @@ type AddBookmark struct {
 	Name     string `json:"name,omitempty" validate:"max=30"`
 	Path     string `json:"path" validate:"max=100"`
 	URL      string `json:"url" validate:"max=200"`
-	IsFolder bool   `json:"is_folder" validate:"required"`
+	IsFolder bool   `json:"is_folder"`
 }
 
 // DeleteBookmark represents the expected JSON request for the user/bookmark POST endpoint.

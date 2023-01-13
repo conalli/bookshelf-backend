@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/conalli/bookshelf-backend/internal/testutils"
+	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest/handlers"
@@ -28,9 +29,10 @@ func TestAddBookmark(t *testing.T) {
 		{
 			name: "Default user",
 			req: request.AddBookmark{
-				Name: "yt",
-				Path: ",Google,",
-				URL:  "https://www.youtube.com",
+				Name:     "yt",
+				Path:     ",Google,",
+				URL:      "https://www.youtube.com",
+				IsFolder: false,
 			},
 			APIKey:     db.Users["1"].APIKey,
 			statusCode: 200,
@@ -38,9 +40,10 @@ func TestAddBookmark(t *testing.T) {
 		{
 			name: "User doesn't exist",
 			req: request.AddBookmark{
-				Name: "yt",
-				Path: ",Google,",
-				URL:  "https://www.youtube.com",
+				Name:     "yt",
+				Path:     ",Google,",
+				URL:      "https://www.youtube.com",
+				IsFolder: false,
 			},
 			APIKey:     uuid.New().String(),
 			statusCode: 400,
@@ -50,12 +53,13 @@ func TestAddBookmark(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			body, err := testutils.MakeRequestBody(c.req)
 			if err != nil {
-				t.Fatalf("Couldn't create add cmd request body.")
+				t.Fatalf("Couldn't create add cmd request body")
 			}
 			res, err := testutils.RequestWithCookie("POST", srv.URL+"/api/bookmark", body, c.APIKey, testutils.NewLogger())
 			if err != nil {
-				t.Fatalf("Couldn't create request to add cmd with cookie.")
+				t.Fatalf("Couldn't create request to add cmd with cookie")
 			}
+			defer res.Body.Close()
 			if res.StatusCode != c.statusCode {
 				t.Errorf("Expected add cmd request to give status code %d: got %d", c.statusCode, res.StatusCode)
 			}
@@ -63,13 +67,18 @@ func TestAddBookmark(t *testing.T) {
 				var response handlers.AddBookmarkResponse
 				err = json.NewDecoder(res.Body).Decode(&response)
 				if err != nil {
-					t.Fatalf("Couldn't decode json body upon adding cmds.")
+					t.Fatalf("Couldn't decode json body upon adding cmds")
 				}
 				if response.NumAdded != 1 {
 					t.Errorf("Expected number of commands added for user with API key %s to be 1: got %d", c.APIKey, response.NumAdded)
 				}
+			} else {
+				var response apierr.ResError
+				err = json.NewDecoder(res.Body).Decode(&response)
+				if err != nil {
+					t.Fatalf("Couldn't decode json body upon add cmd error")
+				}
 			}
-			res.Body.Close()
 		})
 	}
 }
