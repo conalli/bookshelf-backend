@@ -77,10 +77,11 @@ func (m *Mongo) AddBookmark(ctx context.Context, requestData request.AddBookmark
 	}
 	collection := m.db.Collection(CollectionBookmarks)
 	data := bookmarks.Bookmark{
-		APIKey: APIKey,
-		Name:   requestData.Name,
-		Path:   requestData.Path,
-		URL:    requestData.URL,
+		APIKey:   APIKey,
+		Name:     requestData.Name,
+		Path:     requestData.Path,
+		URL:      requestData.URL,
+		IsFolder: requestData.IsFolder,
 	}
 	_, err = collection.InsertOne(ctx, data)
 	if err != nil {
