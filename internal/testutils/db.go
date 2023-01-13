@@ -229,6 +229,10 @@ func (t *Testdb) NewRefreshToken(ctx context.Context, APIKey, refreshToken strin
 	return nil
 }
 
+func (t *Testdb) DeleteRefreshToken(ctx context.Context, APIKey string) (int64, error) {
+	return 1, nil
+}
+
 // Search function for the testutils.
 func (t *Testdb) Search(ctx context.Context, APIKey, cmd string) (string, error) {
 	usr := t.findUserByAPIKey(APIKey)

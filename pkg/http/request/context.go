@@ -32,11 +32,11 @@ func AddSearchKeysToContext(ctx context.Context, APIKey, code string) context.Co
 	return context.WithValue(ctx, SearchKeys, val)
 }
 
-func GetSearchKeysFromContext(ctx context.Context) (string, string, bool) {
+func GetSearchKeysFromContext(ctx context.Context) (APIKey string, code string, ok bool) {
 	key, ok := ctx.Value(SearchKeys).([2]string)
 	if !ok {
 		return "", "", ok
 	}
-	APIKey, code := key[0], key[1]
+	APIKey, code = key[0], key[1]
 	return APIKey, code, ok
 }

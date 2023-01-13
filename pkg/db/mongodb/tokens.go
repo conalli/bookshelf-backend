@@ -49,8 +49,26 @@ func (m *Mongo) NewRefreshToken(ctx context.Context, APIKey, refreshToken string
 	options := options.Update().SetUpsert(true)
 	res, err := collection.UpdateOne(ctx, bson.M{"api_key": APIKey}, update, options)
 	if err != nil || (res.ModifiedCount+res.UpsertedCount < 1) {
-		m.log.Error("could not update db with refresh token")
+		m.log.Errorf("could not update db with refresh token: %+v", err)
 		return apierr.ErrInternalServerError
 	}
 	return nil
+}
+
+func (m *Mongo) DeleteRefreshToken(ctx context.Context, APIKey string) (int64, error) {
+	m.Initialize()
+	err := m.client.Connect(ctx)
+	if err != nil {
+		m.log.Error("could not connect to db")
+		return 0, apierr.ErrInternalServerError
+	}
+	defer m.client.Disconnect(ctx)
+	collection := m.db.Collection(CollectionTokens)
+	res, err := collection.DeleteOne(ctx, bson.M{"api_key": APIKey})
+	if err != nil {
+		m.log.Errorf("could not remove refesh token from db: %+v", err)
+		return 0, nil
+	}
+
+	return res.DeletedCount, nil
 }

@@ -74,7 +74,9 @@ func addAuthRoutes(router *mux.Router, a auth.Service, l logs.Logger) {
 	auth.HandleFunc("/oauth", handlers.OAuthRequest(a, l)).Methods("GET")
 	auth.HandleFunc("/redirect/{authProvider}/{authType}", handlers.OAuthRedirect(a, l)).Methods("GET")
 	auth.HandleFunc("/refresh", handlers.Refresh(a, l)).Methods("POST")
-	auth.HandleFunc("/logout", handlers.LogOut(a, l)).Methods("POST")
+	authorized := auth.PathPrefix("").Subrouter()
+	authorized.Use(middleware.AuthorizedSearch(l))
+	authorized.HandleFunc("/logout", handlers.LogOut(a, l)).Methods("POST")
 }
 
 func addUserRoutes(router *mux.Router, u accounts.UserService, l logs.Logger) {

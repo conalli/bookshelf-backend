@@ -20,6 +20,7 @@ type Repository interface {
 	NewUser(context.Context, accounts.User) (string, error)
 	NewRefreshToken(ctx context.Context, APIKey, refreshToken string) error
 	GetRefreshTokenByAPIKey(ctx context.Context, APIKey string) (string, error)
+	DeleteRefreshToken(ctx context.Context, APIKey string) (int64, error)
 }
 
 type Cache interface {
@@ -33,6 +34,7 @@ type Service interface {
 	OAuthRequest(ctx context.Context, authProvider, authType string) (OIDCRequest, apierr.Error)
 	OAuthRedirect(ctx context.Context, authProvider, authType, code, state string, cookies []*http.Cookie) (*BookshelfTokens, apierr.Error)
 	RefreshTokens(ctx context.Context, accessToken, code string) (*BookshelfTokens, apierr.Error)
+	LogOut(ctx context.Context, APIKey string) apierr.Error
 }
 
 type service struct {
@@ -231,4 +233,17 @@ func (s *service) RefreshTokens(ctx context.Context, accessToken, code string) (
 		return nil, apierr.NewInternalServerError()
 	}
 	return tokens, nil
+}
+
+func (s *service) LogOut(ctx context.Context, APIKey string) apierr.Error {
+	numDeleted, err := s.db.DeleteRefreshToken(ctx, APIKey)
+	if err != nil {
+		s.log.Error("error deleting refresh token from db: %+v", err)
+		return apierr.NewInternalServerError()
+	}
+	if numDeleted != 1 {
+		s.log.Error("attempted to delete one refresh token, got: %d", numDeleted)
+		return apierr.NewBadRequestError("incorrect APIKey")
+	}
+	return nil
 }
