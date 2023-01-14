@@ -33,7 +33,7 @@ func OAuthRequest(a auth.Service, log logs.Logger) http.HandlerFunc {
 			Secure:   true,
 			Path:     "/api",
 			Expires:  time.Now().Add(2 * time.Minute),
-			SameSite: http.SameSiteNoneMode,
+			SameSite: http.SameSiteLaxMode,
 		}
 		nonceCookie := &http.Cookie{
 			Name:     "nonce",
@@ -43,7 +43,7 @@ func OAuthRequest(a auth.Service, log logs.Logger) http.HandlerFunc {
 			Secure:   true,
 			Path:     "/api",
 			Expires:  time.Now().Add(2 * time.Minute),
-			SameSite: http.SameSiteNoneMode,
+			SameSite: http.SameSiteLaxMode,
 		}
 		http.SetCookie(w, stateCookie)
 		http.SetCookie(w, nonceCookie)

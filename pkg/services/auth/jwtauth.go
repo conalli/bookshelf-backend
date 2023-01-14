@@ -141,7 +141,7 @@ func RemoveBookshelfCookies(w http.ResponseWriter) {
 	expires := time.Now().Add(-100 * time.Hour)
 	secure := true
 	httpOnly := true
-	sameSite := http.SameSiteNoneMode
+	sameSite := http.SameSiteStrictMode
 	maxAge := -1
 	codeCookie := &http.Cookie{
 		Name:     BookshelfTokenCode,
