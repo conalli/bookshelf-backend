@@ -19,7 +19,8 @@ const (
 )
 
 var (
-	signingKey = []byte(os.Getenv("SIGNING_SECRET"))
+	signingKey   = []byte(os.Getenv("SIGNING_SECRET"))
+	serverDomain = os.Getenv("SERVER_DOMAIN")
 )
 
 // CustomClaims represents the claims made in the JWT.
@@ -106,6 +107,7 @@ func (t *BookshelfTokens) NewTokenCookies(log logs.Logger, sameSite http.SameSit
 	httpOnly := true
 
 	codeCookie := &http.Cookie{
+		Domain:   serverDomain,
 		Name:     BookshelfTokenCode,
 		Value:    t.code,
 		Path:     path,
@@ -117,6 +119,7 @@ func (t *BookshelfTokens) NewTokenCookies(log logs.Logger, sameSite http.SameSit
 	}
 
 	accessCookie := &http.Cookie{
+		Domain:   serverDomain,
 		Name:     BookshelfAccessToken,
 		Value:    t.accessToken,
 		Path:     path,
@@ -144,6 +147,7 @@ func RemoveBookshelfCookies(w http.ResponseWriter) {
 	sameSite := http.SameSiteStrictMode
 	maxAge := -1
 	codeCookie := &http.Cookie{
+		Domain:   serverDomain,
 		Name:     BookshelfTokenCode,
 		Value:    "",
 		Path:     path,
@@ -154,6 +158,7 @@ func RemoveBookshelfCookies(w http.ResponseWriter) {
 		MaxAge:   maxAge,
 	}
 	accessCookie := &http.Cookie{
+		Domain:   serverDomain,
 		Name:     BookshelfAccessToken,
 		Value:    "",
 		Path:     path,
@@ -169,10 +174,10 @@ func RemoveBookshelfCookies(w http.ResponseWriter) {
 
 func keyFunc(t *jwt.Token) (interface{}, error) { return signingKey, nil }
 
-func ParseJWT(log logs.Logger, token, code string) (*JWTCustomClaims, error) {
+func ParseJWT(log logs.Logger, token string) (*JWTCustomClaims, error) {
 	parsedToken, err := jwt.ParseWithClaims(token, &JWTCustomClaims{}, keyFunc, jwt.WithoutClaimsValidation())
 	if err != nil {
-		log.Error("failed to parse token")
+		log.Errorf("failed to parse token: %+v", err)
 		return nil, apierr.ErrInvalidJWTToken
 	}
 	tkn, ok := parsedToken.Claims.(*JWTCustomClaims)

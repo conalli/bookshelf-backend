@@ -203,7 +203,7 @@ func (s *service) OAuthRedirect(ctx context.Context, authProvider, authType, cod
 }
 
 func (s *service) RefreshTokens(ctx context.Context, accessToken, code string) (*BookshelfTokens, apierr.Error) {
-	tkn, err := ParseJWT(s.log, accessToken, code)
+	tkn, err := ParseJWT(s.log, accessToken)
 	if err != nil || !tkn.HasCorrectClaims(code) {
 		s.log.Error("could not parse jwt from cookie")
 		return nil, apierr.NewJWTTokenError("could not parse token")
@@ -217,7 +217,7 @@ func (s *service) RefreshTokens(ctx context.Context, accessToken, code string) (
 		}
 		return nil, apierr.NewAPIError(http.StatusNotFound, err, "no refresh token")
 	}
-	tkn, err = ParseJWT(s.log, token, code)
+	tkn, err = ParseJWT(s.log, token)
 	if err != nil || !tkn.IsValid() || !tkn.HasCorrectClaims(code) {
 		s.log.Error("parsed refresh token invalid")
 		return nil, apierr.NewBadRequestError("invalid refresh token")

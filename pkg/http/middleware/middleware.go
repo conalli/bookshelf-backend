@@ -49,7 +49,7 @@ func Authorized(log logs.Logger) mux.MiddlewareFunc {
 			}
 			accessToken := bookshelfCookies[auth.BookshelfAccessToken].Value
 			code := bookshelfCookies[auth.BookshelfTokenCode].Value
-			parsedToken, err := auth.ParseJWT(log, accessToken, code)
+			parsedToken, err := auth.ParseJWT(log, accessToken)
 			if err != nil {
 				log.Errorf("could not parse access token: %v", err)
 				apierr.APIErrorResponse(w, apierr.NewJWTTokenError(err.Error()))
@@ -87,7 +87,7 @@ func AuthorizedSearch(log logs.Logger) mux.MiddlewareFunc {
 			}
 			accessToken := bookshelfCookies[auth.BookshelfAccessToken].Value
 			code := bookshelfCookies[auth.BookshelfTokenCode].Value
-			parsedToken, err := auth.ParseJWT(log, accessToken, code)
+			parsedToken, err := auth.ParseJWT(log, accessToken)
 			if err != nil {
 				log.Errorf("could not parse access token: %v", err)
 				http.Redirect(w, r, url, http.StatusTemporaryRedirect)

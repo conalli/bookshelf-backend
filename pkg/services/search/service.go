@@ -182,7 +182,7 @@ func (s *service) refresh(ctx context.Context, APIKey, code string) (*auth.Books
 		}
 		return nil, apierr.ErrNotFound
 	}
-	tkn, err := auth.ParseJWT(s.log, token, code)
+	tkn, err := auth.ParseJWT(s.log, token)
 	if err != nil || !tkn.IsValid() || !tkn.HasCorrectClaims(code) {
 		s.log.Error("parsed refresh token invalid")
 		return nil, apierr.ErrBadRequest
