@@ -32,7 +32,7 @@ func OAuthRedirect(a auth.Service, log logs.Logger) func(w http.ResponseWriter, 
 			apierr.APIErrorResponse(w, apiErr)
 			return
 		}
-		cookies := tokens.NewTokenCookies(log, http.SameSiteNoneMode)
+		cookies := tokens.NewTokenCookies(log, http.SameSiteLaxMode)
 		log.Info("successfully returned token as cookie")
 		auth.AddCookiesToResponse(w, cookies)
 		http.Redirect(w, r, os.Getenv("ALLOWED_URL_DASHBOARD"), http.StatusTemporaryRedirect)

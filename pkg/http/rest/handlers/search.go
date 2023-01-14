@@ -33,7 +33,7 @@ func Search(s search.Service, log logs.Logger) func(w http.ResponseWriter, r *ht
 		}
 		if tokens != nil {
 			log.Info("refreshing tokens during search")
-			cookies := tokens.NewTokenCookies(log, http.SameSiteStrictMode)
+			cookies := tokens.NewTokenCookies(log, http.SameSiteLaxMode)
 			auth.AddCookiesToResponse(w, cookies)
 		}
 		http.Redirect(w, r, url, http.StatusSeeOther)

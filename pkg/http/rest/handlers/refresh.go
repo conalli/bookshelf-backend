@@ -26,7 +26,7 @@ func Refresh(a auth.Service, log logs.Logger) http.HandlerFunc {
 			apierr.APIErrorResponse(w, apiErr)
 			return
 		}
-		cookies := tokens.NewTokenCookies(log, http.SameSiteStrictMode)
+		cookies := tokens.NewTokenCookies(log, http.SameSiteLaxMode)
 		auth.AddCookiesToResponse(w, cookies)
 		w.WriteHeader(http.StatusOK)
 	}

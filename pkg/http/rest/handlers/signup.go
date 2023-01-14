@@ -25,7 +25,7 @@ func SignUp(a auth.Service, log logs.Logger) func(w http.ResponseWriter, r *http
 			apierr.APIErrorResponse(w, apiErr)
 			return
 		}
-		cookies := authUser.Tokens.NewTokenCookies(log, http.SameSiteStrictMode)
+		cookies := authUser.Tokens.NewTokenCookies(log, http.SameSiteLaxMode)
 		log.Info("successfully returned token as cookie")
 		auth.AddCookiesToResponse(w, cookies)
 		w.Header().Set("Content-Type", "application/json")
