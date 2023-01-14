@@ -218,9 +218,13 @@ func (s *service) RefreshTokens(ctx context.Context, accessToken, code string) (
 		return nil, apierr.NewAPIError(http.StatusNotFound, err, "no refresh token")
 	}
 	tkn, err = ParseJWT(s.log, token)
-	if err != nil || !tkn.IsValid() || !tkn.HasCorrectClaims(code) {
-		s.log.Error("parsed refresh token invalid")
-		return nil, apierr.NewBadRequestError("invalid refresh token")
+	if err != nil {
+		s.log.Error("could not parse refresh token")
+		return nil, apierr.NewJWTTokenError("invalid refresh token")
+	}
+	if ok, err := tkn.IsValid(); err != nil || !ok || !tkn.HasCorrectClaims(code) {
+		s.log.Errorf("token not valid: valid - %+v error - %+v check - %t", tkn.Valid(), err, CheckHash(tkn.Code, code))
+		return nil, apierr.NewJWTTokenError("invalid token")
 	}
 	tokens, err := NewTokens(s.log, APIKey)
 	if err != nil {

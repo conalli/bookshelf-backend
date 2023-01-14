@@ -55,8 +55,8 @@ func Authorized(log logs.Logger) mux.MiddlewareFunc {
 				apierr.APIErrorResponse(w, apierr.NewJWTTokenError(err.Error()))
 				return
 			}
-			if !parsedToken.IsValid() || !parsedToken.HasCorrectClaims(code) {
-				log.Errorf("token not valid: token - %+v error - %+v check - %t", parsedToken, err, auth.CheckHash(parsedToken.Code, code))
+			if ok, err := parsedToken.IsValid(); err != nil || !ok || !parsedToken.HasCorrectClaims(code) {
+				log.Errorf("token not valid: valid - %+v error - %+v check - %t", parsedToken.Valid(), err, auth.CheckHash(parsedToken.Code, code))
 				apierr.APIErrorResponse(w, apierr.NewJWTTokenError("invalid token"))
 				return
 			}
@@ -99,8 +99,11 @@ func AuthorizedSearch(log logs.Logger) mux.MiddlewareFunc {
 				return
 			}
 			refreshCode := ""
-			needRefresh := !parsedToken.IsValid()
-			if needRefresh {
+			ok, err := parsedToken.IsValid()
+			if err != nil {
+				log.Info("token not valid: %+v", err)
+			}
+			if !ok {
 				log.Info("token refresh required on search")
 				refreshCode = code
 			}

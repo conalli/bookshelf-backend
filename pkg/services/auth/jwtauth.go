@@ -29,9 +29,12 @@ type JWTCustomClaims struct {
 	jwt.RegisteredClaims
 }
 
-func (j *JWTCustomClaims) IsValid() bool {
+func (j *JWTCustomClaims) IsValid() (bool, error) {
 	err := j.Valid()
-	return err == nil && j.Code != ""
+	if err != nil {
+		return false, err
+	}
+	return j.Code != "", nil
 }
 
 func (j *JWTCustomClaims) HasCorrectClaims(code string) bool {
