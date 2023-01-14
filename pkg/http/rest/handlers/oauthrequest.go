@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/conalli/bookshelf-backend/pkg/apierr"
@@ -26,20 +27,22 @@ func OAuthRequest(a auth.Service, log logs.Logger) http.HandlerFunc {
 			return
 		}
 		stateCookie := &http.Cookie{
+			Domain:   os.Getenv("SERVER_DOMAIN"),
 			Name:     "state",
 			Value:    data.State,
 			MaxAge:   120,
-			HttpOnly: false,
+			HttpOnly: true,
 			Secure:   true,
 			Path:     "/api",
 			Expires:  time.Now().Add(2 * time.Minute),
 			SameSite: http.SameSiteNoneMode,
 		}
 		nonceCookie := &http.Cookie{
+			Domain:   os.Getenv("SERVER_DOMAIN"),
 			Name:     "nonce",
 			Value:    data.Nonce,
 			MaxAge:   120,
-			HttpOnly: false,
+			HttpOnly: true,
 			Secure:   true,
 			Path:     "/api",
 			Expires:  time.Now().Add(2 * time.Minute),

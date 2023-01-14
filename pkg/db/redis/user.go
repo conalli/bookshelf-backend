@@ -36,10 +36,13 @@ func (r *Redis) AddUser(ctx context.Context, userKey string, user accounts.User)
 		r.log.Errorf("could not add user to redis: %+v", err)
 		return 0, err
 	}
-	cmdsAdded, err := r.AddCmds(ctx, userKey, user.Cmds)
-	if err != nil {
-		r.log.Errorf("could not add cmds when adding user to redis: %+v", err)
-		return numAdded, err
+	var cmdsAdded int64
+	if len(user.Cmds) > 0 {
+		cmdsAdded, err = r.AddCmds(ctx, userKey, user.Cmds)
+		if err != nil {
+			r.log.Errorf("could not add cmds when adding user to redis: %+v", err)
+			return numAdded, err
+		}
 	}
 	r.log.Info("successfully set data in redis")
 	return numAdded + cmdsAdded, nil

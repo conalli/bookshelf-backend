@@ -56,7 +56,7 @@ func Authorized(log logs.Logger) mux.MiddlewareFunc {
 				return
 			}
 			if !parsedToken.IsValid() || !parsedToken.HasCorrectClaims(code) {
-				log.Errorf("token not valid: error - %v check - %t", err, auth.CheckHash(parsedToken.Code, code))
+				log.Errorf("token not valid: token - %+v error - %+v check - %t", parsedToken, err, auth.CheckHash(parsedToken.Code, code))
 				apierr.APIErrorResponse(w, apierr.NewJWTTokenError("invalid token"))
 				return
 			}
@@ -89,12 +89,12 @@ func AuthorizedSearch(log logs.Logger) mux.MiddlewareFunc {
 			code := bookshelfCookies[auth.BookshelfTokenCode].Value
 			parsedToken, err := auth.ParseJWT(log, accessToken)
 			if err != nil {
-				log.Errorf("could not parse access token: %v", err)
+				log.Errorf("could not parse access token: %+v", err)
 				http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 				return
 			}
-			if !parsedToken.HasCorrectClaims(code) {
-				log.Errorf("token not valid: error - %v check - %t", err, auth.CheckHash(parsedToken.Code, code))
+			if !parsedToken.HasCorrectClaims(code) || len(accessToken) == 0 || len(code) == 0 {
+				log.Errorf("token not valid: error - %+v check - %t", parsedToken, auth.CheckHash(parsedToken.Code, code))
 				apierr.APIErrorResponse(w, apierr.NewJWTTokenError("invalid token"))
 				return
 			}
