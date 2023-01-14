@@ -26,7 +26,7 @@ func RequestWithCookie(method, url string, body io.Reader, APIKey string, log lo
 	if err != nil {
 		return nil, err
 	}
-	cookies := tokens.NewTokenCookies(log)
+	cookies := tokens.NewTokenCookies(log, http.SameSiteStrictMode)
 	code := request.FilterCookies(cookies, auth.BookshelfTokenCode)
 	access := request.FilterCookies(cookies, auth.BookshelfAccessToken)
 	req.AddCookie(code)

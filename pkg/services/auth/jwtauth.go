@@ -97,14 +97,13 @@ func NewTokens(log logs.Logger, APIKey string) (*BookshelfTokens, error) {
 	return tokens, nil
 }
 
-func (t *BookshelfTokens) NewTokenCookies(log logs.Logger) []*http.Cookie {
+func (t *BookshelfTokens) NewTokenCookies(log logs.Logger, sameSite http.SameSite) []*http.Cookie {
 	now := time.Now()
 	expires := now.Add(24 * time.Hour)
 	maxAge := 24 * 60 * 60
 	path := BookshelfBasePath
 	secure := true
 	httpOnly := true
-	sameSite := http.SameSiteNoneMode
 
 	codeCookie := &http.Cookie{
 		Name:     BookshelfTokenCode,
