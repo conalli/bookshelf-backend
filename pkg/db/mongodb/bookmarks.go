@@ -114,7 +114,7 @@ func (m *Mongo) AddManyBookmarks(ctx context.Context, bookmarks []bookmarks.Book
 }
 
 // DeleteBookmark removes a bookmark for a given user.
-func (m *Mongo) DeleteBookmark(ctx context.Context, requestData request.DeleteBookmark, APIKey string) (int, apierr.Error) {
+func (m *Mongo) DeleteBookmark(ctx context.Context, bookmarkID, APIKey string) (int, apierr.Error) {
 	m.Initialize()
 	defer m.client.Disconnect(ctx)
 	err := m.client.Connect(ctx)
@@ -123,7 +123,7 @@ func (m *Mongo) DeleteBookmark(ctx context.Context, requestData request.DeleteBo
 		return 0, apierr.NewInternalServerError()
 	}
 	collection := m.db.Collection(CollectionBookmarks)
-	oid, err := primitive.ObjectIDFromHex(requestData.ID)
+	oid, err := primitive.ObjectIDFromHex(bookmarkID)
 	if err != nil {
 		m.log.Error("could not get ObjectID from Hex")
 		return 0, apierr.NewBadRequestError("invalid bookmark id")

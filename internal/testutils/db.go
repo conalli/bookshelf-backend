@@ -194,11 +194,11 @@ func (t *Testdb) AddManyBookmarks(ctx context.Context, bookmarks []bookmarks.Boo
 }
 
 // DeleteBookmark removes a bookmark from the test db.
-func (t *Testdb) DeleteBookmark(ctx context.Context, requestData request.DeleteBookmark, APIKey string) (int, apierr.Error) {
+func (t *Testdb) DeleteBookmark(ctx context.Context, bookmarkID, APIKey string) (int, apierr.Error) {
 	i := -1
 	for idx := range t.Bookmarks {
-		log.Println(idx, t.Bookmarks[idx], t.Bookmarks[idx].ID == requestData.ID)
-		if t.Bookmarks[idx].ID == requestData.ID {
+		log.Println(idx, t.Bookmarks[idx], t.Bookmarks[idx].ID == bookmarkID)
+		if t.Bookmarks[idx].ID == bookmarkID {
 			i = idx
 			break
 		}

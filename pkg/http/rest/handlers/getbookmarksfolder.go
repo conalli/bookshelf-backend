@@ -16,7 +16,7 @@ import (
 func GetBookmarksFolder(b bookmarks.Service, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		path := vars["path"]
+		path := vars["name"]
 		APIKey, ok := request.GetAPIKeyFromContext(r.Context())
 		if len(APIKey) < 1 || !ok {
 			log.Error("could not get APIKey from context")

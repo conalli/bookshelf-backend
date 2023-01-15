@@ -15,7 +15,7 @@ type Service interface {
 	GetBookmarksFolder(ctx context.Context, path, APIKey string) (*Folder, apierr.Error)
 	AddBookmark(ctx context.Context, requestData request.AddBookmark, APIKey string) (int, apierr.Error)
 	AddBookmarksFromFile(ctx context.Context, r *http.Request, APIKey string) (int, apierr.Error)
-	DeleteBookmark(ctx context.Context, requestData request.DeleteBookmark, APIKey string) (int, apierr.Error)
+	DeleteBookmark(ctx context.Context, bookmarkID, APIKey string) (int, apierr.Error)
 }
 
 type Repository interface {
@@ -23,7 +23,7 @@ type Repository interface {
 	GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]Bookmark, apierr.Error)
 	AddBookmark(ctx context.Context, requestData request.AddBookmark, APIKey string) (int, apierr.Error)
 	AddManyBookmarks(ctx context.Context, bookmarks []Bookmark) (int, apierr.Error)
-	DeleteBookmark(ctx context.Context, requestData request.DeleteBookmark, APIKey string) (int, apierr.Error)
+	DeleteBookmark(ctx context.Context, bookmarkID, APIKey string) (int, apierr.Error)
 }
 
 type service struct {
@@ -104,15 +104,15 @@ func (s *service) AddBookmarksFromFile(ctx context.Context, r *http.Request, API
 }
 
 // DeleteBookmark removes a bookmark from an account.
-func (s *service) DeleteBookmark(ctx context.Context, requestData request.DeleteBookmark, APIKey string) (int, apierr.Error) {
+func (s *service) DeleteBookmark(ctx context.Context, bookmarkID, APIKey string) (int, apierr.Error) {
 	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
-	validateReqErr := s.validate.Struct(requestData)
+	validateReqErr := s.validate.Var(bookmarkID, "len=24,hexadecimal")
 	validateAPIKeyErr := s.validate.Var(APIKey, "uuid")
 	if validateReqErr != nil || validateAPIKeyErr != nil {
 		s.log.Errorf("Could not validate DELETE BOOKMARK request: %v - %v", validateReqErr, validateAPIKeyErr)
 		return 0, apierr.NewBadRequestError("request format incorrect")
 	}
-	numUpdated, err := s.db.DeleteBookmark(reqCtx, requestData, APIKey)
+	numUpdated, err := s.db.DeleteBookmark(reqCtx, bookmarkID, APIKey)
 	return numUpdated, err
 }

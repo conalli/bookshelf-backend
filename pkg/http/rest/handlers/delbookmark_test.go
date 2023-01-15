@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/conalli/bookshelf-backend/internal/testutils"
-	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest/handlers"
 	"github.com/go-playground/validator/v10"
@@ -20,33 +19,24 @@ func TestDeleteBookmark(t *testing.T) {
 	defer srv.Close()
 	tc := []struct {
 		name       string
-		req        request.DeleteBookmark
+		req        string
 		APIKey     string
 		statusCode int
 		res        handlers.DeleteBookmarkResponse
 	}{
 		{
-			name: "Default bookmark, correct request",
-			req: request.DeleteBookmark{
-				ID: db.Bookmarks[1].ID,
-			},
+			name:       "Default bookmark, correct request",
+			req:        db.Bookmarks[1].ID,
 			APIKey:     db.Users["1"].APIKey,
 			statusCode: 200,
 			res: handlers.DeleteBookmarkResponse{
 				NumDeleted: 1,
-				Name:       db.Bookmarks[1].Name,
-				Path:       db.Bookmarks[1].Path,
-				URL:        db.Bookmarks[1].URL,
 			},
 		},
 	}
 	for _, c := range tc {
 		t.Run(c.name, func(t *testing.T) {
-			body, err := testutils.MakeRequestBody(c.req)
-			if err != nil {
-				t.Fatalf("Couldn't create del bookmark request body.")
-			}
-			res, err := testutils.RequestWithCookie("DELETE", srv.URL+"/api/bookmark", body, c.APIKey, testutils.NewLogger())
+			res, err := testutils.RequestWithCookie("DELETE", srv.URL+"/api/bookmark/"+c.req, nil, c.APIKey, testutils.NewLogger())
 			if err != nil {
 				t.Fatalf("Couldn't create request to del bookmark with cookie.")
 			}

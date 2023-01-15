@@ -100,7 +100,7 @@ func addBookmarkRoutes(router *mux.Router, b bookmarks.Service, l logs.Logger) {
 	bookmarks.Use(middleware.Authorized(l))
 	bookmarks.HandleFunc("", handlers.GetAllBookmarks(b, l)).Methods("GET")
 	bookmarks.HandleFunc("", handlers.AddBookmark(b, l)).Methods("POST")
-	bookmarks.HandleFunc("", handlers.DeleteBookmark(b, l)).Methods("DELETE")
-	bookmarks.HandleFunc("/{path}", handlers.GetBookmarksFolder(b, l)).Methods("GET")
+	bookmarks.HandleFunc("/{id}", handlers.DeleteBookmark(b, l)).Methods("DELETE")
+	bookmarks.HandleFunc("/{name}", handlers.GetBookmarksFolder(b, l)).Methods("GET")
 	bookmarks.HandleFunc("/file", handlers.AddBookmarksFile(b, l)).Methods("POST")
 }

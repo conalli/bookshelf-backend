@@ -8,14 +8,12 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
+	"github.com/gorilla/mux"
 )
 
 // DeleteBookmarkResponse represents a successful response from the /user/bookmark POST endpoint.
 type DeleteBookmarkResponse struct {
 	ID         string `json:"id"`
-	Name       string `json:"name,omitempty"`
-	Path       string `json:"path,omitempty"`
-	URL        string `json:"url"`
 	NumDeleted int    `json:"num_deleted"`
 }
 
@@ -28,12 +26,8 @@ func DeleteBookmark(b bookmarks.Service, log logs.Logger) func(w http.ResponseWr
 			apierr.APIErrorResponse(w, apierr.NewInternalServerError())
 			return
 		}
-		delBookReq, parseErr := request.DecodeJSONRequest[request.DeleteBookmark](r.Body)
-		if parseErr != nil {
-			errRes := apierr.NewBadRequestError("could not parse request body")
-			apierr.APIErrorResponse(w, errRes)
-		}
-		numUpdated, err := b.DeleteBookmark(r.Context(), delBookReq, APIKey)
+		bookmarkID := mux.Vars(r)["id"]
+		numUpdated, err := b.DeleteBookmark(r.Context(), bookmarkID, APIKey)
 		if err != nil {
 			log.Errorf("error returned while trying to delete a bookmark: %v", err)
 			apierr.APIErrorResponse(w, err)
@@ -41,7 +35,7 @@ func DeleteBookmark(b bookmarks.Service, log logs.Logger) func(w http.ResponseWr
 		}
 		if numUpdated == 0 {
 			log.Error("could not delete bookmark")
-			err := apierr.NewBadRequestError("error: could not add bookmark")
+			err := apierr.NewBadRequestError("error: could not delete bookmark")
 			apierr.APIErrorResponse(w, err)
 			return
 		}
@@ -49,10 +43,8 @@ func DeleteBookmark(b bookmarks.Service, log logs.Logger) func(w http.ResponseWr
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		res := DeleteBookmarkResponse{
-			ID:         delBookReq.ID,
+			ID:         bookmarkID,
 			NumDeleted: numUpdated,
-			Path:       delBookReq.Path,
-			URL:        delBookReq.URL,
 		}
 		json.NewEncoder(w).Encode(res)
 	}
