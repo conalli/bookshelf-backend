@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/conalli/bookshelf-backend/internal/testutils"
+	tu "github.com/conalli/bookshelf-backend/internal/testutils"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
 	"github.com/go-playground/validator/v10"
@@ -14,8 +14,8 @@ import (
 
 func TestGetBookmarks(t *testing.T) {
 	t.Parallel()
-	db := testutils.NewDB().AddDefaultUsers()
-	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db, testutils.NewCache(), nil)
+	db := tu.NewDB().AddDefaultUsers()
+	r := rest.NewRouter(tu.NewLogger(), validator.New(), db, tu.NewCache(), nil)
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 	tc := []struct {
@@ -43,9 +43,10 @@ func TestGetBookmarks(t *testing.T) {
 			},
 		},
 	}
+	APIURL := srv.URL + "/api/bookmark"
 	for _, c := range tc {
 		t.Run(c.name, func(t *testing.T) {
-			res, err := testutils.RequestWithCookie("GET", srv.URL+"/api/bookmark", nil, c.APIKey, testutils.NewLogger())
+			res, err := tu.RequestWithCookie("GET", APIURL, tu.WithAPIKey(c.APIKey))
 			if err != nil {
 				t.Fatalf("Couldn't create request to get bookmarks with cookie.")
 			}

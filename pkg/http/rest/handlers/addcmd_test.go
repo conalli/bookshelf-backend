@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/conalli/bookshelf-backend/internal/testutils"
+	tu "github.com/conalli/bookshelf-backend/internal/testutils"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest/handlers"
@@ -14,8 +14,8 @@ import (
 
 func TestAddCmd(t *testing.T) {
 	t.Parallel()
-	db := testutils.NewDB().AddDefaultUsers()
-	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db, testutils.NewCache(), nil)
+	db := tu.NewDB().AddDefaultUsers()
+	r := rest.NewRouter(tu.NewLogger(), validator.New(), db, tu.NewCache(), nil)
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
 	tc := []struct {
@@ -35,14 +35,14 @@ func TestAddCmd(t *testing.T) {
 			statusCode: 200,
 		},
 	}
-
+	APIURL := srv.URL + "/api/user/cmd"
 	for _, c := range tc {
 		t.Run(c.name, func(t *testing.T) {
-			body, err := testutils.MakeRequestBody(c.req)
+			body, err := tu.MakeJSONRequestBody(c.req)
 			if err != nil {
 				t.Fatalf("Couldn't create add cmd request body.")
 			}
-			res, err := testutils.RequestWithCookie("POST", srv.URL+"/api/user/cmd", body, c.APIKey, testutils.NewLogger())
+			res, err := tu.RequestWithCookie("POST", APIURL, tu.WithBody(body), tu.WithAPIKey(c.APIKey))
 			if err != nil {
 				t.Fatalf("Couldn't create request to add cmd with cookie.")
 			}

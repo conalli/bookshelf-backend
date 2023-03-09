@@ -42,7 +42,7 @@ func TestSignUp(t *testing.T) {
 	}
 	for _, c := range tc {
 		t.Run(c.name, func(t *testing.T) {
-			body, err := testutils.MakeRequestBody(c.req)
+			body, err := testutils.MakeJSONRequestBody(c.req)
 			if err != nil {
 				t.Fatalf("Couldn't marshal json body to sign up.")
 			}

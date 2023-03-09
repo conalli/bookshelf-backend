@@ -7,26 +7,73 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"os"
 
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/accounts"
 	"github.com/conalli/bookshelf-backend/pkg/services/auth"
+	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
 )
 
+type requestOptions struct {
+	headers map[string]string
+	body    io.Reader
+	APIKey  string
+	log     logs.Logger
+}
+
+func NewRequestOptions() *requestOptions {
+	return &requestOptions{}
+}
+
+type RequestOption func(*requestOptions)
+
+func WithHeaders(headers map[string]string) RequestOption {
+	return func(ro *requestOptions) {
+		ro.headers = headers
+	}
+}
+
+func WithBody(body io.Reader) RequestOption {
+	return func(ro *requestOptions) {
+		ro.body = body
+	}
+}
+
+func WithAPIKey(APIKey string) RequestOption {
+	return func(ro *requestOptions) {
+		ro.APIKey = APIKey
+	}
+}
+
+func WithLogger(log logs.Logger) RequestOption {
+	return func(ro *requestOptions) {
+		ro.log = log
+	}
+}
+
 // RequestWithCookie provides a helper for testing handlers that require jwt cookies.
-func RequestWithCookie(method, url string, body io.Reader, APIKey string, log logs.Logger) (*http.Response, error) {
+func RequestWithCookie(method, url string, options ...RequestOption) (*http.Response, error) {
 	client := &http.Client{}
-	req, err := http.NewRequest(method, url, body)
+	ro := NewRequestOptions()
+	for _, opt := range options {
+		opt(ro)
+	}
+	req, err := http.NewRequest(method, url, ro.body)
 	if err != nil {
 		return nil, err
 	}
-	tokens, err := auth.NewTokens(log, APIKey)
+	for key, val := range ro.headers {
+		req.Header.Add(key, val)
+	}
+	tokens, err := auth.NewTokens(ro.log, ro.APIKey)
 	if err != nil {
 		return nil, err
 	}
-	cookies := tokens.NewTokenCookies(log, http.SameSiteStrictMode)
+	cookies := tokens.NewTokenCookies(ro.log, http.SameSiteStrictMode)
 	code := request.FilterCookies(cookies, auth.BookshelfTokenCode)
 	access := request.FilterCookies(cookies, auth.BookshelfAccessToken)
 	req.AddCookie(code)
@@ -34,13 +81,32 @@ func RequestWithCookie(method, url string, body io.Reader, APIKey string, log lo
 	return client.Do(req)
 }
 
-// MakeRequestBody takes in a struct and attempts to marshal it and turn it into a new buffer.
-func MakeRequestBody[T request.APIRequest](data T) (*bytes.Buffer, error) {
+// MakeJSONRequestBody takes in a struct and attempts to marshal it and turn it into a new buffer.
+func MakeJSONRequestBody[T request.APIRequest](data T) (*bytes.Buffer, error) {
 	body, err := json.Marshal(data)
 	if err != nil {
 		return nil, err
 	}
 	return bytes.NewBuffer(body), nil
+}
+
+func MakeFileRequestBody(path, filename string) (*bytes.Buffer, string, error) {
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+	ff, err := writer.CreateFormFile(bookmarks.BookmarksFileKey, filename)
+	if err != nil {
+		return nil, "", err
+	}
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, "", err
+	}
+	_, err = io.Copy(ff, file)
+	if err != nil {
+		return nil, "", err
+	}
+	writer.Close()
+	return body, writer.FormDataContentType(), nil
 }
 
 func randomID(length int) (string, error) {

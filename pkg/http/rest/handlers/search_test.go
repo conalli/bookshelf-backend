@@ -4,20 +4,21 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/conalli/bookshelf-backend/internal/testutils"
+	tu "github.com/conalli/bookshelf-backend/internal/testutils"
 	"github.com/conalli/bookshelf-backend/pkg/http/rest"
 	"github.com/go-playground/validator/v10"
 )
 
 func TestSearch(t *testing.T) {
 	t.Parallel()
-	db := testutils.NewDB().AddDefaultUsers()
-	r := rest.NewRouter(testutils.NewLogger(), validator.New(), db, testutils.NewCache(), nil)
+	db := tu.NewDB().AddDefaultUsers()
+	r := rest.NewRouter(tu.NewLogger(), validator.New(), db, tu.NewCache(), nil)
 	srv := httptest.NewServer(r.Handler())
 	defer srv.Close()
+	APIURL := srv.URL + "/api/search/"
 	for _, usr := range db.Users {
 		for k, v := range usr.Cmds {
-			res, err := testutils.RequestWithCookie("GET", srv.URL+"/api/search/"+k, nil, usr.APIKey, testutils.NewLogger())
+			res, err := tu.RequestWithCookie("GET", APIURL+k, tu.WithAPIKey(usr.APIKey))
 			if err != nil {
 				t.Fatalf("Could not create Search request - %v", err)
 			}
