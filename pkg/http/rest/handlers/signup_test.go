@@ -40,13 +40,14 @@ func TestSignUp(t *testing.T) {
 			statusCode: 400,
 		},
 	}
+	APIURL := srv.URL + "/api/auth/signup"
 	for _, c := range tc {
 		t.Run(c.name, func(t *testing.T) {
 			body, err := testutils.MakeJSONRequestBody(c.req)
 			if err != nil {
 				t.Fatalf("Couldn't marshal json body to sign up.")
 			}
-			res, err := http.Post(srv.URL+"/api/auth/signup", "application/json", body)
+			res, err := http.Post(APIURL, "application/json", body)
 			if err != nil {
 				t.Fatalf("Couldn't make post request.")
 			}
