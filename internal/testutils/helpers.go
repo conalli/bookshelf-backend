@@ -19,6 +19,7 @@ import (
 )
 
 type requestOptions struct {
+	*http.Client
 	headers map[string]string
 	body    io.Reader
 	APIKey  string
@@ -26,10 +27,16 @@ type requestOptions struct {
 }
 
 func NewRequestOptions() *requestOptions {
-	return &requestOptions{}
+	return &requestOptions{Client: &http.Client{}}
 }
 
 type RequestOption func(*requestOptions)
+
+func WithClient(client *http.Client) RequestOption {
+	return func(ro *requestOptions) {
+		ro.Client = client
+	}
+}
 
 func WithHeaders(headers map[string]string) RequestOption {
 	return func(ro *requestOptions) {
@@ -55,9 +62,16 @@ func WithLogger(log logs.Logger) RequestOption {
 	}
 }
 
+func NewRedirectClient() *http.Client {
+	return &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+}
+
 // RequestWithCookie provides a helper for testing handlers that require jwt cookies.
 func RequestWithCookie(method, url string, options ...RequestOption) (*http.Response, error) {
-	client := &http.Client{}
 	ro := NewRequestOptions()
 	for _, opt := range options {
 		opt(ro)
@@ -78,7 +92,7 @@ func RequestWithCookie(method, url string, options ...RequestOption) (*http.Resp
 	access := request.FilterCookies(cookies, auth.BookshelfAccessToken)
 	req.AddCookie(code)
 	req.AddCookie(access)
-	return client.Do(req)
+	return ro.Do(req)
 }
 
 // MakeJSONRequestBody takes in a struct and attempts to marshal it and turn it into a new buffer.

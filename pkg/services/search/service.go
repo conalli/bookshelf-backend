@@ -95,7 +95,7 @@ func (s *service) evaluateArgs(ctx context.Context, APIKey string, args []string
 
 	case "ls":
 		ls := NewLSFlagset()
-		err := ls.fs.Parse(args[1:])
+		err := ls.Parse(args[1:])
 		if err != nil || *ls.b && *ls.c {
 			s.log.Error("webcli: could not parse ls flag cmds")
 			return "", apierr.NewBadRequestError("bad ls flags")
@@ -119,7 +119,7 @@ func (s *service) evaluateArgs(ctx context.Context, APIKey string, args []string
 		}
 	case "touch", "add":
 		touch := NewTouchFlagset()
-		err := touch.fs.Parse(args[1:])
+		err := touch.Parse(args[1:])
 		if err != nil {
 			s.log.Error("could not parse touch flag cmds")
 			return "", apierr.NewBadRequestError("bad touch flags")
