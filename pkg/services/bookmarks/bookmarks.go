@@ -5,6 +5,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/url"
+	"strings"
 
 	"golang.org/x/net/html"
 )
@@ -144,12 +145,15 @@ func (h *HTMLBookmarkParser) createBookmark(path string, URL string) (Bookmark, 
 }
 
 func updatePath(currentPath, pathName string) string {
-	newPath := currentPath
-	if len(newPath) == 0 {
-		newPath += ","
+	var sb strings.Builder
+	if len(currentPath) == 0 {
+		sb.WriteString(",")
+	} else {
+		sb.WriteString(currentPath)
 	}
-	newPath += pathName + ","
-	return newPath
+	sb.WriteString(pathName)
+	sb.WriteString(",")
+	return sb.String()
 }
 
 func findURL(attr []html.Attribute) string {

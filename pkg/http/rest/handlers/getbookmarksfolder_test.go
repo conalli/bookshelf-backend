@@ -30,17 +30,25 @@ func TestGetBookmarksFolder(t *testing.T) {
 			folder:     "News",
 			APIKey:     db.Users["1"].APIKey,
 			statusCode: 200,
-			res:        bookmarks.Folder{
-				// TODO: Fix get bookmarks folders
-				// Bookmarks: []bookmarks.Bookmark{db.Bookmarks[1]},
+			res: bookmarks.Folder{
+				ID:   "newsfolderid",
+				Name: "News",
+				Path: bookmarks.BookmarksBasePath,
+				Bookmarks: []bookmarks.Bookmark{{
+					ID:       "c55fdaace3388c2189875fc5",
+					APIKey:   "bd1eb780-0124-11ed-b939-0242ac120002",
+					Name:     "bbc",
+					Path:     ",News,",
+					URL:      "bbc.co.uk",
+					IsFolder: false,
+				}},
 			},
 		},
 	}
-	APIURL := srv.URL + "/api/bookmark/"
+	APIURL := srv.URL + "/api/bookmark/folder?name="
 	for _, c := range tc {
 		t.Run(c.name, func(t *testing.T) {
-			APIKey := db.Users["1"].APIKey
-			res, err := tu.RequestWithCookie("GET", APIURL+c.folder, tu.WithAPIKey(APIKey))
+			res, err := tu.RequestWithCookie("GET", APIURL+c.folder, tu.WithAPIKey(c.APIKey))
 			if err != nil {
 				t.Fatalf("Couldn't create request to get bookmarks folder with cookie.")
 			}

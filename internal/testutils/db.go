@@ -162,7 +162,13 @@ func (t *Testdb) GetAllBookmarks(ctx context.Context, APIKey string) ([]bookmark
 func (t *Testdb) GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]bookmarks.Bookmark, apierr.Error) {
 	folder := []bookmarks.Bookmark{}
 	for _, val := range t.Bookmarks {
-		match, err := regexp.Match(path, []byte(val.Path))
+		check := ""
+		if val.IsFolder {
+			check = val.Name
+		} else {
+			check = val.Path
+		}
+		match, err := regexp.Match("(?i)"+path, []byte(check))
 		if err != nil {
 			return nil, apierr.NewBadRequestError("invalid bookmark folder path")
 		}

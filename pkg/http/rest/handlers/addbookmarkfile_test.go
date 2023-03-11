@@ -54,7 +54,6 @@ func TestAddBookmarkFile(t *testing.T) {
 			}
 			err = json.NewDecoder(res.Body).Decode(&got)
 			if err != nil {
-				t.Logf("%+#v", res.Body)
 				t.Fatalf("couldn't decode api response: %v", err)
 			}
 			if c.want != got.NumAdded {

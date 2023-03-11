@@ -46,10 +46,21 @@ func (m *Mongo) GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]
 	}
 	collection := m.db.Collection(CollectionBookmarks)
 	filter := bson.D{
-		primitive.E{Key: "api_key", Value: APIKey},
-		primitive.E{Key: "path", Value: bson.D{
-			primitive.E{Key: "$regex", Value: primitive.Regex{Pattern: path, Options: "i"}},
-		},
+		bson.E{Key: "api_key", Value: APIKey},
+		bson.E{
+			Key: "$or", Value: bson.A{
+				bson.M{
+					"path": bson.D{
+						bson.E{Key: "$regex", Value: primitive.Regex{Pattern: path, Options: "i"}},
+					},
+				},
+				bson.M{
+					"is_folder": true,
+					"name": bson.D{
+						bson.E{Key: "$regex", Value: primitive.Regex{Pattern: path, Options: "i"}},
+					},
+				},
+			},
 		},
 	}
 	cursor, err := collection.Find(ctx, filter)

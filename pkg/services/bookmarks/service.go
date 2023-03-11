@@ -49,7 +49,7 @@ func (s *service) GetAllBookmarks(ctx context.Context, APIKey string) (*Folder, 
 	return folder, err
 }
 
-func (s *service) GetBookmarksFolder(ctx context.Context, path, APIKey string) (*Folder, apierr.Error) {
+func (s *service) GetBookmarksFolder(ctx context.Context, folderName, APIKey string) (*Folder, apierr.Error) {
 	reqCtx, cancelFunc := request.CtxWithDefaultTimeout(ctx)
 	defer cancelFunc()
 	validateErr := s.validate.Var(APIKey, "uuid")
@@ -57,8 +57,22 @@ func (s *service) GetBookmarksFolder(ctx context.Context, path, APIKey string) (
 		s.log.Errorf("Could not validate GET BOOKMARKS FOLDER request: %v", validateErr)
 		return nil, apierr.NewBadRequestError("request format incorrect.")
 	}
-	books, err := s.db.GetBookmarksFolder(reqCtx, path, APIKey)
-	folder := organizeBookmarks(books, "", BookmarksBasePath, BookmarksBasePath, BookmarksBasePath)
+	books, err := s.db.GetBookmarksFolder(reqCtx, folderName, APIKey)
+	if err != nil {
+		s.log.Error("could not get bookmarks from folder %s", folderName)
+		return nil, apierr.NewInternalServerError()
+	}
+	var f Bookmark
+	for idx, b := range books {
+		if b.IsFolder && b.Name == folderName {
+			f = b
+			end := len(books) - 1
+			books[idx], books[end] = books[end], books[idx]
+			books = books[:end]
+			break
+		}
+	}
+	folder := organizeBookmarks(books, f.ID, f.Name, f.Path, updatePath(f.Path, f.Name))
 	return folder, err
 }
 

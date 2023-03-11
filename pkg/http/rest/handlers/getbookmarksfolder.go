@@ -8,22 +8,20 @@ import (
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
 	"github.com/conalli/bookshelf-backend/pkg/logs"
 	"github.com/conalli/bookshelf-backend/pkg/services/bookmarks"
-	"github.com/gorilla/mux"
 )
 
 // GetBookmarksFolder is the handler for the /user/bookmarks/{Path} GET endpoint. Checks credentials + JWT and if
 // authorized returns all users bookmarks.
 func GetBookmarksFolder(b bookmarks.Service, log logs.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		path := vars["name"]
+		folder := r.URL.Query().Get("name")
 		APIKey, ok := request.GetAPIKeyFromContext(r.Context())
 		if len(APIKey) < 1 || !ok {
 			log.Error("could not get APIKey from context")
 			apierr.APIErrorResponse(w, apierr.NewInternalServerError())
 			return
 		}
-		books, err := b.GetBookmarksFolder(r.Context(), path, APIKey)
+		books, err := b.GetBookmarksFolder(r.Context(), folder, APIKey)
 		if err != nil {
 			log.Errorf("error returned while trying to get cmds: %v", err)
 			apierr.APIErrorResponse(w, err)

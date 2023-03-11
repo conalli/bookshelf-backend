@@ -89,18 +89,18 @@ func addUserRoutes(router *mux.Router, u accounts.UserService, l logs.Logger) {
 	user.HandleFunc("/cmd", handlers.DeleteCmd(u, l)).Methods("PATCH")
 }
 
-func addSearchRoutes(router *mux.Router, s search.Service, l logs.Logger) {
-	search := router.PathPrefix("/search").Subrouter()
-	search.Use(middleware.AuthorizedSearch(l))
-	search.HandleFunc("/{args}", handlers.Search(s, l)).Methods("GET")
-}
-
 func addBookmarkRoutes(router *mux.Router, b bookmarks.Service, l logs.Logger) {
 	bookmarks := router.PathPrefix("/bookmark").Subrouter()
 	bookmarks.Use(middleware.Authorized(l))
 	bookmarks.HandleFunc("", handlers.GetAllBookmarks(b, l)).Methods("GET")
 	bookmarks.HandleFunc("", handlers.AddBookmark(b, l)).Methods("POST")
 	bookmarks.HandleFunc("/{id}", handlers.DeleteBookmark(b, l)).Methods("DELETE")
-	bookmarks.HandleFunc("/{name}", handlers.GetBookmarksFolder(b, l)).Methods("GET")
+	bookmarks.HandleFunc("/folder", handlers.GetBookmarksFolder(b, l)).Methods("GET")
 	bookmarks.HandleFunc("/file", handlers.AddBookmarksFile(b, l)).Methods("POST")
+}
+
+func addSearchRoutes(router *mux.Router, s search.Service, l logs.Logger) {
+	search := router.PathPrefix("/search").Subrouter()
+	search.Use(middleware.AuthorizedSearch(l))
+	search.HandleFunc("/{args}", handlers.Search(s, l)).Methods("GET")
 }
