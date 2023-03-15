@@ -3,6 +3,7 @@ package bookmarks
 import (
 	"context"
 	"net/http"
+	"regexp"
 
 	"github.com/conalli/bookshelf-backend/pkg/apierr"
 	"github.com/conalli/bookshelf-backend/pkg/http/request"
@@ -62,14 +63,22 @@ func (s *service) GetBookmarksFolder(ctx context.Context, folderName, APIKey str
 		s.log.Error("could not get bookmarks from folder %s", folderName)
 		return nil, apierr.NewInternalServerError()
 	}
+
 	var f Bookmark
 	for idx, b := range books {
-		if b.IsFolder && b.Name == folderName {
-			f = b
-			end := len(books) - 1
-			books[idx], books[end] = books[end], books[idx]
-			books = books[:end]
-			break
+		if b.IsFolder {
+			match, err := regexp.MatchString(`(?i)`+folderName, b.Name)
+			if err != nil {
+				s.log.Errorf("error matching string in regex")
+				return nil, apierr.NewInternalServerError()
+			}
+			if match {
+				f = b
+				end := len(books) - 1
+				books[idx], books[end] = books[end], books[idx]
+				books = books[:end]
+				break
+			}
 		}
 	}
 	folder := organizeBookmarks(books, f.ID, f.Name, f.Path, updatePath(f.Path, f.Name))
