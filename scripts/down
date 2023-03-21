@@ -1,9 +1,0 @@
-#! /bin/sh
-
-if [ "$1" = "dev" ]; then
-  docker-compose -p bookshelf_dev down -v
-  exit 0
-else
-  docker-compose -p bookshelf_local down -v
-  exit 0
-fi
