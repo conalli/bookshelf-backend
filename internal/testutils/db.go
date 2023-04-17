@@ -137,6 +137,15 @@ func (t *Testdb) AddCmd(ctx context.Context, body request.AddCmd, APIKey string)
 	return 1, nil
 }
 
+func (t *Testdb) AddCmdByAPIKey(ctx context.Context, body request.AddCmd, APIKey string) (int, apierr.Error) {
+	usr := t.findUserByAPIKey(APIKey)
+	if usr == nil {
+		return 0, apierr.NewBadRequestError("error: could not find user with value " + APIKey)
+	}
+	usr.Cmds[body.Cmd] = body.URL
+	return 1, nil
+}
+
 // DeleteCmd removes a cmd from a user in the test db.
 func (t *Testdb) DeleteCmd(ctx context.Context, body request.DeleteCmd, APIKey string) (int, apierr.Error) {
 	usr := t.findUserByAPIKey(APIKey)

@@ -201,6 +201,54 @@ func (m *Mongo) addCmdToUser(ctx context.Context, collection *mongo.Collection, 
 	return result, nil
 }
 
+func (m *Mongo) AddCmdByAPIKey(ctx context.Context, requestData request.AddCmd, APIKey string) (int, apierr.Error) {
+	m.Initialize()
+	defer m.client.Disconnect(ctx)
+	err := m.client.Connect(ctx)
+	if err != nil {
+		m.log.Error("couldn't connect to db")
+		return 0, apierr.NewInternalServerError()
+	}
+	collection := m.db.Collection(CollectionUsers)
+	opts := UpdateEmbedOptions{
+		FilterKey:   "api_key",
+		FilterValue: APIKey,
+		Embedded:    "cmds",
+		Key:         requestData.Cmd,
+		Value:       requestData.URL,
+	}
+	_, err = m.UpdateEmbedByField(ctx, collection, opts)
+	if err != nil {
+		m.log.Errorf("could not add cmd to user: %v", err)
+		return 0, apierr.NewInternalServerError()
+	}
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			m.log.Error("couldn't find user with given APIKey")
+			return 0, apierr.NewBadRequestError("could not find user")
+		}
+		m.log.Error("error getting user from db")
+		return 0, apierr.NewInternalServerError()
+	}
+	return 1, nil
+}
+
+func (m *Mongo) addCmdToUserByAPIKey(ctx context.Context, collection *mongo.Collection, requestData request.AddCmd) (*mongo.UpdateResult, error) {
+	opts := options.Update().SetUpsert(true)
+	filter, err := primitive.ObjectIDFromHex(requestData.ID)
+	if err != nil {
+		m.log.Error("could not get ObjectID from Hex")
+		return nil, err
+	}
+	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: fmt.Sprintf("cmds.%s", requestData.Cmd), Value: requestData.URL}}}}
+	result, err := collection.UpdateOne(ctx, filter, update, opts)
+	if err != nil {
+		m.log.Errorf("could not get update user by id: %v", err)
+		return nil, err
+	}
+	return result, nil
+}
+
 // DeleteCmd attempts to either rempve a cmd from the user, returning the number
 // of updated cmds.
 func (m *Mongo) DeleteCmd(ctx context.Context, requestData request.DeleteCmd, APIKey string) (int, apierr.Error) {

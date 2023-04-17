@@ -18,6 +18,7 @@ import (
 type Repository interface {
 	GetUserByAPIKey(ctx context.Context, APIKey string) (accounts.User, error)
 	AddBookmark(reqCtx context.Context, requestData request.AddBookmark, APIKey string) (int, apierr.Error)
+	AddCmdByAPIKey(reqCtx context.Context, requestData request.AddCmd, APIKey string) (int, apierr.Error)
 	NewRefreshToken(ctx context.Context, APIKey, refreshToken string) error
 	GetRefreshTokenByAPIKey(ctx context.Context, APIKey string) (string, error)
 }
@@ -141,6 +142,21 @@ func (s *service) evaluateArgs(ctx context.Context, APIKey string, args []string
 			if res == 0 {
 				return fmt.Sprintf("%s/404", os.Getenv("ALLOWED_URL_BASE")), nil
 			}
+			return fmt.Sprintf("%s/webcli/success", os.Getenv("ALLOWED_URL_BASE")), nil
+		}
+		if touch.c != nil {
+			req := request.AddCmd{
+				Cmd: *touch.c,
+				URL: *touch.url,
+			}
+			res, err := s.db.AddCmdByAPIKey(ctx, req, APIKey)
+			if err != nil {
+				return "", err
+			}
+			if res == 0 {
+				return fmt.Sprintf("%s/404", os.Getenv("ALLOWED_URL_BASE")), nil
+			}
+			s.cache.DeleteCmds(ctx, APIKey)
 			return fmt.Sprintf("%s/webcli/success", os.Getenv("ALLOWED_URL_BASE")), nil
 		}
 	default:
