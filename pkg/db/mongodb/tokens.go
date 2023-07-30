@@ -16,8 +16,7 @@ type tokenDocument struct {
 }
 
 func (m *Mongo) GetRefreshTokenByAPIKey(ctx context.Context, APIKey string) (string, error) {
-	m.Initialize()
-	err := m.client.Connect(ctx)
+	err := m.Initialize(ctx)
 	if err != nil {
 		m.log.Error("could not connect to db")
 		return "", apierr.ErrInternalServerError
@@ -37,8 +36,7 @@ func (m *Mongo) GetRefreshTokenByAPIKey(ctx context.Context, APIKey string) (str
 }
 
 func (m *Mongo) NewRefreshToken(ctx context.Context, APIKey, refreshToken string) error {
-	m.Initialize()
-	err := m.client.Connect(ctx)
+	err := m.Initialize(ctx)
 	if err != nil {
 		m.log.Error("could not connect to db")
 		return apierr.ErrInternalServerError
@@ -56,8 +54,7 @@ func (m *Mongo) NewRefreshToken(ctx context.Context, APIKey, refreshToken string
 }
 
 func (m *Mongo) DeleteRefreshToken(ctx context.Context, APIKey string) (int64, error) {
-	m.Initialize()
-	err := m.client.Connect(ctx)
+	err := m.Initialize(ctx)
 	if err != nil {
 		m.log.Error("could not connect to db")
 		return 0, apierr.ErrInternalServerError
