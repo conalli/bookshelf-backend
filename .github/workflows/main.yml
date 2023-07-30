@@ -1,4 +1,4 @@
-name: CI
+name: CI (main)
 
 on:
   push:
@@ -6,43 +6,9 @@ on:
   pull_request:
     branches: [main]
 
-  workflow_dispatch:
-
 jobs:
   audit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.19
-
-      - name: Verify dependencies
-        run: go mod verify
-
-      - name: Build
-        run: go build -v ./...
-
-      - name: Run go vet
-        run: go vet ./...
-
-      - name: Install staticcheck
-        run: go install honnef.co/go/tools/cmd/staticcheck@latest
-
-      - name: Run staticcheck
-        run: staticcheck ./...
-
-      - name: Install golint
-        run: go install golang.org/x/lint/golint@latest
-
-      - name: Run golint
-        run: golint ./...
-
-      - name: Run tests
-        run: go test -race -vet=off ./...
-
+    uses: ./.github/workflows/audit.yml
   build:
     needs: audit
     runs-on: ubuntu-latest
@@ -51,4 +17,4 @@ jobs:
       - name: Deploy backend
         env:
           DEPLOY_URL: ${{ secrets.DEPLOY_URL }}
-        run: curl $DEPLOY_URL
+        run: curl -v $DEPLOY_URL
