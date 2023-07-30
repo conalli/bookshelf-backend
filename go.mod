@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/coreos/go-oidc/v3 v3.4.0
-	github.com/go-redis/redis/v8 v8.11.4
+	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang-jwt/jwt/v4 v4.2.0
 	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.3.0
