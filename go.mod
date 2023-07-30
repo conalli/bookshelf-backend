@@ -3,7 +3,7 @@ module github.com/conalli/bookshelf-backend
 go 1.19
 
 require (
-	github.com/coreos/go-oidc/v3 v3.4.0
+	github.com/coreos/go-oidc/v3 v3.6.0
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/golang-jwt/jwt/v4 v4.2.0
 	github.com/google/go-cmp v0.5.9
@@ -15,11 +15,12 @@ require (
 	go.uber.org/zap v1.21.0
 	golang.org/x/crypto v0.7.0
 	golang.org/x/net v0.8.0
-	golang.org/x/oauth2 v0.2.0
+	golang.org/x/oauth2 v0.6.0
 )
 
 require (
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.0 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 )
 
@@ -46,5 +47,4 @@ require (
 	golang.org/x/text v0.8.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
-	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 )
