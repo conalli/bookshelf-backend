@@ -37,7 +37,10 @@ func main() {
 	if err != nil {
 		log.Fatal("Could not make oidc provider:", err)
 	}
-	r := rest.NewRouter(sugar, validator.New(), mongodb.New(sugar), redis.NewClient(sugar), provider).Walk().HandlerWithCORS()
+	ctx := context.Background()
+	db := mongodb.New(ctx, sugar)
+	defer db.Disconnect(ctx)
+	r := rest.NewRouter(sugar, validator.New(), db, redis.NewClient(sugar), provider).Walk().HandlerWithCORS()
 	port := os.Getenv("PORT")
 	log.Println("Server up and running on port: " + port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), r))

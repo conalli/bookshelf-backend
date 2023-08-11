@@ -16,16 +16,10 @@ import (
 
 // NewUser creates a new user in the db.
 func (m *Mongo) NewUser(ctx context.Context, userData accounts.User) (string, error) {
-	err := m.Initialize(ctx)
-	if err != nil {
-		m.log.Errorf("could not connect to db, %+v", err)
-		return "", apierr.ErrInternalServerError
-	}
-	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
 	result, err := collection.InsertOne(ctx, userData)
 	if err != nil {
-		m.log.Error("could not create new user")
+		m.log.Error("could not create new user", err)
 		return "", apierr.ErrInternalServerError
 	}
 	userOID, ok := result.InsertedID.(primitive.ObjectID)
@@ -39,12 +33,6 @@ func (m *Mongo) NewUser(ctx context.Context, userData accounts.User) (string, er
 // Delete attempts to delete a user from the db, returning the number of deleted users.
 // TODO: remove user from all users teams.
 func (m *Mongo) Delete(ctx context.Context, requestData request.DeleteUser, APIKey string) (int, apierr.Error) {
-	err := m.Initialize(ctx)
-	if err != nil {
-		m.log.Error("could not connect to db")
-		return 0, apierr.NewInternalServerError()
-	}
-	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
 	res, err := m.GetByID(ctx, collection, requestData.ID)
 	if err != nil {
@@ -96,23 +84,12 @@ func (m *Mongo) deleteUserFromDB(ctx context.Context, collection *mongo.Collecti
 
 // UserAlreadyExists checks the db for a user with given email and returns whether they already exist or not.
 func (m *Mongo) UserAlreadyExists(ctx context.Context, email string) (bool, error) {
-	err := m.Initialize(ctx)
-	if err != nil {
-		m.log.Error("couldn't connect to db")
-		return false, apierr.ErrInternalServerError
-	}
-	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
 	return m.DataAlreadyExists(ctx, collection, "email", email), nil
 }
 
 // GetUserByAPIKey retrieves a user from the db based on their APIKey.
 func (m *Mongo) GetUserByAPIKey(ctx context.Context, APIKey string) (accounts.User, error) {
-	err := m.Initialize(ctx)
-	if err != nil {
-		m.log.Error("could not connect to db")
-	}
-	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
 	res := m.GetByKey(ctx, collection, "api_key", APIKey)
 	return m.DecodeUser(res)
@@ -120,12 +97,6 @@ func (m *Mongo) GetUserByAPIKey(ctx context.Context, APIKey string) (accounts.Us
 
 // GetUserByEmail checks the users credentials returns the user if password is correct.
 func (m *Mongo) GetUserByEmail(ctx context.Context, email string) (accounts.User, error) {
-	err := m.Initialize(ctx)
-	if err != nil {
-		m.log.Error("couldn't connect to db")
-		return accounts.User{}, apierr.NewInternalServerError()
-	}
-	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
 	res := m.GetByKey(ctx, collection, "email", email)
 	return m.DecodeUser(res)
@@ -133,12 +104,6 @@ func (m *Mongo) GetUserByEmail(ctx context.Context, email string) (accounts.User
 
 // GetAllCmds uses req info to get all users current cmds from the db.
 func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]string, apierr.Error) {
-	err := m.Initialize(ctx)
-	if err != nil {
-		m.log.Error("couldn't connect to db")
-		return nil, apierr.NewInternalServerError()
-	}
-	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
 	res := m.GetByKey(ctx, collection, "api_key", APIKey)
 	user, err := m.DecodeUser(res)
@@ -156,12 +121,6 @@ func (m *Mongo) GetAllCmds(ctx context.Context, APIKey string) (map[string]strin
 // AddCmd attempts to either add or update a cmd for the user, returning the number
 // of updated cmds.
 func (m *Mongo) AddCmd(ctx context.Context, requestData request.AddCmd, APIKey string) (int, apierr.Error) {
-	err := m.Initialize(ctx)
-	if err != nil {
-		m.log.Error("couldn't connect to db")
-		return 0, apierr.NewInternalServerError()
-	}
-	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
 	result, err := m.addCmdToUser(ctx, collection, requestData)
 	if err != nil {
@@ -195,12 +154,6 @@ func (m *Mongo) addCmdToUser(ctx context.Context, collection *mongo.Collection, 
 }
 
 func (m *Mongo) AddCmdByAPIKey(ctx context.Context, requestData request.AddCmd, APIKey string) (int, apierr.Error) {
-	err := m.Initialize(ctx)
-	if err != nil {
-		m.log.Error("couldn't connect to db")
-		return 0, apierr.NewInternalServerError()
-	}
-	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
 	opts := UpdateEmbedOptions{
 		FilterKey:   "api_key",
@@ -209,7 +162,7 @@ func (m *Mongo) AddCmdByAPIKey(ctx context.Context, requestData request.AddCmd, 
 		Key:         requestData.Cmd,
 		Value:       requestData.URL,
 	}
-	_, err = m.UpdateEmbedByField(ctx, collection, opts)
+	_, err := m.UpdateEmbedByField(ctx, collection, opts)
 	if err != nil {
 		m.log.Errorf("could not add cmd to user: %v", err)
 		return 0, apierr.NewInternalServerError()
@@ -228,12 +181,6 @@ func (m *Mongo) AddCmdByAPIKey(ctx context.Context, requestData request.AddCmd, 
 // DeleteCmd attempts to either rempve a cmd from the user, returning the number
 // of updated cmds.
 func (m *Mongo) DeleteCmd(ctx context.Context, requestData request.DeleteCmd, APIKey string) (int, apierr.Error) {
-	err := m.Initialize(ctx)
-	if err != nil {
-		m.log.Error("could not connect to db")
-		return 0, apierr.NewInternalServerError()
-	}
-	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionUsers)
 	result, err := m.removeUserCmd(ctx, collection, requestData.ID, requestData.Cmd)
 	if err != nil {
