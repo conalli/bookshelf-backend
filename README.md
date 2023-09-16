@@ -30,12 +30,12 @@ To get started
 - To build the project and run the server, in the terminal run:
 
 ``` sh
-./scripts/build <dev> (optional: <up> to run ./up script after building)
-./scripts/up <dev>
+make build
+make up
 ```
 
 - When you are done, run:
 
 ``` sh
-./scripts/down <dev>
+make down
 ```
