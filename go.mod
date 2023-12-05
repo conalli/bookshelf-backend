@@ -3,7 +3,7 @@ module github.com/conalli/bookshelf-backend
 go 1.19
 
 require (
-	github.com/coreos/go-oidc/v3 v3.7.0
+	github.com/coreos/go-oidc/v3 v3.8.0
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/golang-jwt/jwt/v4 v4.2.0
 	github.com/google/go-cmp v0.6.0
