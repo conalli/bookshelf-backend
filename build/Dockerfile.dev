@@ -2,12 +2,12 @@ FROM golang:1.19-alpine as build
 
 WORKDIR /go/src/github.com/conalli/bookshelf-backend
 
+RUN go install github.com/cosmtrek/air@latest
+
 COPY ../go.* .
 
 RUN go mod download
 
-COPY ../ .
-
 EXPOSE 8080
 
-CMD ["go", "run", "./cmd/bookshelf-server/main.go"]
+CMD ["air", "--build.cmd", "go build -o ./tmp/main ./cmd/bookshelf-server/main.go", "--build.bin", "./tmp/main"]

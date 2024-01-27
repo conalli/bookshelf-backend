@@ -94,3 +94,57 @@ func TestSearchLS(t *testing.T) {
 		}
 	}
 }
+
+func TestSearchTouch(t *testing.T) {
+	t.Parallel()
+	db := tu.NewDB().AddDefaultUsers()
+	r := rest.NewRouter(tu.NewLogger(), validator.New(), db, tu.NewCache(), nil)
+	srv := httptest.NewServer(r.Handler())
+	defer srv.Close()
+	redirectURL := os.Getenv("ALLOWED_URL_BASE")
+	tc := []struct {
+		name        string
+		APIKey      string
+		flags       string
+		statusCode  int
+		redirectURL string
+	}{
+		{
+			name:        "Correct request, (touch -b -url)",
+			APIKey:      db.Users["1"].APIKey,
+			flags:       "-b -url youtube.com",
+			statusCode:  303,
+			redirectURL: redirectURL + "/webcli/success",
+		},
+		{
+			name:        "Correct request, (touch -c -url)",
+			APIKey:      db.Users["1"].APIKey,
+			flags:       "-c gh -url github.com",
+			statusCode:  303,
+			redirectURL: redirectURL + "/webcli/success",
+		},
+		{
+			name:        "Incorrect request, incorrect APIKey (touch -b -url)",
+			APIKey:      "unknown",
+			flags:       "-b -url twitter.com",
+			statusCode:  303,
+			redirectURL: redirectURL + "/webcli/error",
+		},
+	}
+	APIURL := srv.URL + "/api/search/touch"
+	client := tu.NewRedirectClient()
+	for _, c := range tc {
+		res, err := tu.RequestWithCookie("GET", fmt.Sprintf("%s %s", APIURL, c.flags), tu.WithClient(client), tu.WithAPIKey(c.APIKey))
+		if err != nil {
+			t.Fatalf("Could not create Search request - %v", err)
+		}
+		defer res.Body.Close()
+		if res.StatusCode != c.statusCode {
+			t.Errorf("wanted %d: got %d", c.statusCode, res.StatusCode)
+		}
+		url := res.Header.Get("Location")
+		if url != c.redirectURL {
+			t.Errorf("wanted %s: got %s", c.redirectURL, url)
+		}
+	}
+}

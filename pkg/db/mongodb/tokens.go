@@ -16,17 +16,10 @@ type tokenDocument struct {
 }
 
 func (m *Mongo) GetRefreshTokenByAPIKey(ctx context.Context, APIKey string) (string, error) {
-	m.Initialize()
-	err := m.client.Connect(ctx)
-	if err != nil {
-		m.log.Error("could not connect to db")
-		return "", apierr.ErrInternalServerError
-	}
-	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionTokens)
 	res := m.GetByKey(ctx, collection, "api_key", APIKey)
 	var token tokenDocument
-	err = res.Decode(&token)
+	err := res.Decode(&token)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return "", apierr.ErrNotFound
@@ -37,13 +30,6 @@ func (m *Mongo) GetRefreshTokenByAPIKey(ctx context.Context, APIKey string) (str
 }
 
 func (m *Mongo) NewRefreshToken(ctx context.Context, APIKey, refreshToken string) error {
-	m.Initialize()
-	err := m.client.Connect(ctx)
-	if err != nil {
-		m.log.Error("could not connect to db")
-		return apierr.ErrInternalServerError
-	}
-	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionTokens)
 	update := bson.M{"$set": bson.M{"token": refreshToken}}
 	options := options.Update().SetUpsert(true)
@@ -56,19 +42,11 @@ func (m *Mongo) NewRefreshToken(ctx context.Context, APIKey, refreshToken string
 }
 
 func (m *Mongo) DeleteRefreshToken(ctx context.Context, APIKey string) (int64, error) {
-	m.Initialize()
-	err := m.client.Connect(ctx)
-	if err != nil {
-		m.log.Error("could not connect to db")
-		return 0, apierr.ErrInternalServerError
-	}
-	defer m.client.Disconnect(ctx)
 	collection := m.db.Collection(CollectionTokens)
 	res, err := collection.DeleteOne(ctx, bson.M{"api_key": APIKey})
 	if err != nil {
 		m.log.Errorf("could not remove refesh token from db: %+v", err)
 		return 0, nil
 	}
-
 	return res.DeletedCount, nil
 }

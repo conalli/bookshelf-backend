@@ -12,13 +12,6 @@ import (
 
 // GetAllBookmarks gets all a users bookmarks from the db.
 func (m *Mongo) GetAllBookmarks(ctx context.Context, APIKey string) ([]bookmarks.Bookmark, apierr.Error) {
-	m.Initialize()
-	defer m.client.Disconnect(ctx)
-	err := m.client.Connect(ctx)
-	if err != nil {
-		m.log.Error("couldn't connect to db")
-		return nil, apierr.NewInternalServerError()
-	}
 	collection := m.db.Collection(CollectionBookmarks)
 	filter := bson.D{primitive.E{Key: "api_key", Value: APIKey}}
 	cursor, err := collection.Find(ctx, filter)
@@ -37,13 +30,6 @@ func (m *Mongo) GetAllBookmarks(ctx context.Context, APIKey string) ([]bookmarks
 
 // GetBookmarksFolder gets all a users bookmarks from the db.
 func (m *Mongo) GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]bookmarks.Bookmark, apierr.Error) {
-	m.Initialize()
-	defer m.client.Disconnect(ctx)
-	err := m.client.Connect(ctx)
-	if err != nil {
-		m.log.Error("couldn't connect to db")
-		return nil, apierr.NewInternalServerError()
-	}
 	collection := m.db.Collection(CollectionBookmarks)
 	filter := bson.D{
 		bson.E{Key: "api_key", Value: APIKey},
@@ -79,13 +65,6 @@ func (m *Mongo) GetBookmarksFolder(ctx context.Context, path, APIKey string) ([]
 
 // AddBookmark adds a new bookmark for a given user.
 func (m *Mongo) AddBookmark(ctx context.Context, requestData request.AddBookmark, APIKey string) (int, apierr.Error) {
-	m.Initialize()
-	defer m.client.Disconnect(ctx)
-	err := m.client.Connect(ctx)
-	if err != nil {
-		m.log.Error("could not connect to db")
-		return 0, apierr.NewInternalServerError()
-	}
 	collection := m.db.Collection(CollectionBookmarks)
 	data := bookmarks.Bookmark{
 		APIKey:   APIKey,
@@ -94,7 +73,7 @@ func (m *Mongo) AddBookmark(ctx context.Context, requestData request.AddBookmark
 		URL:      requestData.URL,
 		IsFolder: requestData.IsFolder,
 	}
-	_, err = collection.InsertOne(ctx, data)
+	_, err := collection.InsertOne(ctx, data)
 	if err != nil {
 		m.log.Errorf("couldn't insert bookmark: %v", err)
 		return 0, apierr.NewInternalServerError()
@@ -103,13 +82,6 @@ func (m *Mongo) AddBookmark(ctx context.Context, requestData request.AddBookmark
 }
 
 func (m *Mongo) AddManyBookmarks(ctx context.Context, bookmarks []bookmarks.Bookmark) (int, apierr.Error) {
-	m.Initialize()
-	defer m.client.Disconnect(ctx)
-	err := m.client.Connect(ctx)
-	if err != nil {
-		m.log.Error("could not connect to db")
-		return 0, apierr.NewInternalServerError()
-	}
 	collection := m.db.Collection(CollectionBookmarks)
 	data := make([]interface{}, len(bookmarks))
 	for i := range bookmarks {
@@ -126,13 +98,6 @@ func (m *Mongo) AddManyBookmarks(ctx context.Context, bookmarks []bookmarks.Book
 
 // DeleteBookmark removes a bookmark for a given user.
 func (m *Mongo) DeleteBookmark(ctx context.Context, bookmarkID, APIKey string) (int, apierr.Error) {
-	m.Initialize()
-	defer m.client.Disconnect(ctx)
-	err := m.client.Connect(ctx)
-	if err != nil {
-		m.log.Error("could not connect to db")
-		return 0, apierr.NewInternalServerError()
-	}
 	collection := m.db.Collection(CollectionBookmarks)
 	oid, err := primitive.ObjectIDFromHex(bookmarkID)
 	if err != nil {

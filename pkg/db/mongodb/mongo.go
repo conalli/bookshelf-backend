@@ -46,21 +46,26 @@ func resolveEnv(envType string) string {
 }
 
 // New creates a new MongoDB client and database.
-func New(logger logs.Logger) *Mongo {
-	return &Mongo{log: logger}
-}
-
-// Initialize initializes the MongoDB client and database.
-func (m *Mongo) Initialize() {
+func New(ctx context.Context, logger logs.Logger) *Mongo {
 	mongoURI := resolveEnv("uri")
 	db := resolveEnv("db")
-	client, err := mongo.NewClient(options.Client().ApplyURI(mongoURI))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoURI))
 	if err != nil {
-		m.log.Fatalf("could not connect to mongo client: %v", err)
+		logger.Fatalf("could not connect to mongo client: %v", err)
 	}
-	m.client = client
-	m.db = m.client.Database(db)
+	return &Mongo{log: logger, client: client, db: client.Database(db)}
 }
+
+func (m *Mongo) Disconnect(ctx context.Context) {
+	m.client.Disconnect(ctx)
+}
+
+// // Initialize initializes the MongoDB client and database.
+// func (m *Mongo) Initialize(ctx context.Context) error {
+// 	m.client = client
+// 	m.db = m.client.Database(db)
+// 	return nil
+// }
 
 // Collection uses the DB_NAME env var, and returns a collection based on the collectionName and client.
 func (m *Mongo) Collection(collectionName string) *mongo.Collection {

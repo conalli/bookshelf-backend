@@ -95,7 +95,9 @@ func (h *HTMLBookmarkParser) parseFolder(path string) error {
 				}
 				h.bookmarks = append(h.bookmarks, f)
 				newPath := updatePath(path, f.Name)
-				h.parseFolder(newPath)
+				if err = h.parseFolder(newPath); err != nil {
+					return err
+				}
 			case "a":
 				URL := findURL(attr)
 				if len(URL) == 0 {
