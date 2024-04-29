@@ -7,12 +7,12 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5s
         with:
-          go-version: 1.19
+          go-version: 1.22s
 
       - name: Verify dependencies
         run: go mod verify
