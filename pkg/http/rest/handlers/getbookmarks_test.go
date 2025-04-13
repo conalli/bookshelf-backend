@@ -48,7 +48,7 @@ func TestGetBookmarks(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			res, err := tu.RequestWithCookie("GET", APIURL, tu.WithAPIKey(c.APIKey))
 			if err != nil {
-				t.Fatalf("Couldn't create request to get bookmarks with cookie.")
+				t.Fatal("Couldn't create request to get bookmarks with cookie.")
 			}
 			if res.StatusCode != c.statusCode {
 				t.Errorf("Expected get bookmarks request to give status code %d: got %d", c.statusCode, res.StatusCode)
@@ -56,10 +56,10 @@ func TestGetBookmarks(t *testing.T) {
 			var response bookmarks.Folder
 			err = json.NewDecoder(res.Body).Decode(&response)
 			if err != nil {
-				t.Fatalf("Couldn't decode json body upon getting bookmarks.")
+				t.Fatal("Couldn't decode json body upon getting bookmarks.")
 			}
 			if !cmp.Equal(response, c.res) {
-				t.Errorf(cmp.Diff(response, c.res))
+				t.Error(cmp.Diff(response, c.res))
 			}
 			res.Body.Close()
 		})

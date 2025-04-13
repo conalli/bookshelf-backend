@@ -15,7 +15,7 @@ func OAuthRedirect(a auth.Service, log logs.Logger) func(w http.ResponseWriter, 
 		route := mux.Vars(r)
 		authProvider, ok := route["authProvider"]
 		authType, ok2 := route["authType"]
-		if !(ok && ok2) {
+		if !ok || !ok2 {
 			log.Error("no authType returned from redirect")
 			apierr.APIErrorResponse(w, apierr.NewBadRequestError("invalid request url"))
 			return

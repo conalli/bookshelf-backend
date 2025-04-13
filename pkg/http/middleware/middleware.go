@@ -60,9 +60,9 @@ func Authorized(log logs.Logger) mux.MiddlewareFunc {
 				apierr.APIErrorResponse(w, apierr.NewJWTTokenError("invalid token"))
 				return
 			}
-			ctx := request.AddAPIKeyToContext(r.Context(), parsedToken.RegisteredClaims.Subject)
+			ctx := request.AddAPIKeyToContext(r.Context(), parsedToken.Subject)
 			req := r.WithContext(ctx)
-			log.Info(parsedToken.RegisteredClaims.Subject)
+			log.Info(parsedToken.Subject)
 			next.ServeHTTP(w, req)
 		})
 	}
@@ -109,7 +109,7 @@ func AuthorizedSearch(log logs.Logger) mux.MiddlewareFunc {
 			}
 			ctx := request.AddSearchKeysToContext(r.Context(), parsedToken.Subject, refreshCode)
 			req := r.WithContext(ctx)
-			log.Info(parsedToken.RegisteredClaims.Subject)
+			log.Info(parsedToken.Subject)
 			next.ServeHTTP(w, req)
 		})
 	}
