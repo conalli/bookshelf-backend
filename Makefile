@@ -3,11 +3,11 @@
 all: build up
 
 build:
-	docker-compose -f ./build/docker-compose.dev.yml -p bookshelf_dev build
+	docker compose -f ./build/docker-compose.dev.yml -p bookshelf_dev build
 
 up:
-	docker-compose -f ./build/docker-compose.dev.yml -p bookshelf_dev up -d
+	docker compose -f ./build/docker-compose.dev.yml -p bookshelf_dev up -d
 
 down:
-	docker-compose -p bookshelf_dev down -v
+	docker compose -p bookshelf_dev down -v
 	rm -rf ./tmp

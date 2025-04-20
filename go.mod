@@ -1,8 +1,8 @@
 module github.com/conalli/bookshelf-backend
 
-go 1.22
+go 1.24
 
-toolchain go1.22.2
+toolchain go1.24.2
 
 require (
 	github.com/coreos/go-oidc/v3 v3.10.0

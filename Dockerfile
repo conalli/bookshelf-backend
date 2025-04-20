@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine as build
+FROM golang:1.24-alpine as build
 
 WORKDIR /go/src/github.com/conalli/bookshelf-backend
 
@@ -11,7 +11,7 @@ COPY . .
 
 RUN go build -o main ./cmd/bookshelf-server/main.go
 
-FROM alpine:3.16
+FROM alpine:3.21
 
 WORKDIR /app
 
