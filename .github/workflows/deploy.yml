@@ -1,15 +1,13 @@
-name: CI (main)
+name: CI (deploy)
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  release:
+    types: [released]
 
 jobs:
   audit:
     uses: ./.github/workflows/audit.yml
-  build:
+  deploy:
     needs: audit
     runs-on: ubuntu-latest
     steps:
